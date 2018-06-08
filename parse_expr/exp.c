@@ -86,7 +86,7 @@ int assign_value(char *name, int val)
 	}
 }
 
-int primary()
+int primary_expression()
 {
 	int res = 0;
 
@@ -113,7 +113,7 @@ int primary()
 	case lcLBRACE:
 	{
 		token = get_token(NEXT);
-		res = assign();
+		res = assignment_expression();
 		token = get_token(CURR);
 		if (token->type != lcRBRACE)
 		{
@@ -132,13 +132,13 @@ int primary()
 	return res;
 }
 
-int factor()
+int multiplicative_expression()
 {
 	int res = 0;
 	int stop = 0;
 	token_t *token;
 
-	res = primary();
+	res = primary_expression();
 	token = get_token(CURR);
 	while ( token->type == lcMUL || token->type == lcDIV)
 	{
@@ -147,13 +147,13 @@ int factor()
 		case lcMUL:
 		{
 			token = get_token(NEXT);
-			res *= primary();
+			res *= primary_expression();
 			break;
 		}
 		case lcDIV:
 		{
 			token = get_token(NEXT);
-			res /= primary();
+			res /= primary_expression();
 			break;
 		}
 		default:
@@ -165,14 +165,14 @@ int factor()
 	return res;
 }
 
-int calc_expr()
+int additive_expression()
 {
 	char **buffer;
 	token_t *token;
 	int res = 0;
 	int stop = 0;
 	
-	res = factor();
+	res = multiplicative_expression();
 	token = get_token(CURR);
 	while (token->type == lcPLUS || token->type == lcMINUS)
 	{
@@ -181,13 +181,13 @@ int calc_expr()
 		case lcPLUS:
 		{
 			token = get_token(NEXT);
-			res += factor();
+			res += multiplicative_expression();
 			break;
 		}
 		case lcMINUS:
 		{
 			token = get_token(NEXT);
-			res -= factor();
+			res -= multiplicative_expression();
 			break;
 		}
 		default:
@@ -212,12 +212,12 @@ int is_relop(token_type type)
 		);
 }
 
-int relation()
+int conditional_expression()
 {
 	token_t *token = get_token(CURR);
 	int res = 0;
 	token_type type = token->type;
-	res = calc_expr();
+	res = additive_expression();
 
 	type = (token = get_token(CURR))->type;
 	
@@ -228,27 +228,31 @@ int relation()
 		{	
 
 		case lcAND_OP:
-			res &= calc_expr();
+			res &= additive_expression();
 			break;
 		case lcOR_OP:
-			res |= calc_expr();
+			res |= additive_expression();
 			break;
 		case lcEQ_OP:
-			res = res == calc_expr();
+			res = res == additive_expression();
 			break;
 		case lcL_OP:
-			res  = res < calc_expr();
+			res  = res < additive_expression();
+			break;
 		case lcG_OP:
-			res = res > calc_expr();
+			res = res > additive_expression();
 			break;
 		case lcLE_OP:
-			res = res <= calc_expr();
+			res = res <= additive_expression();
+			break;
 		case lcGE_OP:
-			res = res >= calc_expr();
+			res = res >= additive_expression();
 			break;
 		case lcN_OP:
-			res != calc_expr();
+			res != additive_expression();
 			break;
+		case lcNE_OP:
+			res = res != additive_expression();
 		default:
 			break;
 		}
@@ -257,7 +261,7 @@ int relation()
 	return res;
 }
 
-int assign()
+int assignment_expression()
 {
 	char *name;
 	int tmp = 0;
@@ -265,7 +269,8 @@ int assign()
 	token_t *token = get_token(CURR);
 	name = (char*)token->text;
 	
-	
+	if (token->type == lcSEMI)
+		return res;
 	if (token->type == lcIDENT)
 	{
 		char *name;
@@ -281,19 +286,19 @@ int assign()
 			switch (type)
 			{
 			case lcASSIGN:
-				res = assign();
+				res = assignment_expression();
 				break;
 			case lcPLUS_ASSIGN:
-				res = tmp += res = assign();
+				res = tmp += res = assignment_expression();
 				break;
 			case lcMINUS_ASSIGN:
-				res = tmp -= assign();
+				res = tmp -= assignment_expression();
 				break;
 			case lcMUL_ASSIGN:
-				res = tmp *= assign();
+				res = tmp *= assignment_expression();
 				break;
 			case lcDIV_ASSIGN:
-				res = tmp /= assign();
+				res = tmp /= assignment_expression();
 				break;
 			default:
 				break;
@@ -306,7 +311,7 @@ int assign()
 			token = get_token(PREV);			
 		}
 	}
-	res = relation();
+	res = conditional_expression();
 	return res;
 
 }

@@ -1,4 +1,33 @@
-print "Input 2 variables";
-//read var1 var2;
-//print "Value of first var: "  var1 " value of second var: " var2;
-print "bye";
+/*
+{
+	a = 7;
+	if (a >= 7)
+		print "yes";
+}
+*/
+{
+	print "first";
+	{
+		print "SECOND";
+		{
+			print "third";
+			print 1;
+		}
+		{
+			var1=10;
+			var2=2;
+			print var1" "var2;
+			if (var1 == var2)
+			{
+				print var1" not equal "var2;
+				print "Recursion this is good!";
+			}
+		}
+	}
+}
+{
+	print "test"
+}
+{
+	print "test"
+}

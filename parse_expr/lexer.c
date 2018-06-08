@@ -117,9 +117,14 @@ int is_hexdigit(int digit)
 
 }
 
-char *get_curpos()
+char *get_pos()
 {
 	return curr_context->curr_token.pos;
+}
+
+void set_pos(char *pos)
+{
+	curr_context->curr_token.pos = pos;
 }
 
 token_t* get_token(token_direct direction)
@@ -407,6 +412,15 @@ token_t* get_token(token_direct direction)
 				else
 				{
 					type = lcG_OP;
+				}
+				break;
+			}
+			case '!':
+			{
+				if (pos[1] == '=')
+				{
+					type = lcNE_OP;
+					pos++;
 				}
 				break;
 			}

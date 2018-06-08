@@ -21,15 +21,15 @@ typedef struct _variable
 
 int block(char ** buffer);
 
-int assign();
+int assignment_expression();
 
 int lookup(char *name, int * val);
 
 int assign_value(char *name, int val);
 
-int primary();
+int primary_expression();
 
-int factor();
+int multiplicative_expression();
 
-int calc_expr();
+int additive_expression();
 
