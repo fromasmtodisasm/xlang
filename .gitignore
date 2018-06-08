@@ -1,0 +1,8 @@
+vs2017/Debug/*
+*.exe
+*.obj
+*.ncb
+*.suo
+*.user
+vs2017/Backup/*
+*.htm

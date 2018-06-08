@@ -1,0 +1,4 @@
+print "Input 2 variables";
+//read var1 var2;
+//print "Value of first var: "  var1 " value of second var: " var2;
+print "bye";
