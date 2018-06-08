@@ -1,1 +1,1 @@
-This is training for x language
+This is training interpreter for x language
