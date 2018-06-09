@@ -41,6 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="../parse_expr/include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -171,7 +172,19 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\main.cpp"
+				RelativePath="..\parse_expr\exp.c"
+				>
+			</File>
+			<File
+				RelativePath="..\parse_expr\interpreter.c"
+				>
+			</File>
+			<File
+				RelativePath="..\parse_expr\lexer.c"
+				>
+			</File>
+			<File
+				RelativePath="..\parse_expr\main.cpp"
 				>
 			</File>
 		</Filter>
@@ -180,6 +193,22 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath="..\parse_expr\include\common.h"
+				>
+			</File>
+			<File
+				RelativePath="..\parse_expr\include\exp.h"
+				>
+			</File>
+			<File
+				RelativePath="..\parse_expr\include\interpreter.h"
+				>
+			</File>
+			<File
+				RelativePath="..\parse_expr\include\lexer.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Файлы ресурсов"
@@ -188,6 +217,18 @@
 			>
 			<File
 				RelativePath=".\test.txt"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="Test Files"
+			>
+			<File
+				RelativePath="..\test\break"
+				>
+			</File>
+			<File
+				RelativePath="..\test\while"
 				>
 			</File>
 		</Filter>
