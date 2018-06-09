@@ -95,13 +95,14 @@
     <ClCompile Include="..\parse_expr\lexer.c" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="../parse_expr/test.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="..\parse_expr\include\common.h" />
     <ClInclude Include="..\parse_expr\include\exp.h" />
     <ClInclude Include="..\parse_expr\include\interpreter.h" />
     <ClInclude Include="..\parse_expr\include\lexer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\test\break" />
+    <None Include="..\test\while" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

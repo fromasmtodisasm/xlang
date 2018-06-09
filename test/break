@@ -1,0 +1,106 @@
+{
+	if (1!=1)
+	{
+		print "Oh my god";
+	}
+	else
+	{
+		print "good logic";
+	}
+}
+/*
+{
+	j=1;
+	print "This is while operator!";
+	while (j < 10)
+	{
+		print j;
+		if (j>5)
+		{
+			print "before break";
+			break;
+			print "after break";
+			continue;
+		}
+		j+=1;
+	}
+}
+
+
+if ((token = get_token(NEXT))->type == lcLBRACKET)
+			{
+				if (condition)
+				{
+					compound_statement();
+					if ((token = get_token(CURR))->type != lcRBRACKET)
+					{
+						exptected_func("RBRACKET");
+						//exit(-1);
+					}
+					if (get_token(NEXT)->type == lcELSE)
+					{
+						get_token(NEXT);
+						skip_statement();
+					}
+					//else
+					//{
+					//	//get_token(PREV);
+					//}					
+				}
+				else
+				{
+					//get_token(NEXT);
+					skip_compound_statement();
+					if (get_token(NEXT)->type == lcELSE)
+					{
+						if (get_token(NEXT)->type == lcLBRACKET)
+						{
+							compound_statement();
+							if ((token = get_token(CURR))->type != lcRBRACKET)
+							{
+								exptected_func("RBRACKET");
+								//exit(-1);
+							}
+						}
+						else
+						{
+							statement();
+						}
+					}
+				}
+			}
+			else
+			if (condition)
+			{
+				statement();
+				skip_statement();
+				if (get_token(NEXT)->type == lcELSE)
+				{
+					get_token(NEXT);
+					skip_compound_statement();
+				}
+				else
+				{
+					get_token(PREV);
+				}
+			}
+			else
+			{
+				get_token(NEXT);
+				if (get_token(CURR)->type == lcELSE)
+				{
+					if ((token = get_token(NEXT))->type == lcLBRACKET)
+					{
+						compound_statement();
+						if ((token = get_token(CURR))->type != lcRBRACKET)
+						{
+							exptected_func("RBRACKET");
+						}
+					}
+					else
+					{
+						statement();
+					}
+				}
+			}
+*/

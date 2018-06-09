@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
+    <Filter Include="Test Files">
+      <UniqueIdentifier>{b393c0bb-5480-4281-8f30-407fc6772723}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\parse_expr\interpreter.c">
@@ -29,9 +32,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="../parse_expr/test.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="..\parse_expr\include\common.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
@@ -44,5 +44,13 @@
     <ClInclude Include="..\parse_expr\include\lexer.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\test\break">
+      <Filter>Test Files</Filter>
+    </None>
+    <None Include="..\test\while">
+      <Filter>Test Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
