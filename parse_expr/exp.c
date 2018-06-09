@@ -119,7 +119,7 @@ int primary_expression()
 		{
 			printf("Error, expected ')'\n");
 			getchar();
-			exit(-1);
+			//exit(-1);
 		}
 		break;
 	}

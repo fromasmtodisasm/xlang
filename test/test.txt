@@ -1,0 +1,62 @@
+/*
+{
+	a = 7;
+	if (a >= 7)
+		print "yes";
+}
+
+{
+	print "first";
+	{
+		print "SECOND";
+		{
+			print "third";
+			print 1;
+		}
+		{
+			var1=10;
+			var2=2;
+			print var1" "var2;
+			if (var1 != var2)
+			{
+				print var1" not equal "var2;
+				print "Recursion this is good!";
+				if (1==1)
+				{
+					if (2==2)
+					{
+						if (3==3) {
+							if (4==4)
+							{
+								print "Oh my GOD!"
+										
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+{
+	print "test"
+}
+{
+	print "END"
+}
+*/
+
+{
+	if (1!=1)
+	{
+		print "Condition is true";
+	}
+	else if (3==3)
+	{
+		print "Second condition is true";
+	}
+	else
+	{
+		print "Condition is false";
+	}
+}
