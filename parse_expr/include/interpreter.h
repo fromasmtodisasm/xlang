@@ -3,8 +3,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif 
-	int do_if();
-	// __cplusplus
+// __cplusplus
+
+int do_if();
 int expr(char ** buffer);
 
 #ifdef __cplusplus

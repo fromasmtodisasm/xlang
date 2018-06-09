@@ -7,15 +7,33 @@
 
 extern char *token_to_string[];
 void skip_compound_statement();
+void skip_statement();
+void eat_tokens(token_type skip_to);
+
 void exptected_func(char *exptected)
 {
 	printf("Error. Expected %s\n", exptected);
 }
 
-void eat_tokens()
+int skip_if()
+{
+	eat_tokens(lcRBRACE);
+	if (get_token(NEXT)->type == lcLBRACKET)
+	{
+		skip_compound_statement();
+	}
+	else
+	{
+		skip_statement();
+	}
+}
+
+void eat_tokens(token_type skip_to)
 {
 	token_type type = lcEND;
-	while (((type = get_token(NEXT)->type) != lcSEMI) && type != lcEND );
+	if (get_token(CURR)->type == skip_to)
+		return;
+	while (((type = get_token(NEXT)->type) != skip_to) && type != lcEND );
 }
 void skip_statement()
 {
@@ -37,10 +55,15 @@ void skip_statement()
 			}*/
 		}
 		break;
+		case lcIF:
+		{
+			skip_if();
+		}
+		break;
 		case lcRBRACKET:
 			return;
 		default:
-			eat_tokens();
+			eat_tokens(lcSEMI);
 			if (get_token(CURR)->type == lcSEMI)
 				break;
 			else
@@ -85,7 +108,6 @@ int do_if()
 		{
 			if ((token = get_token(NEXT))->type == lcLBRACKET)
 			{
-				
 				if (!condition)
 				{
 					get_token(NEXT);
@@ -105,8 +127,6 @@ int do_if()
 						{
 							statement();
 						}
-						
-						
 					}
 				}
 				else
@@ -120,7 +140,7 @@ int do_if()
 					if (get_token(NEXT)->type == lcELSE)
 					{
 						get_token(NEXT);
-						skip_compound_statement();
+						skip_statement();
 					}
 					else
 					{
@@ -154,7 +174,6 @@ int do_if()
 						if ((token = get_token(CURR))->type != lcRBRACKET)
 						{
 							exptected_func("RBRACKET");
-							//exit(-1);
 						}
 					}
 					else
@@ -165,6 +184,47 @@ int do_if()
 			}
 		}
 	}
+}
+
+int do_while()
+{
+	token_t *token = get_token(NEXT);
+	int condition = 0;
+	
+	if (token->type == lcLBRACE)
+	{
+		char *pos_begin = get_pos();
+		char* pos_end = pos_begin;
+		
+		while (get_token(NEXT), condition = assignment_expression())
+		{	
+			if ((token = get_token(CURR))->type == lcRBRACE)
+			{
+				if (get_token(NEXT)->type == lcLBRACKET)
+				{
+					compound_statement();
+					if ((token = get_token(CURR))->type != lcRBRACKET)
+					{
+						exptected_func("RBRACKET");
+						//exit(-1);
+					}
+				}
+				else
+				{
+					statement();
+				}
+				pos_end = get_pos();
+				set_pos(pos_begin);
+				get_token(NEXT);
+			}
+		}
+		set_pos(pos_end);
+		get_token(NEXT);
+		skip_compound_statement();
+	}
+
+	get_token(NEXT);
+	return 0;
 }
 
 
@@ -183,82 +243,6 @@ int func_decl()
 		}
 	}
 	return 0;
-}
-
-int interpreter()
-{
-	int res = 0;
-	int expr_len;
-	token_t *token;
-	int retval = 0;
-
-	while ((token = get_token(NEXT))->type != lcEND)
-	{
-		/*
-		if (token->type == lcINT || token->type == lcCHAR)
-		{
-		token = get_token(NEXT);
-		if (token->type == lcIDENT)
-		{
-
-		}
-		}
-		else
-		*/
-		if (token->type == lcIF)
-		{
-			do_if();
-		}
-		else if (token->type == lcBREAK)
-		{
-			token = get_token(NEXT);
-			puts("break point");
-			getchar();
-		}
-		else if (token->type == lcFUNCTION)
-		{
-			if ((token = get_token(NEXT))->type == lcIDENT)
-			{
-				func_decl();
-			}
-			else
-			{
-				exptected_func("IDENT");
-			}
-		}
-		else if (token->type == lcPRINT)
-		{
-			print();
-		}
-		else if (token->type == lcREAD)
-		{
-			read();
-		}
-		else if (token->type == lcABORT)
-		{
-			get_token(NEXT);
-			puts("This is abort!");
-			retval = -1;
-			//getchar();
-			goto abort;
-		}
-		else if (token->type == lcINTERPRETE)
-		{
-			interprete();
-		}
-		else
-		{
-			
-			res = assignment_expression();
-			if (/*get_token(CURR)->type != lcSEMI*/0)
-			{
-				exptected_func("SEMI");
-				goto abort;
-			}
-		}
-	}
-abort:
-	return retval;
 }
 
 int expr(char **buffer)
@@ -352,11 +336,6 @@ int statement()
 	int retval = 0;
 	int stop = 0;
 
-	//if ((token = get_token(NEXT))->type == lcIF)
-	//{
-	//	do_if();
-	//}
-
 	while (!stop)
 	{
 		switch (get_token(CURR)->type)
@@ -364,7 +343,11 @@ int statement()
 		case lcIF:
 		{
 			do_if();
-			return res;
+		}
+		break;
+		case lcWHILE:
+		{
+			do_while();
 		}
 		break;
 		case lcLBRACKET:
@@ -406,7 +389,6 @@ int statement()
 			{
 				get_token(NEXT);
 			}
-
 		}
 		break;
 		case lcREAD:
@@ -420,7 +402,6 @@ int statement()
 			get_token(NEXT);
 			puts("This is abort!");
 			retval = -1;
-			//getchar();
 			goto abort;
 		}
 		break;

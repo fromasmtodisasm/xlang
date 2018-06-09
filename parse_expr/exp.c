@@ -9,8 +9,6 @@
 
 variable *vars;
 
-
-
 int make_builtin_vars()
 {
 	vars = malloc(sizeof(variable));
@@ -208,6 +206,7 @@ int is_relop(token_type type)
 			lcLE_OP == type ||
 			lcGE_OP == type ||
 			lcEQ_OP == type ||
+			lcL_OP == type ||
 			lcNE_OP == type
 		);
 }

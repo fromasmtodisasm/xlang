@@ -87,6 +87,11 @@ token_type is_keyword(char *name)
 	}
 	return type;
 }
+
+void tokenize()
+{
+	
+}
 int lexerInit(char *src)
 {
 	token[0] = (token_t*)malloc(sizeof(token_t));
@@ -125,6 +130,7 @@ char *get_pos()
 void set_pos(char *pos)
 {
 	curr_context->curr_token.pos = pos;
+	curr_context->pos = pos;
 }
 
 token_t* get_token(token_direct direction)
@@ -442,7 +448,6 @@ token_t* get_token(token_direct direction)
 		CURTOK().pos = begin;
 		curr_context->pos = pos;
 	}
-	
 	//printf("\ncurr_tok = %s\n", token_to_string[CURTOK().type - BASE_INDEX]);
 	return &CURTOK();
 }
