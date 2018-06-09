@@ -28,6 +28,19 @@ int skip_if()
 	}
 }
 
+int skip_while()
+{
+	eat_tokens(lcRBRACE);
+	if (get_token(NEXT)->type == lcLBRACKET)
+	{
+		skip_compound_statement();
+	}
+	else
+	{
+		skip_statement();
+	}
+}
+
 void eat_tokens(token_type skip_to)
 {
 	token_type type = lcEND;
@@ -58,6 +71,11 @@ void skip_statement()
 		case lcIF:
 		{
 			skip_if();
+		}
+		break;
+		case lcWHILE:
+		{
+			skip_while();
 		}
 		break;
 		case lcRBRACKET:
@@ -108,9 +126,27 @@ int do_if()
 		{
 			if ((token = get_token(NEXT))->type == lcLBRACKET)
 			{
-				if (!condition)
+				if (condition)
 				{
-					get_token(NEXT);
+					compound_statement();
+					if ((token = get_token(CURR))->type != lcRBRACKET)
+					{
+						exptected_func("RBRACKET");
+						//exit(-1);
+					}
+					if (get_token(NEXT)->type == lcELSE)
+					{
+						get_token(NEXT);
+						skip_statement();
+					}
+					//else
+					//{
+					//	//get_token(PREV);
+					//}					
+				}
+				else
+				{
+					//get_token(NEXT);
 					skip_compound_statement();
 					if (get_token(NEXT)->type == lcELSE)
 					{
@@ -127,24 +163,6 @@ int do_if()
 						{
 							statement();
 						}
-					}
-				}
-				else
-				{
-					compound_statement();
-					if ((token = get_token(CURR))->type != lcRBRACKET)
-					{
-						exptected_func("RBRACKET");
-						//exit(-1);
-					}
-					if (get_token(NEXT)->type == lcELSE)
-					{
-						get_token(NEXT);
-						skip_statement();
-					}
-					else
-					{
-						get_token(PREV);
 					}
 				}
 			}
@@ -220,7 +238,6 @@ int do_while()
 		}
 		set_pos(pos_end);
 		get_token(NEXT);
-		skip_compound_statement();
 	}
 
 	get_token(NEXT);

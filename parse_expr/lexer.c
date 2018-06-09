@@ -430,6 +430,18 @@ token_t* get_token(token_direct direction)
 				}
 				break;
 			}
+			case '&':
+			{
+				if (pos[1] == '&')
+				{
+					type = lcAND_OP;
+					pos++;
+				}
+				else
+				{
+					type = lcUNKNOWN;
+				}
+			}
 			}
 			if (type != lcEND)
 				pos++;
