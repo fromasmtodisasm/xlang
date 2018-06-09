@@ -36,10 +36,14 @@ typedef enum token_type
 	lcN_OP,
 	lcL_OP,
 
+	lcGOTO,
+	lcCONTINUE,
+	lcBREAK,
+	lcRETURN,
 
 	lcLBRACE,
 	lcRBRACE,
-	lcBREAK,
+	
 	lcIF,
 	lcELSE,
 	lcFOR,
@@ -47,7 +51,7 @@ typedef enum token_type
 	lcWHILE,
 	lcCHAR,
 	lcINT,
-	lcRETURN,
+	
 	lcLBRACKET,
 	lcRBRACKET,
 	lcABORT,
@@ -67,6 +71,7 @@ typedef enum token_category {
 	catOPERATOR,
 	catDELIM
 }token_category;
+
 typedef struct token_t
 {
 	token_type type;

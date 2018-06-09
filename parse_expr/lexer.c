@@ -30,11 +30,21 @@ struct commands { /* таблица зарезервированных слов */
 	"print", lcPRINT,
 	"read", lcREAD,
 	"break", lcBREAK,
+	"goto", lcGOTO,
+	"continue", lcCONTINUE,
 	"begin", lcBEGINBLOCK,
 	"function", lcFUNCTION,
 	"interprete", lcINTERPRETE,
 	"end", lcENDBLOCK,
 	"", lcEND  /* конец таблицы */
+};
+
+int jump_statement[] =
+{
+	lcGOTO,
+	lcCONTINUE,
+	lcBREAK,
+	lcRETURN,
 };
 
 char *token_to_string[] =
@@ -160,6 +170,19 @@ token_t* get_token(token_direct direction)
 			pos++;
 		}
 		begin = pos;
+		while (*pos == '#')
+		{
+			pos++;
+			while (*pos)
+			{
+				if (*pos == '\n')
+				{
+					type = lcCOMMENT;
+					break;
+				}
+				pos++;
+			}
+		}
 		while (*pos == '/' && (*(pos + 1) == '/' || *(pos + 1) == '*'))
 		{
 			if (*(pos + 1) == '/')

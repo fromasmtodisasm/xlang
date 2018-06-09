@@ -205,6 +205,7 @@ int is_relop(token_type type)
 			lcOR_OP == type ||
 			lcLE_OP == type ||
 			lcGE_OP == type ||
+			lcG_OP == type ||
 			lcEQ_OP == type ||
 			lcL_OP == type ||
 			lcNE_OP == type
