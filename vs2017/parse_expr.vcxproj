@@ -98,8 +98,8 @@
     <Text Include="../parse_expr/test.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\parse_expr\common.h" />
-    <ClInclude Include="..\parse_expr\exp.h" />
+    <ClInclude Include="..\parse_expr\include\common.h" />
+    <ClInclude Include="..\parse_expr\include\exp.h" />
     <ClInclude Include="..\parse_expr\include\interpreter.h" />
     <ClInclude Include="..\parse_expr\include\lexer.h" />
   </ItemGroup>
