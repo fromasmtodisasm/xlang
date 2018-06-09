@@ -18,30 +18,30 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\parse_expr\interpreter.c">
+    <ClCompile Include="..\src\interpreter.c">
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
-    <ClCompile Include="..\parse_expr\lexer.c">
+    <ClCompile Include="..\src\lexer.c">
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
-    <ClCompile Include="..\parse_expr\exp.c">
+    <ClCompile Include="..\src\exp.c">
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
-    <ClCompile Include="..\parse_expr\main.c">
+    <ClCompile Include="..\src\main.c">
       <Filter>Файлы исходного кода</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\parse_expr\include\common.h">
+    <ClInclude Include="..\src\include\common.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
-    <ClInclude Include="..\parse_expr\include\exp.h">
+    <ClInclude Include="..\src\include\exp.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
-    <ClInclude Include="..\parse_expr\include\interpreter.h">
+    <ClInclude Include="..\src\include\interpreter.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
-    <ClInclude Include="..\parse_expr\include\lexer.h">
+    <ClInclude Include="..\src\include\lexer.h">
       <Filter>Заголовочные файлы</Filter>
     </ClInclude>
   </ItemGroup>

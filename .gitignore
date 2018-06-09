@@ -8,3 +8,5 @@ vs2017/Backup/*
 *.htm
 vs2017/enc_temp_folder/*
 vs2008/Debug/*
+.vs/*
+*.bak

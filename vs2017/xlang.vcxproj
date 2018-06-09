@@ -12,9 +12,10 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2EA60FA5-D3F2-4235-9D1E-857157121527}</ProjectGuid>
-    <RootNamespace>parse_expr</RootNamespace>
+    <RootNamespace>xlang</RootNamespace>
     <Keyword>Win32Proj</Keyword>
     <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <ProjectName>xlang</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -61,7 +62,7 @@
       <PrecompiledHeader />
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\parse_expr\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\src\include\</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -89,16 +90,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\parse_expr\main.c" />
-    <ClCompile Include="..\parse_expr\exp.c" />
-    <ClCompile Include="..\parse_expr\interpreter.c" />
-    <ClCompile Include="..\parse_expr\lexer.c" />
+    <ClCompile Include="..\src\main.c" />
+    <ClCompile Include="..\src\exp.c" />
+    <ClCompile Include="..\src\interpreter.c" />
+    <ClCompile Include="..\src\lexer.c" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\parse_expr\include\common.h" />
-    <ClInclude Include="..\parse_expr\include\exp.h" />
-    <ClInclude Include="..\parse_expr\include\interpreter.h" />
-    <ClInclude Include="..\parse_expr\include\lexer.h" />
+    <ClInclude Include="..\src\include\common.h" />
+    <ClInclude Include="..\src\include\exp.h" />
+    <ClInclude Include="..\src\include\interpreter.h" />
+    <ClInclude Include="..\src\include\lexer.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\test\break" />
