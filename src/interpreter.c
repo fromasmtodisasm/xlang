@@ -170,8 +170,9 @@ int do_while()
 				get_token(NEXT);
 			}
 		}
-		set_pos(pos_end);
 		get_token(NEXT);
+		skip_statement();
+		return 0;
 	}
 
 	get_token(NEXT);
