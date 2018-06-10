@@ -1,0 +1,36 @@
+#!/usr/bin/xlang
+int main()
+{
+	j=1;
+	print "This main definition!";
+	while (j < 10)
+	{
+		print j;
+		j+=1;
+		if (j>5)
+		{
+			print "before continue";
+			continue;
+			print "after continue";
+		}
+		
+	}
+}
+
+int fucntion2(int a, int b, int c)
+{
+	j=1;
+	print "This fucntion2 definition!";
+	while (j < 10)
+	{
+		print j;
+		j+=1;
+		if (j>5)
+		{
+			print "before continue";
+			continue;
+			print "after continue";
+		}
+		
+	}
+}
