@@ -8,7 +8,7 @@
 extern char *token_to_string[];
 void skip_compound_statement();
 void skip_statement();
-void eat_tokens(token_type skip_to);
+token_type eat_tokens(token_type skip_to);
 
 void exptected_func(char *exptected)
 {
@@ -17,36 +17,29 @@ void exptected_func(char *exptected)
 
 void skip_if()
 {
-	eat_tokens(lcRBRACE);
-	if (get_token(NEXT)->type == lcLBRACKET)
+	if (eat_tokens(lcRBRACE) == lcRBRACE)
 	{
-		skip_compound_statement();
-	}
-	else
-	{
+		get_token(NEXT);
 		skip_statement();
 	}
 }
 
 void skip_while()
 {
-eat_tokens(lcRBRACE);
-if (get_token(NEXT)->type == lcLBRACKET)
-{
-	skip_compound_statement();
-}
-else
-{
-	skip_statement();
-}
+	if (eat_tokens(lcRBRACE) == lcRBRACE)
+	{
+		get_token(NEXT);
+		skip_statement();
+	}
 }
 
-void eat_tokens(token_type skip_to)
+token_type eat_tokens(token_type skip_to)
 {
 	token_type type = lcEND;
 	if (get_token(CURR)->type == skip_to)
 		return;
 	while (((type = get_token(NEXT)->type) != skip_to) && type != lcEND);
+	return type;
 }
 void skip_statement()
 {
@@ -82,8 +75,7 @@ void skip_statement()
 		case lcRBRACKET:
 			return;
 		default:
-			eat_tokens(lcSEMI);
-			if (get_token(CURR)->type == lcSEMI)
+			if (eat_tokens(lcSEMI) == lcSEMI)
 				break;
 			else
 				return;
@@ -190,7 +182,6 @@ int do_while()
 		}
 		get_token(NEXT);
 		skip_statement();
-		return out;
 	}
 
 	get_token(NEXT);
