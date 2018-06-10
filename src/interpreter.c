@@ -144,7 +144,7 @@ way_out do_if()
 			}
 		}
 	}
-	get_token(NEXT);
+	/*get_token(NEXT);*/
 	return out;
 }
 
