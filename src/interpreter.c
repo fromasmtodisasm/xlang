@@ -15,7 +15,7 @@ void exptected_func(char *exptected)
 	printf("Error. Expected %s\n", exptected);
 }
 
-int skip_if()
+void skip_if()
 {
 	eat_tokens(lcRBRACE);
 	if (get_token(NEXT)->type == lcLBRACKET)
@@ -28,17 +28,17 @@ int skip_if()
 	}
 }
 
-int skip_while()
+void skip_while()
 {
-	eat_tokens(lcRBRACE);
-	if (get_token(NEXT)->type == lcLBRACKET)
-	{
-		skip_compound_statement();
-	}
-	else
-	{
-		skip_statement();
-	}
+eat_tokens(lcRBRACE);
+if (get_token(NEXT)->type == lcLBRACKET)
+{
+	skip_compound_statement();
+}
+else
+{
+	skip_statement();
+}
 }
 
 void eat_tokens(token_type skip_to)
@@ -46,7 +46,7 @@ void eat_tokens(token_type skip_to)
 	token_type type = lcEND;
 	if (get_token(CURR)->type == skip_to)
 		return;
-	while (((type = get_token(NEXT)->type) != skip_to) && type != lcEND );
+	while (((type = get_token(NEXT)->type) != skip_to) && type != lcEND);
 }
 void skip_statement()
 {
@@ -115,10 +115,11 @@ void skip_compound_statement()
 	}
 }
 
-int do_if()
+way_out do_if()
 {
 	token_t *token = get_token(NEXT);
 	int condition = 0;
+	way_out out = NORMAL;
 	if (token->type == lcLBRACE)
 	{
 		get_token(NEXT);
@@ -128,7 +129,11 @@ int do_if()
 			if (condition)
 			{
 				get_token(NEXT);
-				statement();
+				if ((out = statement(SELECTION)) == CONTINUE || out == BREAK)
+				{
+					//get_token(PREV);
+				}
+				else
 				if (get_token(NEXT)->type == lcELSE)
 				{
 					get_token(NEXT);
@@ -142,17 +147,19 @@ int do_if()
 				if (get_token(NEXT)->type == lcELSE)
 				{
 					get_token(NEXT);
-					statement();
+					out = statement(SELECTION);
 				}
 			}
 		}
 	}
+	return out;
 }
 
 int do_while()
 {
 	token_t *token = get_token(NEXT);
 	int condition = 0;
+	way_out out = NORMAL;
 	
 	if (token->type == lcLBRACE)
 	{
@@ -164,19 +171,30 @@ int do_while()
 			if ((token = get_token(CURR))->type == lcRBRACE)
 			{
 				get_token(NEXT);
-				statement();
-				pos_end = get_pos();
-				set_pos(pos_begin);
-				get_token(NEXT);
+				if ((out = statement(ITERATION)) == BREAK)
+				{
+					break;
+				}
+				else if (out == CONTINUE || out == NORMAL)
+				{
+					pos_end = get_pos();
+					set_pos(pos_begin);
+					get_token(NEXT);
+					continue;
+				}
+				else if (out == RETURN)
+				{
+					return RETURN;
+				}
 			}
 		}
 		get_token(NEXT);
 		skip_statement();
-		return 0;
+		return out;
 	}
 
 	get_token(NEXT);
-	return 0;
+	return out;
 }
 
 
@@ -208,7 +226,7 @@ int expr(char **buffer)
 		do
 		{
 			get_token(NEXT);
-			retval = compound_statement();
+			retval = compound_statement(COMPOUND);
 		} while (get_token(NEXT)->type != lcEND);	
 	}
 
@@ -280,12 +298,12 @@ int interprete()
 	return 0;
 }
 
-int statement()
+way_out statement(compound_origin origin)
 {
 	int res = 0;
 	int expr_len;
 	token_t *token;
-	int retval = 0;
+	way_out out = NORMAL;
 	int stop = 0;
 
 	while (!stop)
@@ -294,7 +312,8 @@ int statement()
 		{
 		case lcIF:
 		{
-			do_if();
+			if ((out = do_if()) == CONTINUE || out == BREAK)
+				return out;
 		}
 		break;
 		case lcWHILE:
@@ -307,6 +326,8 @@ int statement()
 			if (get_token(NEXT)->type == lcSEMI)
 			{
 				get_token(NEXT);
+				skip_statement();
+				return BREAK;				
 			}
 			else
 			{
@@ -319,6 +340,8 @@ int statement()
 			if (get_token(NEXT)->type == lcSEMI)
 			{
 				get_token(NEXT);
+				skip_statement();
+				return CONTINUE;
 			}
 			else
 			{
@@ -328,15 +351,12 @@ int statement()
 		break;
 		case lcLBRACKET:
 		{
-			res = compound_statement();
+			out = compound_statement(origin);
 			if (get_token(CURR)->type != lcRBRACKET)
 			{
 				printf("error: expected }\n");
 			}
-			/*else
-			{
-				
-			}*/
+			return out;
 		}
 		break;
 		case lcFUNCTION:
@@ -370,7 +390,7 @@ int statement()
 		{
 			get_token(NEXT);
 			puts("This is abort!");
-			retval = -1;
+			out = -1;
 			goto abort;
 		}
 		break;
@@ -398,12 +418,12 @@ int statement()
 	}
 
 abort:
-	return retval;
+	return out;
 
 }
-int compound_statement()
+way_out compound_statement(compound_origin origin)
 {
-	int res = 0;
+	way_out out = NORMAL;
 	int expr_len;
 	token_t *token;
 	int retval = 0;
@@ -417,7 +437,7 @@ int compound_statement()
 		if (get_token(PREV)->type == lcLBRACKET)
 		{
 			get_token(NEXT);
-			res = statement();
+			out = statement(origin);
 			if (get_token(CURR)->type == lcRBRACKET)
 			{
 
@@ -430,5 +450,5 @@ int compound_statement()
 		
 		
 	}
-	return res;
+	return out;
 }

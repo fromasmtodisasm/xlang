@@ -1,0 +1,18 @@
+#!/usr/bin/xlang
+{
+	j=1;
+	print "This is while operator!";
+	while (j < 10)
+	{
+		print j;
+		j+=1;
+		if (j>5)
+		{
+			print "before continue";
+			continue;
+			print "after continue";
+		}
+		
+	}
+}
+
