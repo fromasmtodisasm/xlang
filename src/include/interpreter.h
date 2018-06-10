@@ -20,8 +20,8 @@ typedef enum way_out
 	RETURN
 }way_out;
 
+int start(char ** buffer);
 way_out do_if();
-int expr(char ** buffer);
 way_out statement(compound_origin origin);
 way_out compound_statement(compound_origin origin);
 

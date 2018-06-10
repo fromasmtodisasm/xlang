@@ -8,6 +8,9 @@
 extern char *token_to_string[];
 void skip_compound_statement();
 void skip_statement();
+int function_definition();
+int declaration_list();
+
 token_type eat_tokens(token_type skip_to);
 
 void exptected_func(char *exptected)
@@ -36,8 +39,8 @@ void skip_while()
 token_type eat_tokens(token_type skip_to)
 {
 	token_type type = lcEND;
-	if (get_token(CURR)->type == skip_to)
-		return;
+	if ((type = get_token(CURR)->type) == skip_to)
+		return type;
 	while (((type = get_token(NEXT)->type) != skip_to) && type != lcEND);
 	return type;
 }
@@ -89,7 +92,7 @@ void skip_compound_statement()
 {
 	int bracket_lvl = 0;
 	int res = 0;
-	if (!(get_token(CURR)->type == lcLBRACKET && get_token(NEXT)->type == lcRBRACKET) && (get_token(CURR) != lcEND))
+	if (!(get_token(CURR)->type == lcLBRACKET && get_token(NEXT)->type == lcRBRACKET) && (get_token(CURR)->type != lcEND))
 	{
 		if (get_token(PREV)->type == lcLBRACKET)
 		{
@@ -207,13 +210,13 @@ int func_decl()
 	return 0;
 }
 
-int expr(char **buffer)
+int start(char **buffer)
 {
 	int retval = 0;
 
-	parser_init();
+	exp_parser_init();
 
-	if ((lexerInit(*buffer)) != NULL)
+	if ((lexerInit(*buffer)) != 0)
 	{
 		do
 		{
@@ -309,7 +312,7 @@ int interprete()
 {
 	if (get_token(NEXT)->type == lcSTRING)
 	{
-		expr(&(get_token(CURR)->text));
+		start((char**)&(get_token(CURR)->text));
 	}
 	get_token(NEXT);
 	return 0;

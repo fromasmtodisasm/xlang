@@ -92,6 +92,7 @@ typedef struct context
 token_type is_keyword(char *name);
 int lexerInit(char *src);
 char * get_pos();
+void set_pos(char* pos);
 
 token_t* get_token(token_direct direction);
 /*

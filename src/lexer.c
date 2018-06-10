@@ -2,6 +2,7 @@
 #include "common.h"
 #include <ctype.h>
 #include <string.h>
+#include <malloc.h>
 
 /******** Static variables *********/
 #define CURTOK() (curr_context->curr_token)
@@ -476,7 +477,7 @@ token_t* get_token(token_direct direction)
 			if (type != lcEND)
 				pos++;
 		}
-		else if (*pos == NULL)
+		else if (*pos == '\0')
 		{
 			type = lcEND;
 		}

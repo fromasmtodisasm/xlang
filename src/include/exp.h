@@ -33,3 +33,4 @@ int multiplicative_expression();
 
 int additive_expression();
 
+int exp_parser_init();

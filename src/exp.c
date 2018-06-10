@@ -26,7 +26,7 @@ int make_builtin_vars()
 	true.next = &false;
 }
 
-int parser_init()
+int exp_parser_init()
 {
 	make_builtin_vars();
 }
@@ -95,12 +95,12 @@ int primary_expression()
 
 	case lcNUMBER:
 	{
-		res = token->text;
+		res = (int)token->text;
 		break;
 	}
 	case lcIDENT:
 	{
-		if ((lookup(token->text, &res)) == NULL)
+		if ((lookup(token->text, &res)) == 0)
 		{
 			printf("Error, undefined variable <%s>\n", token->text);
 

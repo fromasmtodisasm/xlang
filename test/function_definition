@@ -10,10 +10,12 @@ int main()
 		j+=1;
 		if (j>5)
 		{
+			break;
 			print "before continue";
 			continue;
 			print "after continue";
 		}
+		print "After break";
 	}
 	print "after while";
 	print""; print"";

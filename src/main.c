@@ -98,7 +98,7 @@ int main(int argc, char **argv)
 		{
 			if (buffer = loadProgram(argv[cur_file]))
 			{
-				expr(&buffer);
+				start(&buffer);
 			}
 			
 		}
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 		usage(basename(argv[0]));
 		while (fgets(buffer, buffer_size, stdin) != NULL)
 		{
-			if (expr(&buffer) == -1)
+			if (start(&buffer) == -1)
 				break;
 		}
 	}
