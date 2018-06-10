@@ -1,6 +1,6 @@
 #!/usr/bin/xlang
 
-int main(int b)
+int main()
 {
 	j=1;
 	print "This main definition!";
