@@ -1,4 +1,5 @@
 #!/usr/bin/xlang.exe
+int test_while()
 {
 	print "Check while statement...";
 

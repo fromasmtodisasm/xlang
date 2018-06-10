@@ -1,4 +1,5 @@
 #!/usr/bin/xlang
+int test_break()
 {
 	j=1;
 	print "This is while operator!";
