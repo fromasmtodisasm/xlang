@@ -6,6 +6,10 @@
 #include "exp.h"
 #include "interpreter.h"
 
+#if !defined _MSC_VER
+	#define getline mygetline
+#endif
+
 int getline(FILE *fp)
 {
 	int ch = EOF;
