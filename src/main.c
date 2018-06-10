@@ -114,6 +114,5 @@ int main(int argc, char **argv)
 				break;
 		}
 	}
-	getchar();
 	return 0;
 }
