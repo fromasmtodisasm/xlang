@@ -304,6 +304,11 @@ token_t* get_token(token_direct direction)
 			value = (void*)val;
 			type = lcNUMBER;
 		}
+		else if (*pos == ',')
+		{
+			type = lcCOMMA;
+			pos++;
+		}
 		else if (*pos == ';')
 		{
 			type = lcSEMI;

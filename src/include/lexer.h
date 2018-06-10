@@ -22,6 +22,8 @@ typedef enum token_type
 	lcMUL_ASSIGN,
 	lcDIV_ASSIGN,
 
+	lcCOMMA,
+
 	lcINC_OP,
 	lcDEC_OP,
 	lcPTR_OP,

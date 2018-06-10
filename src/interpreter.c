@@ -226,7 +226,7 @@ int expr(char **buffer)
 		do
 		{
 			get_token(NEXT);
-			retval = compound_statement(COMPOUND);
+			retval = function_definition();
 		} while (get_token(NEXT)->type != lcEND);	
 	}
 
@@ -271,6 +271,31 @@ int print()
 	} while ((token = get_token(CURR))->type == lcSTRING || token->type == lcIDENT);
 	puts("");
 }
+
+int my_printf()
+{
+	token_t *token = get_token(NEXT);
+	int stop = 0;
+	
+	do
+	{
+		char *number = "%d";
+		char *string = "%s";
+		char *curtype;
+		int expr_val = 0;
+		if (token->type == lcSTRING) {
+			printf("%s", token->text);
+			token = get_token(NEXT);
+		}
+		else {
+			curtype = number;
+			expr_val = assignment_expression();
+			printf("%d", expr_val);
+		}
+	} while ((token = get_token(CURR))->type == lcSTRING || token->type == lcIDENT);
+	puts("");
+}
+
 
 int read()
 {
@@ -451,4 +476,54 @@ way_out compound_statement(compound_origin origin)
 		
 	}
 	return out;
+}
+
+int function_definition()
+{
+	way_out out;
+	if (get_token(CURR)->type == lcINT && get_token(NEXT)->type == lcIDENT)
+	{
+		get_token(NEXT);
+		declaration_list();
+		out = compound_statement(COMPOUND);
+	}
+
+	return 0;
+}
+
+int declaration_list()
+{
+	token_type type;
+	int retval = -1;
+	if (get_token(CURR)->type == lcLBRACE)
+	{
+		if ((type = get_token(NEXT)->type) == lcINT )
+		{
+			if (get_token(NEXT)->type == lcIDENT)
+			{
+				while (get_token(NEXT)->type == lcCOMMA && get_token(NEXT)->type == lcINT && get_token(NEXT)->type == lcIDENT);
+				if (get_token(CURR)->type != lcRBRACE)
+				{
+					exptected_func("RBRACE");
+				}
+				else
+				{
+					retval = 0;
+				}
+			}
+		}
+		else
+		{
+			if (get_token(CURR)->type != lcRBRACE)
+			{
+				exptected_func("RBRACE");
+			}
+			else
+			{
+				retval = 0;
+			}
+
+		}
+	}
+	get_token(NEXT);
 }
