@@ -105,9 +105,10 @@ int main(int argc, char **argv)
 	}
 	else
 	{
-		char *buffer = malloc(256);
+		int buffer_size = 1024;
+		char *buffer = malloc(buffer_size);
 		usage(basename(argv[0]));
-		while (fgets(buffer, 255, stdin) != NULL)
+		while (fgets(buffer, buffer_size, stdin) != NULL)
 		{
 			if (expr(&buffer) == -1)
 				break;
