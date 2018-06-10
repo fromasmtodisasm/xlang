@@ -178,6 +178,7 @@ token_t* get_token(token_direct direction)
 				if (*pos == '\n')
 				{
 					type = lcCOMMENT;
+					pos++;
 					break;
 				}
 				pos++;
@@ -193,6 +194,7 @@ token_t* get_token(token_direct direction)
 					if (*pos == '\n')
 					{
 						type = lcCOMMENT;
+						pos++;
 						break;
 					}
 					pos++;
@@ -212,14 +214,14 @@ token_t* get_token(token_direct direction)
 					pos++;
 				}
 			}
-			while (
-				*pos == ' ' ||
-				*pos == '\t' ||
-				*pos == '\n')pos++;
 			/*if (type == lcEND)
 				type = lcUNKNOWN;
 */
 		}
+		while (
+			*pos == ' ' ||
+			*pos == '\t' ||
+			*pos == '\n')pos++;
 		if (isalpha(*pos) || *pos == '_')
 		{
 			int len = 0;
