@@ -1,5 +1,6 @@
 #!/usr/bin/xlang
-int main()
+
+int main(int b)
 {
 	j=1;
 	print "This main definition!";
@@ -13,8 +14,9 @@ int main()
 			continue;
 			print "after continue";
 		}
-		
 	}
+	print "after while";
+	print""; print"";
 }
 
 int fucntion2(int a, int b, int c)

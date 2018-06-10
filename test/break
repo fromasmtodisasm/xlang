@@ -1,13 +1,4 @@
-{
-	if (1!=1)
-	{
-		print "Oh my god";
-	}
-	else
-	{
-		print "good logic";
-	}
-}
+#!/usr/bin/xlang
 {
 	j=1;
 	print "This is while operator!";
