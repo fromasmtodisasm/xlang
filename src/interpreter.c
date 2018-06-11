@@ -2,6 +2,7 @@
 #include "lexer.h"
 #include "exp.h"
 #include "common.h"
+#include "preprocessor.h"
 
 #include <stdio.h>
 
@@ -218,11 +219,10 @@ int start(char **buffer)
 
 	if ((lexerInit(*buffer)) != 0)
 	{
-		do
+		while (get_token(NEXT)->type != lcEND)
 		{
-			get_token(NEXT);
 			retval = function_definition();
-		} while (get_token(NEXT)->type != lcEND);	
+		} 	
 	}
 
 	return retval;
