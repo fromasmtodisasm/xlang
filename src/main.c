@@ -5,6 +5,8 @@
 
 #include "exp.h"
 #include "interpreter.h"
+#include "preprocessor.h"
+#include "fileutils.h"
 
 #if !defined _MSC_VER
 	#define getline mygetline
@@ -34,31 +36,9 @@ char *loadProgram(char *name)
 {
 	FILE *program;
 	char *source = NULL;
-	if ((program = fopen(name, "r")) != NULL)
+	if ((program = preprocess(name)) != NULL)
 	{
-		int len = 0;
-		int real_len = 0;
-		int lines = 0;
-		fseek(program, 0, SEEK_END);
-		fseek(program, 0, SEEK_SET);
-		while (1)
-		{
-			int cur_len = getline(program);
-			if (cur_len)
-			{
-				len += cur_len;
-				
-			}
-			else
-			{
-				break;
-			}
-		}
-		fseek(program, 0, SEEK_SET);
- 		source = (char*)malloc(len);
-		fread(source, 1, len, program);
-		source[len] = '\0';
-		fclose(program);
+		source = file2str(program);
 	}
 	return source;
 }
@@ -85,9 +65,9 @@ char *basename(char *path)
 
 int main(int argc, char **argv)
 {
-	char *buffer = "a=b;";
+	char *source = NULL;
 	char buf[255];
-	char *expression = buffer;
+	char *expression = source;
 	FILE *test;
 
 	if (argc > 1)
@@ -96,9 +76,9 @@ int main(int argc, char **argv)
 		int cur_file = 1;
 		for (; cur_file < argc; cur_file++)
 		{
-			if (buffer = loadProgram(argv[cur_file]))
+			if (source = loadProgram(argv[cur_file]))
 			{
-				start(&buffer);
+				start(&source);
 			}
 			
 		}
@@ -106,11 +86,11 @@ int main(int argc, char **argv)
 	else
 	{
 		int buffer_size = 1024;
-		char *buffer = malloc(buffer_size);
+		*source = malloc(buffer_size);
 		usage(basename(argv[0]));
-		while (fgets(buffer, buffer_size, stdin) != NULL)
+		while (fgets(source, buffer_size, stdin) != NULL)
 		{
-			if (start(&buffer) == -1)
+			if (start(&source) == -1)
 				break;
 		}
 	}
