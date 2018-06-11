@@ -3,6 +3,9 @@ SRC=main.c interpreter.c exp.c lexer.c
 OBJ=main.o interpreter.o exp.o lexer.o
 PROGRAM=xlang
 CC=/usr/bin/gcc
+INSTALL_DIR=/usr/bin/
+
+.PHONY: all install clean
 
 all:  $(PROGRAM)
 
@@ -16,3 +19,5 @@ $(OBJ): ./%.o : ./%.c
 
 clean:
 	rm -rf *.o
+install:
+	install $(PROGRAM) $(INSTALL_DIR)
