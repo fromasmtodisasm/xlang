@@ -35,6 +35,7 @@ struct commands { /* таблица зарезервированных слов */
 	"continue", lcCONTINUE,
 	"begin", lcBEGINBLOCK,
 	"function", lcFUNCTION,
+	"void",lcVOID,
 	"interprete", lcINTERPRETE,
 	"end", lcENDBLOCK,
 	"", lcEND  /* конец таблицы */

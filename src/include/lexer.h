@@ -64,6 +64,9 @@ typedef enum token_type
 	lcENDBLOCK,
 	lcFUNCTION,
 	lcINTERPRETE,
+
+	lcVOID,
+
 	lcUNKNOWN
 }token_type;
 typedef enum token_category {
