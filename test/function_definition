@@ -1,6 +1,6 @@
 #!/usr/bin/xlang
 
-int main()
+void main()
 {
 	j=1;
 	print "This main definition!";
@@ -21,7 +21,7 @@ int main()
 	print""; print"";
 }
 
-int fucntion2(int a, int b, int c)
+void fucntion2(int a, int b, int c)
 {
 	j=1;
 	print "This fucntion2 definition!";
