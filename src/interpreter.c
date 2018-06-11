@@ -473,10 +473,27 @@ way_out compound_statement(compound_origin origin)
 	return out;
 }
 
+int is_type(token_type type)
+{
+	int res = FALSE;
+	switch(type)
+	{
+		case lcINT:
+		case lcVOID:
+		case lcCHAR:
+			res = TRUE;
+			break;
+
+	}
+	return res;
+
+}
+
 int function_definition()
 {
 	way_out out;
-	if (get_token(CURR)->type == lcINT && get_token(NEXT)->type == lcIDENT)
+	token_type type = get_token(CURR)->type;
+	if (is_type(type) && get_token(NEXT)->type == lcIDENT)
 	{
 		get_token(NEXT);
 		declaration_list();
@@ -492,7 +509,7 @@ int declaration_list()
 	int retval = -1;
 	if (get_token(CURR)->type == lcLBRACE)
 	{
-		if ((type = get_token(NEXT)->type) == lcINT )
+		if (is_type(get_token(NEXT)->type))
 		{
 			if (get_token(NEXT)->type == lcIDENT)
 			{
