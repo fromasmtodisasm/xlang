@@ -88,7 +88,7 @@ int primary_expression()
 {
 	int res = 0;
 
-	token_t *token = get_token(CURR);
+	token_t *token = get_token()/*FIXME: change process getting <CURR_TOKEN>*/;
 	token_direct direct = NEXT;
 	switch (token->type)
 	{
@@ -110,9 +110,9 @@ int primary_expression()
 	}
 	case lcLBRACE:
 	{
-		token = get_token(NEXT);
+		token = get_token()/*FIXME: change process getting <NEXT_TOKEN>*/;
 		res = assignment_expression();
-		token = get_token(CURR);
+		token = get_token()/*FIXME: change process getting <CURR_TOKEN>*/;
 		if (token->type != lcRBRACE)
 		{
 			printf("Error, expected ')'\n");
@@ -137,20 +137,20 @@ int multiplicative_expression()
 	token_t *token;
 
 	res = primary_expression();
-	token = get_token(CURR);
+	token = get_token()/*FIXME: change process getting <CURR_TOKEN>*/;
 	while ( token->type == lcMUL || token->type == lcDIV)
 	{
 		switch (token->type)
 		{
 		case lcMUL:
 		{
-			token = get_token(NEXT);
+			token = get_token()/*FIXME: change process getting <NEXT_TOKEN>*/;
 			res *= primary_expression();
 			break;
 		}
 		case lcDIV:
 		{
-			token = get_token(NEXT);
+			token = get_token()/*FIXME: change process getting <NEXT_TOKEN>*/;
 			res /= primary_expression();
 			break;
 		}
@@ -158,7 +158,7 @@ int multiplicative_expression()
 			stop = 1;
 			break;
 		}
-		token = get_token(CURR);
+		token = get_token()/*FIXME: change process getting <CURR_TOKEN>*/;
 	}
 	return res;
 }
@@ -171,20 +171,20 @@ int additive_expression()
 	int stop = 0;
 	
 	res = multiplicative_expression();
-	token = get_token(CURR);
+	token = get_token()/*FIXME: change process getting <CURR_TOKEN>*/;
 	while (token->type == lcPLUS || token->type == lcMINUS)
 	{
 		switch (token->type)
 		{
 		case lcPLUS:
 		{
-			token = get_token(NEXT);
+			token = get_token()/*FIXME: change process getting <NEXT_TOKEN>*/;
 			res += multiplicative_expression();
 			break;
 		}
 		case lcMINUS:
 		{
-			token = get_token(NEXT);
+			token = get_token()/*FIXME: change process getting <NEXT_TOKEN>*/;
 			res -= multiplicative_expression();
 			break;
 		}
@@ -192,7 +192,7 @@ int additive_expression()
 			stop = 1;
 			break;
 		}
-		token = get_token(CURR);
+		token = get_token()/*FIXME: change process getting <CURR_TOKEN>*/;
 	}
 	return res;
 }
@@ -214,16 +214,16 @@ int is_relop(token_type type)
 
 int conditional_expression()
 {
-	token_t *token = get_token(CURR);
+	token_t *token = get_token()/*FIXME: change process getting <CURR_TOKEN>*/;
 	int res = 0;
 	token_type type = token->type;
 	res = additive_expression();
 
-	type = (token = get_token(CURR))->type;
+	type = (token = get_token()/*FIXME: change process getting <CURR_TOKEN>*/)->type;
 	
 	while (is_relop(type))
 	{
-		token = get_token(NEXT);
+		token = get_token()/*FIXME: change process getting <NEXT_TOKEN>*/;
 		switch (type)
 		{	
 
@@ -256,7 +256,7 @@ int conditional_expression()
 		default:
 			break;
 		}
-		type = (token = get_token(CURR))->type;
+		type = (token = get_token()/*FIXME: change process getting <CURR_TOKEN>*/)->type;
 	}
 	return res;
 }
@@ -266,7 +266,7 @@ int assignment_expression()
 	char *name;
 	int tmp = 0;
 	int res = 0;
-	token_t *token = get_token(CURR);
+	token_t *token = get_token()/*FIXME: change process getting <CURR_TOKEN>*/;
 	name = (char*)token->text;
 	
 	if (token->type == lcSEMI)
@@ -276,12 +276,12 @@ int assignment_expression()
 		char *name;
 		int tmp = 0;
 		name = (char*)token->text;
-		token_type type = (token = get_token(NEXT))->type;
+		token_type type = (token = get_token()/*FIXME: change process getting <NEXT_TOKEN>*/)->type;
 		if (type == lcASSIGN || type == lcPLUS_ASSIGN ||
 			type == lcMINUS_ASSIGN || type == lcMUL_ASSIGN ||
 			type == lcDIV_ASSIGN)
 		{
-			get_token(NEXT);
+			get_token()/*FIXME: change process getting <NEXT_TOKEN>*/;
 			lookup(name, &tmp);
 			switch (type)
 			{
@@ -308,7 +308,7 @@ int assignment_expression()
 		}
 		else
 		{
-			token = get_token(PREV);			
+			token = get_token()/*FIXME: change process getting <PREV_TOKEN>*/;			
 		}
 	}
 	res = conditional_expression();
