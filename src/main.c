@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 	else
 	{
 		int buffer_size = 1024;
-		*source = malloc(buffer_size);
+		source = malloc(buffer_size);
 		usage(basename(argv[0]));
 		while (fgets(source, buffer_size, stdin) != NULL)
 		{
