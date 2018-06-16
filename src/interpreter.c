@@ -152,7 +152,7 @@ way_out do_if()
 	return out;
 }
 
-int do_while()
+way_out do_while();
 {
 	token_t *token = get_token(NEXT);
 	int condition = 0;
