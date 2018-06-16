@@ -90,16 +90,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\fileutils.c" />
     <ClCompile Include="..\src\main.c" />
     <ClCompile Include="..\src\exp.c" />
     <ClCompile Include="..\src\interpreter.c" />
     <ClCompile Include="..\src\lexer.c" />
+    <ClCompile Include="..\src\preprocessor.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\include\common.h" />
     <ClInclude Include="..\src\include\exp.h" />
     <ClInclude Include="..\src\include\interpreter.h" />
     <ClInclude Include="..\src\include\lexer.h" />
+    <ClInclude Include="..\src\include\preprocessor.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\test\break" />

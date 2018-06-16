@@ -1,0 +1,36 @@
+#!/usr/bin/xlang.exe
+#define true 10 
+#define SOME_TEXT "THIS IS SOME TEXT!!!"
+#include "test.h"
+
+int test_while()
+{
+	print "true == " true;
+	print "Check while statement...";
+
+	i = 1;
+	while(i < 10)
+	{
+		print "This is while operator!";
+		print "SOME_TEXT: " SOME_TEXT;
+		if ((i >= 5) && (i <=7))
+		{
+			print "(( " i " >= 5) && (" i " <=7))";
+			j=1;
+			while (j < 10)
+			{
+				print j;
+				if (j>5 == true)
+				{
+					print "true == " true;
+					break;
+					continue;
+				}
+				j+=1;
+			}
+		}
+		i+=1;
+	}
+	print "After while";
+	print "End check";
+}

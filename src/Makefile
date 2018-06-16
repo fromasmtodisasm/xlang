@@ -1,6 +1,6 @@
 INC=-I./include/
-SRC=main.c interpreter.c exp.c lexer.c
-OBJ=main.o interpreter.o exp.o lexer.o
+SRC=main.c interpreter.c exp.c lexer.c preprocessor.c fileutils.c
+OBJ=main.o interpreter.o exp.o lexer.o preprocessor.o fileutils.o
 PROGRAM=xlang
 CC=/usr/bin/gcc
 INSTALL_DIR=/usr/bin/
