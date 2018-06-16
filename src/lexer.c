@@ -288,6 +288,19 @@ token_t* get_token(token_direct direction)
 				else
 				{
 					radix = 8;
+					pos++;
+					while (*pos)
+					{
+						if (isdigit(*pos))
+						{
+							val = val * radix + (*pos - '0');
+							pos++;
+						}
+						else
+						{
+							break;
+						}
+					}
 				}
 			}
 			else
