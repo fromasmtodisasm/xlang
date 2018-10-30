@@ -11,3 +11,4 @@ vs2008/Debug/*
 .vs/*
 *.bak
 *.o
+build/*
