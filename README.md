@@ -5,7 +5,7 @@ Training interpreter for x language
 
 **Типы лексем**:
  
-1) Зарезервированные слова:
+1) Зарезервированные слова:  
 **var**,  
 **int**,  
 **float**,  
@@ -60,37 +60,37 @@ Ls – строковый литерал
 *program*  
 	:	{[*var_def*|*func_def*]}EOF  
 *var_def*  
-	:	“var” [“int”, ”float” ]  *identifier* {“,” *identifier*}  
+	:	'var' ['int', 'float' ]  *identifier* {',' *identifier*}  
 *func_def*  
-	:	[“void”, “int”, “float” ] *identifier* “(“ [ [“int”, “float”] *identifier* {“;” [“int”, “float”] *identifier* } ]? “)” [“;”| BL]  
+	:	['void', 'int', 'float' ] *identifier* '(' [ ['int', 'float'] *identifier* {';' ['int', 'float'] *identifier* } ]? ')' [';'| BL]  
 *BL*  
-	:	“begin” ST {“;” ST} “end”  
+	:	'begin' ST {';' ST} 'end'  
 *ST*  
 	:	[  
-    *identifier* “=” e | var_def |    
-    “if” e “then” ST [“else” ST]? |  
-    “while” e “do” ST |  
+    *identifier* '=' e | var_def |    
+    'if' e 'then' ST ['else' ST]? |  
+    'while' e 'do' ST |  
     BL |  
-   “return” e |  
-    “write” “(“  [e|Ls] {“,” [e|Ls] } “)”  |  
-    “read” *identifier* |  
-    “exit” e |  
-    *identifier* “(“ [ e {“,” e} ]? “)”  
+   'return' e |  
+    'write' '('  [e|Ls] {',' [e|Ls] } ')'  |  
+    'read' *identifier* |  
+    'exit' e |  
+    *identifier* '(' [ e {',' e} ]? ')'  
     ]  
 *e*  
-	:	e1 { “||” e1 }  
+	:	e1 { '||' e1 }  
 *e1*  
-	:	e2 { “&&” e2 }  
+	:	e2 { '&&' e2 }  
 *e2*  
-	:	e7 [ [“==”, ”!=”]  e7 ]?  
+	:	e7 [ ['==', '!=']  e7 ]?  
 *e7*  
-	:	e3 [  [“>”, ”>=”, ”<”, ”<=”] e3 ]?  
+	:	e3 [  ['>', '>=', '<', '<='] e3 ]?  
 *e3*  
-	:	e4 { [“+”, ”-”] e4}  
+	:	e4 { ['+', '-'] e4}  
 *e4*  
-	:	e5 { [“*”, ”/”, ”%”]  e5 }  
+	:	e5 { ['*', '/', '%']  e5 }  
 *e5*  
-	:	e6 [ “^” e6 ]?  
+	:	e6 [ '^' e6 ]?  
 *e6*  
 	:	L |  
     !e6 |  
@@ -98,7 +98,7 @@ Ls – строковый литерал
     +e6|  
     (e) |  
     *identifier* |  
-    *identifier* “(“ [ e {“,” e} ]? “)”
+    *identifier* '(' [ e {',' e} ]? ')'
 
 
 Сборка
