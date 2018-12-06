@@ -60,21 +60,21 @@ Ls – строковый литерал
 *program*  
 	:	{[*var_def*|*func_def*]}EOF  
 *var_def*  
-	:	'var' ['int', 'float' ]  *identifier* {',' *identifier*}  
+	:	**'var'** [**'int'**, **'float'** ]  *identifier* {',' *identifier*}  
 *func_def*  
-	:	['void', 'int', 'float' ] *identifier* '(' [ ['int', 'float'] *identifier* {';' ['int', 'float'] *identifier* } ]? ')' [';'| BL]  
-*BL*  
-	:	'begin' ST {';' ST} 'end'  
+	:	[**'void'**, **'int'**, **'float'** ] *identifier* '(' [ [**'int'**, **'float'**] *identifier* {';' [**'int'**, **'float'**] *identifier* } ]? ')' *statement*  
+*statement*  
+	:	**'begin'** ST {';' ST} **'end'**  
 *ST*  
 	:	[  
     *identifier* '=' e | var_def |    
-    'if' e 'then' ST ['else' ST]? |  
-    'while' e 'do' ST |  
-    BL |  
-   'return' e |  
-    'write' '('  [e|Ls] {',' [e|Ls] } ')'  |  
-    'read' *identifier* |  
-    'exit' e |  
+    **'if'** e **'then'** ST [**'else'** ST]? |  
+    **'while'** e **'do'** ST |  
+    statement |  
+   **'return'** e |  
+    **'write'** '('  [e|Ls] {',' [e|Ls] } ')'  |  
+    **'read'** *identifier* |  
+    **'exit'** e |  
     *identifier* '(' [ e {',' e} ]? ')'  
     ]  
 *e*  
