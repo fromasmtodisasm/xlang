@@ -43,34 +43,34 @@ I – идентификатор,
 L – численный литерал,
 Ls – строковый литерал
 ***
-Program -> {[VarDef|Func]}EOF
-VarDef -> “var” [“int”, ”float” ]  I {“,” I}
-Func -> [“void”, “int”, “float” ] I “(“ [ [“int”, “float”] I {“;” [“int”, “float”] I } ]? “)” [“;”| BL]
-BL -> “begin” ST {“;” ST} “end”
-ST -> [
-    I “=” E | VarDef |  
-    “if” E “then” ST [“else” ST]? |
-    “while” E “do” ST |
-    BL |
-    “return” E |
-    “write” “(“  [E|Ls] {“,” [E|Ls] } “)”  |
-    “read” I |
-    “exit” E |
-    I “(“ [ E {“,” E} ]? “)”
-    ]
-E -> E1 { “||” E1 }
-E1 -> E2 { “&&” E2 }
-E2  -> E7 [ [“==”, ”!=”]  E7 ]?
-E7 -> E3 [  [“>”, ”>=”, ”<”, ”<=”] E3 ]?
-E3 -> E4 { [“+”, ”-”] E4}
-E4 -> E5 { [“*”, ”/”, ”%”]  E5 }
-E5 -> E6 [ “^” E6 ]?
-E6 ->   “waserror” |
-    L |
-    !E6 |
-    -E6 |
-    +E6|
-    (E) |
-    I |
-    I “(“ [ E {“,” E} ]? “)”
+* Program -> {[VarDef|Func]}EOF
+* VarDef -> “var” [“int”, ”float” ]  I {“,” I}
+* Func -> [“void”, “int”, “float” ] I “(“ [ [“int”, “float”] I {“;” [“int”, “float”] I } ]? “)” [“;”| BL]
+* BL -> “begin” ST {“;” ST} “end”
+* ST -> [
+*    I “=” E | VarDef |  
+*    “if” E “then” ST [“else” ST]? |
+*    “while” E “do” ST |
+*    BL |
+*   “return” E |
+*    “write” “(“  [E|Ls] {“,” [E|Ls] } “)”  |
+*    “read” I |
+*    “exit” E |
+*    I “(“ [ E {“,” E} ]? “)”
+*    ]
+*E -> E1 { “||” E1 }
+*E1 -> E2 { “&&” E2 }
+*E2  -> E7 [ [“==”, ”!=”]  E7 ]?
+*E7 -> E3 [  [“>”, ”>=”, ”<”, ”<=”] E3 ]?
+*E3 -> E4 { [“+”, ”-”] E4}
+*E4 -> E5 { [“*”, ”/”, ”%”]  E5 }
+*E5 -> E6 [ “^” E6 ]?
+*E6 ->   “waserror” |
+*    L |
+*    !E6 |
+*    -E6 |
+*    +E6|
+*    (E) |
+*    I |
+*    I “(“ [ E {“,” E} ]? “)”
 ***
