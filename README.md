@@ -45,11 +45,11 @@ I – идентификатор,
 L – численный литерал,
 Ls – строковый литерал
 
- Program -> {[VarDef|Func]}EOF  
- VarDef -> “var” [“int”, ”float” ]  I {“,” I}  
- Func -> [“void”, “int”, “float” ] I “(“ [ [“int”, “float”] I {“;” [“int”, “float”] I } ]? “)” [“;”| BL]  
- BL -> “begin” ST {“;” ST} “end”  
- ST -> [  
+*program* -> {[VarDef|Func]}EOF  
+*var_def* -> “var” [“int”, ”float” ]  I {“,” I}  
+*func* -> [“void”, “int”, “float” ] I “(“ [ [“int”, “float”] I {“;” [“int”, “float”] I } ]? “)” [“;”| BL]  
+*BL* -> “begin” ST {“;” ST} “end”  
+*ST* -> [  
     I “=” E | VarDef |    
     “if” E “then” ST [“else” ST]? |  
     “while” E “do” ST |  
@@ -60,25 +60,25 @@ Ls – строковый литерал
     “exit” E |  
     I “(“ [ E {“,” E} ]? “)”  
     ]  
- E -> E1 { “||” E1 }  
- E1 -> E2 { “&&” E2 }  
- E2  -> E7 [ [“==”, ”!=”]  E7 ]?  
- E7 -> E3 [  [“>”, ”>=”, ”<”, ”<=”] E3 ]?  
- E3 -> E4 { [“+”, ”-”] E4}  
- E4 -> E5 { [“*”, ”/”, ”%”]  E5 }  
- E5 -> E6 [ “^” E6 ]?  
- E6 ->   “waserror” |  
+*e* -> e1 { “||” e1 }  
+*e1* -> e2 { “&&” e2 }  
+*e2*  -> e7 [ [“==”, ”!=”]  e7 ]?  
+*e7* -> e3 [  [“>”, ”>=”, ”<”, ”<=”] e3 ]?  
+*e3* -> e4 { [“+”, ”-”] e4}  
+*e4* -> e5 { [“*”, ”/”, ”%”]  e5 }  
+*e5* -> e6 [ “^” e6 ]?  
+*e6* ->   “waserror” |  
     L |  
-    !E6 |  
-    -E6 |  
-    +E6|  
-    (E) |  
+    !e6 |  
+    -e6 |  
+    +e6|  
+    (e) |  
     I |  
-    I “(“ [ E {“,” E} ]? “)”
+    I “(“ [ e {“,” e} ]? “)”
 
 
-Сборка:
------------------------------------
+Сборка
+------
 
 cd /path/to/xlang/
 cmake -T \<toolset-name\> -S \<path-to-source\> -B \<path-to-build\>  
