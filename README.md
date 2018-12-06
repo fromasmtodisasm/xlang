@@ -1,14 +1,14 @@
-This is training interpreter for x language
-
-GRAMMAR:
+Training interpreter for x language  
+===========================================
+Грамматика:
 -----------------------------------
 
-**Lexeme type**:
+**Типы лексем**:
  
-1) Keywords
+1) Зарезервированные слова
 var, int, float, void, begin, end, if, then, else, while, do, write, return, read, waserror, exit
 
-2) Identifier
+2) Идентификаторы
 Начинаются с буквы или “_”
 
 3) Операции почти как в плюсах:
@@ -25,9 +25,9 @@ var, int, float, void, begin, end, if, then, else, while, do, write, return, rea
 
 {} – комментарии.
 
-Переменные могут быть глобальными и локальными. Блок “begin”…”end” не 
-локализует переменные,описанные в нем. Локальные переменные
-скрывают глобальные.
+Переменные могут быть глобальными и локальными. Блок “begin”…”end” 
+не локализует переменные, описанные в нем. 
+Локальные переменные скрывают глобальные.
 
 Выполнение начинается с функции int main(…), она всегда должна присутствовать.
 
@@ -45,44 +45,44 @@ I – идентификатор,
 L – численный литерал,
 Ls – строковый литерал
 
-* Program -> {[VarDef|Func]}EOF
-* VarDef -> “var” [“int”, ”float” ]  I {“,” I}
-* Func -> [“void”, “int”, “float” ] I “(“ [ [“int”, “float”] I {“;” [“int”, “float”] I } ]? “)” [“;”| BL]
-* BL -> “begin” ST {“;” ST} “end”
-* ST -> [
-*    I “=” E | VarDef |  
-*    “if” E “then” ST [“else” ST]? |
-*    “while” E “do” ST |
-*    BL |
-*   “return” E |
-*    “write” “(“  [E|Ls] {“,” [E|Ls] } “)”  |
-*    “read” I |
-*    “exit” E |
-*    I “(“ [ E {“,” E} ]? “)”
-*    ]
-* E -> E1 { “||” E1 }
-* E1 -> E2 { “&&” E2 }
-* E2  -> E7 [ [“==”, ”!=”]  E7 ]?
-* E7 -> E3 [  [“>”, ”>=”, ”<”, ”<=”] E3 ]?
-* E3 -> E4 { [“+”, ”-”] E4}
-* E4 -> E5 { [“*”, ”/”, ”%”]  E5 }
-* E5 -> E6 [ “^” E6 ]?
-* E6 ->   “waserror” |
-*    L |
-*    !E6 |
-*    -E6 |
-*    +E6|
-*    (E) |
-*    I |
-*    I “(“ [ E {“,” E} ]? “)”
+ Program -> {[VarDef|Func]}EOF  
+ VarDef -> “var” [“int”, ”float” ]  I {“,” I}  
+ Func -> [“void”, “int”, “float” ] I “(“ [ [“int”, “float”] I {“;” [“int”, “float”] I } ]? “)” [“;”| BL]  
+ BL -> “begin” ST {“;” ST} “end”  
+ ST -> [  
+    I “=” E | VarDef |    
+    “if” E “then” ST [“else” ST]? |  
+    “while” E “do” ST |  
+    BL |  
+   “return” E |  
+    “write” “(“  [E|Ls] {“,” [E|Ls] } “)”  |  
+    “read” I |  
+    “exit” E |  
+    I “(“ [ E {“,” E} ]? “)”  
+    ]  
+ E -> E1 { “||” E1 }  
+ E1 -> E2 { “&&” E2 }  
+ E2  -> E7 [ [“==”, ”!=”]  E7 ]?  
+ E7 -> E3 [  [“>”, ”>=”, ”<”, ”<=”] E3 ]?  
+ E3 -> E4 { [“+”, ”-”] E4}  
+ E4 -> E5 { [“*”, ”/”, ”%”]  E5 }  
+ E5 -> E6 [ “^” E6 ]?  
+ E6 ->   “waserror” |  
+    L |  
+    !E6 |  
+    -E6 |  
+    +E6|  
+    (E) |  
+    I |  
+    I “(“ [ E {“,” E} ]? “)”
 
 
-BUILD:
+Сборка:
 -----------------------------------
 
 cd /path/to/xlang/
-cmake -T <toolset-name> -S <path-to-source> -B <path-to-build>
-<path-to-build> build directory
-<toolset-name> toolset name (visual studio, makefile e.t.c)
-<path-to-source> location of CMakeList.txt
+cmake -T \<toolset-name\> -S \<path-to-source\> -B \<path-to-build\>  
+\<path-to-build> - build directory  
+\<toolset-name> - toolset name (visual studio, makefile e.t.c)  
+\<path-to-source> - location of CMakeList.txt  
 
