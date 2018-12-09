@@ -76,6 +76,7 @@ int main(int argc, char **argv)
 		int cur_file = 1;
 		for (; cur_file < argc; cur_file++)
 		{
+      printf("Load %s \n", argv[cur_file]);
 			if (source = loadProgram(argv[cur_file]))
 			{
 				start(&source);
