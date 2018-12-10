@@ -12,3 +12,4 @@ vs2008/Debug/*
 *.bak
 *.o
 build/*
+/CMakeSettings.json
