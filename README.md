@@ -107,7 +107,7 @@ Ls – строковый литерал
 
 cd /path/to/xlang/
 cmake -T \<toolset-name\> -S \<path-to-source\> -B \<path-to-build\>  
-\<path-to-build> - build directory  
-\<toolset-name> - toolset name (visual studio, makefile e.t.c)  
-\<path-to-source> - location of CMakeList.txt  
+\<path-to-build\> - build directory  
+\<toolset-name\> - toolset name (visual studio, makefile e.t.c)  
+\<path-to-source\> - location of CMakeList.txt  
 
