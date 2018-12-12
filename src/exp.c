@@ -43,7 +43,7 @@ int block(char **buffer)
 	return 0;
 }
 
-int lookup(char *name, int *val)
+int lookup(char *name, float *val)
 {
 	variable *cur_var;
 	int res = 0;
@@ -60,7 +60,7 @@ int lookup(char *name, int *val)
 	return res;
 }
 
-int assign_value(char *name, int val)
+int assign_value(char *name, float val)
 {
 	variable *cur_var;
 	variable *tmp;
@@ -89,6 +89,7 @@ int assign_value(char *name, int val)
 		tmp->next = NULL;
 
 	}
+  printf("end of assign\n");
 }
 
 int primary_expression(node_t **root)
@@ -99,6 +100,7 @@ int primary_expression(node_t **root)
 	{
 
 	case lcNUMBER:
+  case lcSTRING:
   case lcIDENT:
 	{
     *root = create_node();
@@ -216,7 +218,6 @@ int conditional_expression(node_t **root)
 
 		type = curr_token->type;
 	}
-  printf("result = %d\n", res);
   assert(*root != NULL);
 	return res;
 }
@@ -230,7 +231,6 @@ int assignment_expression(node_t **root)
 
   node_t *node;
 
-  puts("begin assign");
 	name = curr_token->text;
 	if (curr_token->type == lcSEMI)
   {
@@ -243,19 +243,15 @@ int assignment_expression(node_t **root)
 		name = curr_token->text;
 		char *prev_pos = get_pos();
 		memcpy(&prev_token, curr_token, sizeof(token_t));
-    printf("This is ident!\n");
 		
     *root = create_node();
     (*root)->text = strdup(curr_token->text);
     (*root)->type = curr_token->type;
     token_type type = get_token()->type;
-    //root->left = node;
 		if (type == lcASSIGN || type == lcPLUS_ASSIGN ||
 			type == lcMINUS_ASSIGN || type == lcMUL_ASSIGN ||
 			type == lcDIV_ASSIGN)
 		{
-			//lookup(name, &tmp);
-			
       node = create_node();
       assert(curr_token->text != NULL);
       assert(node != NULL);
@@ -267,9 +263,6 @@ int assignment_expression(node_t **root)
 
       assignment_expression(&(node->right));
       *root = node;
-      printf("left root = %s;op = %s; right root = %s\n", (*root)->left->text, (*root)->text, (*root)->right->text);
-
-			//assign_value(name, res);
 			return res;
 		}
 		else
@@ -279,7 +272,6 @@ int assignment_expression(node_t **root)
 		}
 	}
 	res = conditional_expression(root);
-  //prefix_tree(root
 	return res;
 }
 
@@ -294,14 +286,73 @@ void print_node(node_t *node, int level)
 {
   assert(node != NULL);
   //make_space(level);
-  printf("%s ", node->text); 
+  switch(node->type)
+  {
+    case lcPLUS:    printf("add");  break;
+    case lcMINUS:   printf("sub");  break;
+    case lcASSIGN:  printf("move"); break;
+  }
+      
 }
 
-void prefix_tree(node_t *tree, int level)
+void functional(node_t *tree, int level)
 {
   if (tree){
-    print_node(tree, level + 1);  
-    prefix_tree(tree->left, level + 1);  
-    prefix_tree(tree->right, level + 1);  
+    switch (tree->type)
+    {
+      case lcPLUS:
+      case lcMINUS:
+      case lcASSIGN:
+      {
+        print_node(tree, level + 1);
+        putchar('(');
+        functional(tree->left, level + 1);  
+        printf(", ");
+        functional(tree->right, level + 1);  
+        putchar(')');
+        break;
+      }
+      default:
+        printf("%s", tree->text);
+    }
   }
 }
+
+void calculate(node_t *tree, float *val)
+{
+  float val1 = 0, val2 = 0;
+  if (tree)
+  {
+    calculate(tree->left, &val1);
+    calculate(tree->right, &val2);
+    switch(tree->type)
+    {
+      case lcPLUS:    *val = val1 + val2; break;
+      case lcMINUS:   *val = val1 - val2; break;
+      case lcNUMBER:  *val = atoi(tree->text); break;
+      case lcIDENT:   if (!lookup(tree->text, val)) {printf("Undefined var: %s\n", tree->text);} break; 
+      case lcASSIGN:  
+      {
+        float res;
+        calculate(tree->right, &res);
+        assign_value(tree->left->text, res);
+        *val = res;
+      }
+      break;
+    }
+  }
+}
+
+
+float eval()
+{
+  node_t *root;
+  float retval = assignment_expression(&root);
+  
+  //functional(root,0);
+  calculate(root, &retval);
+  //printf("result = %f\n", retval);
+  return retval;
+
+}
+

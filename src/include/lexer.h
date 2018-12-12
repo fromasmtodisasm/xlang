@@ -82,7 +82,7 @@ typedef enum token_category {
 typedef struct token_t
 {
 	token_type type;
-	void *text;
+	char *text;
 	token_category category;
 	char *pos;
 }token_t;

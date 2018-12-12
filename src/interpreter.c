@@ -124,7 +124,7 @@ way_out do_if(node_t *root)
 	if (curr_token->type == lcLBRACE)
 	{
 		get_token(/*NEXT_TOKEN*/);
-		condition = assignment_expression(root);
+		condition = (int)eval();
 		if ((curr_token = curr_token)->type == lcRBRACE)
 		{
 			if (condition)
@@ -168,7 +168,7 @@ way_out do_while(node_t *root)
 		char *pos_begin = curr_token->pos;
 		char* pos_end = pos_begin;
 		
-		while (get_token(/*NEXT_TOKEN*/), condition = assignment_expression(root))
+		while (get_token(/*NEXT_TOKEN*/), condition = (int)eval())
 		{	
 			if ((curr_token = curr_token)->type == lcRBRACE)
 			{
@@ -207,7 +207,7 @@ int func_decl()
 
 int start(char **buffer)
 {
-#define TEST
+//#define TEST
 	int retval = 0;
 
 	exp_parser_init();
@@ -220,13 +220,15 @@ int start(char **buffer)
     while (get_token()->type != lcEND)
     {
       retval = assignment_expression(&root);
-      //printf("exp val = %d\n", retval);
-      //printf("%s\n", root->text);
-      puts("Printing sytax tree...");
+      puts("\nPrinting sytax tree...");
       
-      prefix_tree(root,0);
-      //printf("str = \n%s\n-----\n", get_pos());
+      //prefix_tree(root,0);
+      float res;
+      calculate(root, &res);
+      printf("result = %f\n", res);
+      puts("");
     }
+    puts("");
 #else
 		while (get_token(/*NEXT_TOKEN*/)->type != lcEND)
 		{
@@ -250,21 +252,28 @@ int print(node_t *root)
 	get_token(/*NEXT_TOKEN*/);
 	do
 	{
-		char *number = "%d";
+		char *number = "%f";
 		char *string = "%s";
 		char *curtype;
-		int expr_val = 0;
-		if (curr_token->type == lcSTRING) {
-			printf("%s", curr_token->text);
-			get_token(/*NEXT_TOKEN*/);
+		float expr_val = 0;
+    switch(curr_token->type)
+    {
+      case lcSTRING:
+        printf("%s", curr_token->text);
+        get_token(/*NEXT_TOKEN*/);
+        break;
+		
+	    case lcNUMBER:	
+      case lcIDENT:
+        curtype = number;
+        expr_val = eval();
+        printf("%f", expr_val);
+        break;
+      default:
+        puts("");
+        return TRUE;
 		}
-		else {
-			curtype = number;
-			expr_val = assignment_expression(&root);
-			printf("%d", expr_val);
-		}
-	} while ((curr_token = curr_token)->type == lcSTRING || curr_token->type == lcIDENT);
-	puts("");
+	}while(TRUE);
 }
 
 
@@ -303,7 +312,7 @@ way_out statement(compound_origin origin)
 
   node_t *root;
 
-	while (!stop)
+	while (TRUE)
 	{
 		switch (curr_token->type)
 		{
@@ -397,20 +406,20 @@ way_out statement(compound_origin origin)
 		}
 		break;
 		case lcIDENT:
+    case lcNUMBER:
 		{
-
-			res = assignment_expression(root);
+			res = eval();
 			if (curr_token->type != lcSEMI)
 			{
 				exptected_func("SEMI");
 				goto abort;
 			}
+      printf("exp evaluated\n");
 			get_token(/*NEXT_TOKEN*/);
 		}
 		break;
 		default:
-			stop = 1;
-			break;
+      return NORMAL;
 		}		
 	}
 

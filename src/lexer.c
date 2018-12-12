@@ -152,7 +152,7 @@ token_t* get_token()
   
   if (*pos == '\0')
   {
-    printf("End of source\n");
+   printf("End of source\n");
   }
 	while (
 		*pos == ' ' ||
@@ -229,13 +229,15 @@ token_t* get_token()
 		pos++;
 	}
   begin = pos;
+
   if (*pos == '\0')
   {
     CURTOK().type = type = lcEND;
-    printf("End of source\n");
+   // printf("End of source\n");
     //return &CURTOK();
   }
-  /*
+
+    /*
    * Parse identifier
    */
 	
@@ -358,7 +360,6 @@ token_t* get_token()
 	{
 		type = lcSEMI;
 		pos++;
-    printf("Pos on SEMI = %d\n", *pos);
 	}
 	else if (*pos == '(')
 	{
@@ -534,6 +535,7 @@ token_t* get_token()
 		type = lcUNKNOWN;
 		pos++;
 	}
+  //assert(type != lcEND);
   if (!text && ((type != lcEND) &&  (type != lcUNKNOWN)))
   {
     
@@ -546,6 +548,7 @@ token_t* get_token()
 	CURTOK().text = text;
 	CURTOK().pos = begin;
 	curr_context->pos = pos;
-  printf("\ncurr_tok = %s, text = %s\n", token_to_string[CURTOK().type - BASE_INDEX], text);
+  //printf("<%s, %s>", token_to_string[CURTOK().type - BASE_INDEX], text);
+  assert(&CURTOK() != NULL);
 	return &CURTOK();
 }
