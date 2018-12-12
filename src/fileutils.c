@@ -1,4 +1,5 @@
 #include "fileutils.h"
+#include <malloc.h>
 
 
 char *file2str(FILE *file)

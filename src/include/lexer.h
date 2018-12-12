@@ -1,6 +1,8 @@
 #pragma once
 
 #define BASE_INDEX 257
+#define IDENT_LEN 64
+#define NUMBER_LEN 20
 typedef enum token_direct {PREV, CURR, NEXT}token_direct;
 typedef enum token_type
 {
@@ -98,6 +100,7 @@ token_type is_keyword(char *name);
 int lexerInit(char *src);
 char * get_pos();
 void set_pos(char* pos);
+int get_line();
 
 token_t* get_token();
 /*

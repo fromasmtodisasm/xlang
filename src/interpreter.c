@@ -115,7 +115,7 @@ void skip_compound_statement()
 	}
 }
 
-way_out do_if()
+way_out do_if(node_t *root)
 {
 	int condition = 0;
 	way_out out = NORMAL;
@@ -124,7 +124,7 @@ way_out do_if()
 	if (curr_token->type == lcLBRACE)
 	{
 		get_token(/*NEXT_TOKEN*/);
-		condition = assignment_expression();
+		condition = assignment_expression(root);
 		if ((curr_token = curr_token)->type == lcRBRACE)
 		{
 			if (condition)
@@ -157,7 +157,7 @@ way_out do_if()
 	return out;
 }
 
-way_out do_while()
+way_out do_while(node_t *root)
 {
 	int condition = 0;
 	way_out out = NORMAL;
@@ -168,7 +168,7 @@ way_out do_while()
 		char *pos_begin = curr_token->pos;
 		char* pos_end = pos_begin;
 		
-		while (get_token(/*NEXT_TOKEN*/), condition = assignment_expression())
+		while (get_token(/*NEXT_TOKEN*/), condition = assignment_expression(root))
 		{	
 			if ((curr_token = curr_token)->type == lcRBRACE)
 			{
@@ -207,16 +207,32 @@ int func_decl()
 
 int start(char **buffer)
 {
+#define TEST
 	int retval = 0;
 
 	exp_parser_init();
 
 	if ((lexerInit(*buffer)) != 0)
 	{
+#ifdef TEST
+    node_t *root;
+    printf("eval expression\n");
+    while (get_token()->type != lcEND)
+    {
+      retval = assignment_expression(&root);
+      //printf("exp val = %d\n", retval);
+      //printf("%s\n", root->text);
+      puts("Printing sytax tree...");
+      
+      prefix_tree(root,0);
+      //printf("str = \n%s\n-----\n", get_pos());
+    }
+#else
 		while (get_token(/*NEXT_TOKEN*/)->type != lcEND)
 		{
 			retval = function_definition();
 		} 	
+#endif
 	}
 
 	return retval;
@@ -227,7 +243,7 @@ int is_print()
 	return 0;
 }
 
-int print()
+int print(node_t *root)
 { 
 	int stop = 0;
 	
@@ -244,7 +260,7 @@ int print()
 		}
 		else {
 			curtype = number;
-			expr_val = assignment_expression();
+			expr_val = assignment_expression(&root);
 			printf("%d", expr_val);
 		}
 	} while ((curr_token = curr_token)->type == lcSTRING || curr_token->type == lcIDENT);
@@ -285,19 +301,21 @@ way_out statement(compound_origin origin)
 	way_out out = NORMAL;
 	int stop = 0;
 
+  node_t *root;
+
 	while (!stop)
 	{
 		switch (curr_token->type)
 		{
 		case lcIF:
 		{
-			if ((out = do_if()) == CONTINUE || out == BREAK)
+			if ((out = do_if(root)) == CONTINUE || out == BREAK)
 				return out;
 		}
 		break;
 		case lcWHILE:
 		{
-			do_while();
+			do_while(root);
 		}
 		break;
 		case lcBREAK:
@@ -352,7 +370,7 @@ way_out statement(compound_origin origin)
 		break;
 		case lcPRINT:
 		{
-			print();
+			print(root);
 			if ((curr_token = curr_token)->type == lcSEMI)
 			{
 				get_token(/*NEXT_TOKEN*/);
@@ -381,7 +399,7 @@ way_out statement(compound_origin origin)
 		case lcIDENT:
 		{
 
-			res = assignment_expression();
+			res = assignment_expression(root);
 			if (curr_token->type != lcSEMI)
 			{
 				exptected_func("SEMI");

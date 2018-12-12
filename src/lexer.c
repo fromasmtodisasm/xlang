@@ -3,6 +3,8 @@
 #include <ctype.h>
 #include <string.h>
 #include <malloc.h>
+#include <assert.h>
+#include <stdio.h>
 
 /******** Static variables *********/
 #define CURTOK() (curr_context->curr_token)
@@ -141,12 +143,21 @@ token_t* get_token()
 	char *pos = curr_context->pos;
 	token_type type = lcEND;
 	void *value = NULL;
+  char *text = NULL;
 	char *begin = pos;
+  static char curr_digit[NUMBER_LEN];
+  static char curr_ident[IDENT_LEN];
+  static char curr_oper[3];
 
-	//curr_context = curr_context->next;
+  
+  if (*pos == '\0')
+  {
+    printf("End of source\n");
+  }
 	while (
 		*pos == ' ' ||
 		*pos == '\t' ||
+		*pos == '\r' ||
 		*pos == '\n')
 	{
 		if (*pos == '\n')
@@ -217,19 +228,35 @@ token_t* get_token()
 		}
 		pos++;
 	}
-	if (isalpha(*pos) || *pos == '_')
+  begin = pos;
+  if (*pos == '\0')
+  {
+    CURTOK().type = type = lcEND;
+    printf("End of source\n");
+    //return &CURTOK();
+  }
+  /*
+   * Parse identifier
+   */
+	
+  else if (isalpha(*pos) || *pos == '_')
 	{
 		int len = 0;
 		while (isalpha(*pos) || *pos == '_' || isdigit(*pos))
 		{
-			len++;
-			pos++;
+      if (len < IDENT_LEN)
+          curr_ident[len++] = *pos++;
 		}
-		value = malloc(len + 1);
-		memcpy(value, pos - len, len);
-		((char*)(value))[len] = '\0';
+    curr_ident[len] = 0;
+
+    /*
+		text = malloc(len + 1);
+		memcpy(text, pos - len, len);
+		((char*)(text))[len] = '\0';
+    */
+    text = curr_ident;
 		int tmp;
-		if ((tmp = is_keyword(value)) != lcEND)
+		if ((tmp = is_keyword(text)) != lcEND)
 		{
 			type = tmp;
 		}
@@ -239,6 +266,9 @@ token_t* get_token()
 		}
 
 	}
+  /*
+   * Parse identifier
+   */
 	else if (isdigit(*pos))
 	{
 		int val = 0;
@@ -298,20 +328,25 @@ token_t* get_token()
 		}
 		else
 		{
+      char *digit = curr_digit;
 			while (*pos)
 			{
 				if (isdigit(*pos))
 				{
 					val = val * 10 + (*pos - '0');
-					pos++;
+          *digit = *pos++;
+          digit++;
 				}
 				else
 				{
+          *digit = 0;
 					break;
 				}
 			}
 		}
-		value = (void*)val;
+    
+		//value = (void*)val;
+    text = curr_digit;
 		type = lcNUMBER;
 	}
 	else if (*pos == ',')
@@ -323,6 +358,7 @@ token_t* get_token()
 	{
 		type = lcSEMI;
 		pos++;
+    printf("Pos on SEMI = %d\n", *pos);
 	}
 	else if (*pos == '(')
 	{
@@ -359,9 +395,9 @@ token_t* get_token()
 			pos++;
 		}
 
-		value = malloc(len + 1);
-		memcpy(value, pos - len - 1, len);
-		((char*)(value))[len] = '\0';
+		text = malloc(len + 1);
+		memcpy(text, pos - len - 1, len);
+		((char*)(text))[len] = '\0';
 		type = lcSTRING;
 	}
 	else if (type == lcEND)
@@ -429,6 +465,7 @@ token_t* get_token()
 			}
 			else
 			{
+        //fprintf(stderr, "This is assign\n");
 				type = lcASSIGN;
 			}
 			break;
@@ -479,10 +516,13 @@ token_t* get_token()
 			{
 				type = lcUNKNOWN;
 			}
+      break;
 		}
-		}
+    }
 		if (type != lcEND)
+    {
 			pos++;
+    }
 	}
 	else if (*pos == '\0')
 	{
@@ -490,13 +530,22 @@ token_t* get_token()
 	}
 	else
 	{
+    printf("UNKNOWN token\n");
 		type = lcUNKNOWN;
 		pos++;
 	}
+  if (!text && ((type != lcEND) &&  (type != lcUNKNOWN)))
+  {
+    
+    assert(type != lcEND);
+    assert( pos > begin);
+    memcpy(curr_oper, begin, pos - begin);
+    text = curr_oper;
+  }
 	CURTOK().type = type;
-	CURTOK().text = value;
+	CURTOK().text = text;
 	CURTOK().pos = begin;
 	curr_context->pos = pos;
-	//printf("\ncurr_tok = %s\n", token_to_string[CURTOK().type - BASE_INDEX]);
+  printf("\ncurr_tok = %s, text = %s\n", token_to_string[CURTOK().type - BASE_INDEX], text);
 	return &CURTOK();
 }

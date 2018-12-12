@@ -7,6 +7,7 @@ set(SOURCES
     lexer.c
     main.c
     preprocessor.c
+    tree.c
     )
 set(HEADERS
 	include/
@@ -16,6 +17,7 @@ set(HEADERS
 	include/interpreter.h
 	include/lexer.h
 	include/preprocessor.h
+  include/tree.h
     )
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 target_include_directories(${PROJECT_NAME} PUBLIC include)

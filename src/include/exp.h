@@ -1,5 +1,6 @@
 #pragma once
 #include "lexer.h"
+#include "tree.h"
 
 typedef enum variable_type
 {
@@ -20,17 +21,13 @@ typedef struct _variable
 
 
 int block(char ** buffer);
-
-int assignment_expression();
-
+int assignment_expression(node_t **node);
 int lookup(char *name, int * val);
-
 int assign_value(char *name, int val);
-
-int primary_expression();
-
-int multiplicative_expression();
-
-int additive_expression();
+int primary_expression(node_t **node);
+int multiplicative_expression(node_t **node);
+int additive_expression(node_t **node);
+int conditional_expression(node_t **node);
 
 int exp_parser_init();
+void prefix_tree(node_t *tree, int level);

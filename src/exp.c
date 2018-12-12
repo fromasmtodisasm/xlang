@@ -1,11 +1,17 @@
 #include "exp.h"
 #include "lexer.h"
+#include "tree.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <assert.h>
 
+#define begin_func() \
+  fprintf(stderr, "Function is %s line is %d\n", __FUNCTION__, __LINE__)
+#define end_func() \
+  printf( "On line [%d]\n", __LINE__)//fprintf(stderr, "Function %s is end on line %d\n", __FUNCTION__, __LINE__)
 
 variable *vars;
 //static token_t *curr_token;// = curr_token;
@@ -85,7 +91,7 @@ int assign_value(char *name, int val)
 	}
 }
 
-int primary_expression()
+int primary_expression(node_t **root)
 {
 	int res = 0;
 
@@ -93,24 +99,19 @@ int primary_expression()
 	{
 
 	case lcNUMBER:
+  case lcIDENT:
 	{
-		res = (int)curr_token->text;
-		break;
-	}
-	case lcIDENT:
-	{
-		if ((lookup(curr_token->text, &res)) == 0)
-		{
-			printf("Error, undefined variable <%s>\n", curr_token->text);
-
-			//exit(-1);
-		}
+    *root = create_node();
+    assert(curr_token->text != NULL);
+    assert(*root != NULL);
+    (*root)->text = strdup(curr_token->text);
+    (*root)->type = curr_token->type;
 		break;
 	}
 	case lcLBRACE:
 	{
 		get_token(/*NEXT_TOKEN*/);
-		res = assignment_expression();
+		res = assignment_expression(root);
 		if (curr_token->type != lcRBRACE)
 		{
 			printf("Error, expected ')'\n");
@@ -128,63 +129,58 @@ int primary_expression()
 	return res;
 }
 
-int multiplicative_expression()
+int multiplicative_expression(node_t **root)
 {
 	int res = 0;
 	int stop = 0;
-
-	res = primary_expression();
+  node_t *node;
+  
+  // Build left subtree
+	res = primary_expression(root);
+  printf("after primary root->text: %s\n", (*root)->text);
 	while ( curr_token->type == lcMUL || curr_token->type == lcDIV)
 	{
-		switch (curr_token->type)
-		{
-		case lcMUL:
-		{
-			get_token(/*NEXT_TOKEN*/);
-			res *= primary_expression();
-			break;
-		}
-		case lcDIV:
-		{
-			get_token(/*NEXT_TOKEN*/);
-			res /= primary_expression();
-			break;
-		}
-		default:
-			stop = 1;
-			break;
-		}
-	}
+    node = create_node();
+    assert(curr_token->text != NULL);
+    assert(node != NULL);
+    node->left = (*root);
+    node->text = strdup(curr_token->text);
+    node->type = curr_token->type;
+    get_token();
+		primary_expression(&(node->right));
+    *root = node;
+  }
+  puts("ret from mul");
+  assert(*root != NULL);
 	return res;
 }
 
-int additive_expression()
+int additive_expression(node_t **root)
 {
 	int res = 0;
-	int stop = 0;
-	
-	res = multiplicative_expression();
+  node_t *node;
+
+	res = multiplicative_expression(root);
+  assert(*root != NULL);
+  puts("try plus or minus");
 	while (curr_token->type == lcPLUS || curr_token->type == lcMINUS)
 	{
-		switch (curr_token->type)
-		{
-		case lcPLUS:
-		{
-			get_token(/*NEXT_TOKEN*/);
-			res += multiplicative_expression();
-			break;
-		}
-		case lcMINUS:
-		{
-			get_token(/*NEXT_TOKEN*/);
-			res -= multiplicative_expression();
-			break;
-		}
-		default:
-			stop = 1;
-			break;
-		}
+    node = create_node();
+    assert(curr_token->text != NULL);
+    assert(node != NULL);
+    node->left = *root;
+    node->text = strdup(curr_token->text);
+    node->type = curr_token->type;
+    puts("172");
+    get_token();
+    puts("174");
+		multiplicative_expression(&(node->right));
+    *root = node;
 	}
+  assert(*root != NULL);
+  printf("from addition root->text = %s\n", (*root)->text);
+  //prefix_tree(*root,0);
+  
 	return res;
 }
 
@@ -203,62 +199,52 @@ int is_relop(token_type type)
 		);
 }
 
-int conditional_expression()
+int conditional_expression(node_t **root)
 {
 	int res = 0;
+  node_t *node;
 	token_type type = curr_token->type;
-	res = additive_expression();
+	res = additive_expression(root);
 	
 	while (is_relop(type=curr_token->type))
 	{
+    puts("In relop");
 		get_token(/*NEXT_TOKEN*/);
-		switch (type)
-		{	
 
-		case lcAND_OP:
-			res &= additive_expression();
-			break;
-		case lcOR_OP:
-			res |= additive_expression();
-			break;
-		case lcEQ_OP:
-			res = res == additive_expression();
-			break;
-		case lcL_OP:
-			res  = res < additive_expression();
-			break;
-		case lcG_OP:
-			res = res > additive_expression();
-			break;
-		case lcLE_OP:
-			res = res <= additive_expression();
-			break;
-		case lcGE_OP:
-			res = res >= additive_expression();
-			break;
-		case lcN_OP:
-			res != additive_expression();
-			break;
-		case lcNE_OP:
-			res = res != additive_expression();
-		default:
-			break;
-		}
+    node = create_node();
+    assert(curr_token->text != NULL);
+    assert(node != NULL);
+    node->left = *root;
+    
+    node->text = strdup(curr_token->text);
+
+    node->type = curr_token->type;
+		additive_expression(&(node->right));
+    *root = node;
+
 		type = curr_token->type;
 	}
+  printf("result = %d\n", res);
+  assert(*root != NULL);
+  printf("in cond root->text %s\n", (*root)->text);
 	return res;
 }
 
-int assignment_expression()
+int assignment_expression(node_t **root)
 {
 	char *name;
 	int tmp = 0;
 	int res = 0;
 	token_t prev_token;
 
+  node_t *node;
+
+  puts("begin assign");
 	name = curr_token->text;
 	if (curr_token->type == lcSEMI)
+  {
 		return res;
+  }
 	if (curr_token->type == lcIDENT)
 	{
 		char *name;
@@ -266,35 +252,26 @@ int assignment_expression()
 		name = curr_token->text;
 		char *prev_pos = get_pos();
 		memcpy(&prev_token, curr_token, sizeof(token_t));
-		
+    printf("This is ident!\n");
 		token_type type = get_token()->type;
+    printf("prog: %s\n", get_pos());
 		if (type == lcASSIGN || type == lcPLUS_ASSIGN ||
 			type == lcMINUS_ASSIGN || type == lcMUL_ASSIGN ||
 			type == lcDIV_ASSIGN)
 		{
 			get_token(/*NEXT_TOKEN*/);
 			lookup(name, &tmp);
-			switch (type)
-			{
-			case lcASSIGN:
-				res = assignment_expression();
-				break;
-			case lcPLUS_ASSIGN:
-				res = tmp += res = assignment_expression();
-				break;
-			case lcMINUS_ASSIGN:
-				res = tmp -= assignment_expression();
-				break;
-			case lcMUL_ASSIGN:
-				res = tmp *= assignment_expression();
-				break;
-			case lcDIV_ASSIGN:
-				res = tmp /= assignment_expression();
-				break;
-			default:
-				break;
-			}
-			assign_value(name, res);
+			
+      node = create_node();
+      assert(curr_token->text != NULL);
+      assert(node != NULL);
+      node->left = *root;
+      node->text = strdup(curr_token->text);
+      node->type = curr_token->type;
+      assignment_expression(&(node->right));
+      *root = node;
+
+			//assign_value(name, res);
 			return res;
 		}
 		else
@@ -303,7 +280,31 @@ int assignment_expression()
 			set_pos(prev_pos);
 		}
 	}
-	res = conditional_expression();
+	res = conditional_expression(root);
+  //prefix_tree(root
+  printf("Im here\n");
 	return res;
+}
 
+void make_space(int n)
+{
+  for ( ; n > 0; n--)
+  {
+    printf(" ");
+  }
+}
+void print_node(node_t *node, int level)
+{
+  assert(node != NULL);
+  //make_space(level);
+  printf("%s ", node->text); 
+}
+
+void prefix_tree(node_t *tree, int level)
+{
+  if (tree){
+    print_node(tree, level + 1);  
+    prefix_tree(tree->left, level + 1);  
+    prefix_tree(tree->right, level + 1);  
+  }
 }
