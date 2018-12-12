@@ -23,7 +23,7 @@ typedef struct _variable
 int block(char ** buffer);
 int assignment_expression(node_t **node);
 int lookup(char *name, float  *val);
-int assign_value(char *name, float val);
+float assign_value(char *name, float val);
 int primary_expression(node_t **node);
 int multiplicative_expression(node_t **node);
 int additive_expression(node_t **node);

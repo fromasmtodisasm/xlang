@@ -271,7 +271,7 @@ token_t* get_token()
   /*
    * Parse identifier
    */
-	else if (isdigit(*pos))
+	else if (isdigit(*pos) || *pos == '.')
 	{
 		int val = 0;
 		int hex_val = 0;
@@ -286,7 +286,7 @@ token_t* get_token()
 				{
 					if (*pos >= '0' && *pos <= '9')
 					{
-						val = val * radix + (*pos - '0');
+						//val = val * radix + (*pos - '0');
 						pos++;
 					}
 					else if (*pos >= 'A' && *pos <= 'F'
@@ -295,13 +295,13 @@ token_t* get_token()
 					{
 						if (*pos >= 'a')
 						{
-							hex_val = *pos - 'A' - 32 + 10;
+							//hex_val = *pos - 'A' - 32 + 10;
 						}
 						else
 						{
-							hex_val = *pos - 'A' + 10;
+							//hex_val = *pos - 'A' + 10;
 						}
-						val = val * radix + (hex_val);
+						//val = val * radix + (hex_val);
 						pos++;
 					}
 					else
@@ -333,7 +333,7 @@ token_t* get_token()
       char *digit = curr_digit;
 			while (*pos)
 			{
-				if (isdigit(*pos))
+				if (isdigit(*pos) || *pos == '.')
 				{
 					val = val * 10 + (*pos - '0');
           *digit = *pos++;
