@@ -67,14 +67,17 @@ float assign_value(char *name, float val)
 	for (cur_var = vars; cur_var != NULL; cur_var = cur_var->next)
 	{
 		tmp = cur_var;
-		if (cur_var->name == NULL)
+		/*if (cur_var->name == NULL)
 		{
 			cur_var->name = name;
 			cur_var->value = val;
 			break;
 		}
-		else if (!strcmp(name, cur_var->name))
+		else 
+    */
+    if (!strcmp(name, cur_var->name))
 		{
+      //printf("var %s founded with value %f\n", name, cur_var->value);
 			cur_var->name = name;
 			cur_var->value = val;
 			break;
@@ -89,7 +92,6 @@ float assign_value(char *name, float val)
 		tmp->next = NULL;
 
 	}
-  printf("end of assign\n");
   return val;
 }
 
@@ -346,12 +348,12 @@ void calculate(node_t *tree, float *val)
       case lcL_OP:        *val = (val1 < val2);  break;
 
       case lcNUMBER:      *val = atof(tree->text); break;
-      case lcIDENT:       if (!lookup(tree->text, val)) {printf("Undefined var: %s\n", tree->text);} break; 
+      case lcIDENT:       if (!lookup(tree->text, val)) 
+                          {printf("Undefined var: %s\n", tree->text);} break; 
       
       case lcASSIGN:  
       {
         float res;
-        printf("bbbb\n");
         calculate(tree->right, &res);
         *val = assign_value(tree->left->text, res);
       }
@@ -361,19 +363,23 @@ void calculate(node_t *tree, float *val)
         float res;
         calculate(tree->right, &val2);
         *val = assign_value(tree->left->text, val1 + val2);
+        //printf("plus_asign = %f\n", *val);
       }
+      break;
       case lcMINUS_ASSIGN: 
       {
         float res;
         calculate(tree->right, &val2);
         *val = assign_value(tree->left->text, val1 - val2);
       }
+      break;
       case lcMUL_ASSIGN: 
       {
         float res;
         calculate(tree->right, &val2);
         *val = assign_value(tree->left->text, val1 * val2);
       }
+      break;
       case lcDIV_ASSIGN: 
       {
         float res;

@@ -40,6 +40,7 @@ struct commands { /* таблица зарезервированных слов */
 	"function", lcFUNCTION,
 	"void",lcVOID,
 	"interprete", lcINTERPRETE,
+  "sleep", lcSLEEP,
 	"end", lcENDBLOCK,
 	"", lcEND  /* конец таблицы */
 };

@@ -6,6 +6,7 @@
 
 #include <stdio.h>
 #include <memory.h> //memcpy
+#include <unistd.h> //sleep
 
 extern char *token_to_string[];
 //static token_t *curr_token;// = curr_token;
@@ -277,7 +278,7 @@ int print(node_t *root)
 }
 
 
-int read()
+int do_read()
 {
 	int stop = 0;
 	int tmp;
@@ -291,6 +292,14 @@ int read()
 
 		}
 	} 
+}
+
+void do_sleep()
+{
+  int ms;
+  get_token();
+  ms = eval();
+  sleep(ms); 
 }
 
 int interprete()
@@ -388,7 +397,7 @@ way_out statement(compound_origin origin)
 		break;
 		case lcREAD:
 		{
-			read();
+			do_read();
 
 		}
 		break;
@@ -399,6 +408,14 @@ way_out statement(compound_origin origin)
 			out = -1;
 			goto abort;
 		}
+    case lcSLEEP:
+    {
+			do_sleep();
+			if ((curr_token = curr_token)->type == lcSEMI)
+			{
+				get_token(/*NEXT_TOKEN*/);
+			}
+    }
 		break;
 		case lcINTERPRETE:
 		{
@@ -414,7 +431,7 @@ way_out statement(compound_origin origin)
 				exptected_func("SEMI");
 				goto abort;
 			}
-      printf("exp evaluated\n");
+      //printf("exp evaluated\n");
 			get_token(/*NEXT_TOKEN*/);
 		}
 		break;

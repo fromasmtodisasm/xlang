@@ -61,6 +61,7 @@ typedef enum token_type
 	lcABORT,
 	lcPRINT,
 	lcREAD,
+  lcSLEEP,
 
 	lcBEGINBLOCK,
 	lcENDBLOCK,
