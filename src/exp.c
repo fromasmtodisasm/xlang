@@ -381,7 +381,6 @@ void calculate(node_t *tree, float *val)
         *val = assign_value(tree->left->text, val1 / val2);
       }
       break;
-      case lcEQ_OP:         *val = (val1 == val2); printf("eq_op\n");break;
     }
   }
 }

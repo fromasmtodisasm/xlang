@@ -519,6 +519,19 @@ token_t* get_token()
 			}
       break;
 		}
+		case '|':
+		{
+			if (pos[1] == '|')
+			{
+				type = lcAND_OP;
+				pos++;
+			}
+			else
+			{
+				type = lcUNKNOWN;
+			}
+      break;
+		}
     }
 		if (type != lcEND)
     {
