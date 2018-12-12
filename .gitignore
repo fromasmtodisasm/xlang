@@ -13,3 +13,5 @@ vs2008/Debug/*
 *.o
 build/*
 /CMakeSettings.json
+*.swp
+
