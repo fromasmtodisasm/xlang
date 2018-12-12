@@ -2,8 +2,7 @@
 
 typedef struct node_t node_t;
 
-struct node_t
-{
+struct node_t {
   int type;
   char *text;
   float value;
@@ -11,4 +10,3 @@ struct node_t
 };
 
 node_t *create_node();
-

@@ -2,27 +2,24 @@
 #include "lexer.h"
 #include "tree.h"
 
-typedef enum variable_type
-{
-	VAR_INT,
-	VAR_STRING,
-	VAR_BOOL,
-	VAR_CONST,
-	VAR_SONST_LITERAL
-}variable_type;
+typedef enum variable_type {
+  VAR_INT,
+  VAR_STRING,
+  VAR_BOOL,
+  VAR_CONST,
+  VAR_SONST_LITERAL
+} variable_type;
 
-typedef struct _variable
-{
-	char *name;
-	float value;
-	int type;
-	struct _variable *next;
-}variable;
+typedef struct _variable {
+  char *name;
+  float value;
+  int type;
+  struct _variable *next;
+} variable;
 
-
-int block(char ** buffer);
+int block(char **buffer);
 int assignment_expression(node_t **node);
-int lookup(char *name, float  *val);
+int lookup(char *name, float *val);
 float assign_value(char *name, float val);
 int primary_expression(node_t **node);
 int multiplicative_expression(node_t **node);

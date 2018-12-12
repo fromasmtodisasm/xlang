@@ -1,10 +1,9 @@
 #include "preprocessor.h"
 
-FILE *preprocess(char* name)
-{
-	FILE *processed;
+FILE *preprocess(char *name) {
+  FILE *processed;
 
-	processed = fopen(name, "rb");
+  processed = fopen(name, "rb");
 
-	return processed;
+  return processed;
 }
