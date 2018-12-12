@@ -137,7 +137,6 @@ int multiplicative_expression(node_t **root)
   
   // Build left subtree
 	res = primary_expression(root);
-  printf("after primary root->text: %s\n", (*root)->text);
 	while ( curr_token->type == lcMUL || curr_token->type == lcDIV)
 	{
     node = create_node();
@@ -150,7 +149,6 @@ int multiplicative_expression(node_t **root)
 		primary_expression(&(node->right));
     *root = node;
   }
-  puts("ret from mul");
   assert(*root != NULL);
 	return res;
 }
@@ -162,7 +160,6 @@ int additive_expression(node_t **root)
 
 	res = multiplicative_expression(root);
   assert(*root != NULL);
-  puts("try plus or minus");
 	while (curr_token->type == lcPLUS || curr_token->type == lcMINUS)
 	{
     node = create_node();
@@ -171,15 +168,11 @@ int additive_expression(node_t **root)
     node->left = *root;
     node->text = strdup(curr_token->text);
     node->type = curr_token->type;
-    puts("172");
     get_token();
-    puts("174");
 		multiplicative_expression(&(node->right));
     *root = node;
 	}
   assert(*root != NULL);
-  printf("from addition root->text = %s\n", (*root)->text);
-  //prefix_tree(*root,0);
   
 	return res;
 }
@@ -208,7 +201,6 @@ int conditional_expression(node_t **root)
 	
 	while (is_relop(type=curr_token->type))
 	{
-    puts("In relop");
 		get_token(/*NEXT_TOKEN*/);
 
     node = create_node();
@@ -226,7 +218,6 @@ int conditional_expression(node_t **root)
 	}
   printf("result = %d\n", res);
   assert(*root != NULL);
-  printf("in cond root->text %s\n", (*root)->text);
 	return res;
 }
 
@@ -253,14 +244,17 @@ int assignment_expression(node_t **root)
 		char *prev_pos = get_pos();
 		memcpy(&prev_token, curr_token, sizeof(token_t));
     printf("This is ident!\n");
-		token_type type = get_token()->type;
-    printf("prog: %s\n", get_pos());
+		
+    *root = create_node();
+    (*root)->text = strdup(curr_token->text);
+    (*root)->type = curr_token->type;
+    token_type type = get_token()->type;
+    //root->left = node;
 		if (type == lcASSIGN || type == lcPLUS_ASSIGN ||
 			type == lcMINUS_ASSIGN || type == lcMUL_ASSIGN ||
 			type == lcDIV_ASSIGN)
 		{
-			get_token(/*NEXT_TOKEN*/);
-			lookup(name, &tmp);
+			//lookup(name, &tmp);
 			
       node = create_node();
       assert(curr_token->text != NULL);
@@ -268,8 +262,12 @@ int assignment_expression(node_t **root)
       node->left = *root;
       node->text = strdup(curr_token->text);
       node->type = curr_token->type;
+
+			get_token(/*NEXT_TOKEN*/);
+
       assignment_expression(&(node->right));
       *root = node;
+      printf("left root = %s;op = %s; right root = %s\n", (*root)->left->text, (*root)->text, (*root)->right->text);
 
 			//assign_value(name, res);
 			return res;
@@ -282,7 +280,6 @@ int assignment_expression(node_t **root)
 	}
 	res = conditional_expression(root);
   //prefix_tree(root
-  printf("Im here\n");
 	return res;
 }
 
