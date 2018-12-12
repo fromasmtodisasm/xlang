@@ -332,7 +332,6 @@ void calculate(node_t *tree, float *val)
       case lcMINUS:       *val = val1 - val2; break;
       case lcMUL:         *val = val1 * val2; break;
       case lcDIV:         *val = val1 / val2; break;
-<<<<<<< HEAD
       case lcINC_OP:      *val++;             break;
       case lcDEC_OP:      *val--;             break;
 
@@ -348,15 +347,7 @@ void calculate(node_t *tree, float *val)
 
       case lcNUMBER:      *val = atof(tree->text); break;
       case lcIDENT:       if (!lookup(tree->text, val)) {printf("Undefined var: %s\n", tree->text);} break; 
-=======
-      /*
-      case lcMINUS:       *val = val1 - val2; break;
-      case lcMUL:         *val = val1 * val2; break;
-      case lcDIV:         *val = val1 / val2; break;
-      */
-      case lcNUMBER:      *val = atof(tree->text); break;
-      case lcIDENT:   if (!lookup(tree->text, val)) {printf("Undefined var: %s\n", tree->text);} break; 
->>>>>>> a8e6961a7d2082fc0ad2b3c950777c2da250e703
+      
       case lcASSIGN:  
       {
         float res;
@@ -370,7 +361,6 @@ void calculate(node_t *tree, float *val)
         float res;
         calculate(tree->right, &val2);
         *val = assign_value(tree->left->text, val1 + val2);
-<<<<<<< HEAD
       }
       case lcMINUS_ASSIGN: 
       {
@@ -389,8 +379,6 @@ void calculate(node_t *tree, float *val)
         float res;
         calculate(tree->right, &val2);
         *val = assign_value(tree->left->text, val1 / val2);
-=======
->>>>>>> a8e6961a7d2082fc0ad2b3c950777c2da250e703
       }
       break;
       case lcEQ_OP:         *val = (val1 == val2); printf("eq_op\n");break;
