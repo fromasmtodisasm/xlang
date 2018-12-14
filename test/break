@@ -1,7 +1,9 @@
 #!/usr/bin/xlang
 int test_break()
 {
-	j=1;
+	var j=1;
+  var i;
+  var a;
 	print "This is while operator!";
 	while (j < 10)
 	{

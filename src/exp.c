@@ -1,4 +1,5 @@
 #include "exp.h"
+#include "generic_list.h"
 
 #include <assert.h>
 #include <ctype.h>
@@ -11,58 +12,71 @@
 #define end_func()                                                             \
   printf("On line [%d]\n", __LINE__) // fprintf(stderr, "Function %s is end on
                                      // line %d\n", __FUNCTION__, __LINE__)
+typedef struct Node listof;
 
-variable *vars;
+listof *vars;
 // static token_t *curr_token;// = curr_token;
 
+typedef struct name_val
+{
+  char *name;
+  void *val;
+}name_val;
+
 int make_builtin_vars() {
-  vars = malloc(sizeof(variable));
-  static variable false = {"false", 0};
-  static variable true = {
+  //vars = malloc(sizeof(variable));
+  variable false = {"false", 0};
+  variable true = {
       "true",
       1,
   };
-
-  vars = &true;
-  true.next = &false;
+  push(&vars, &true, sizeof(variable));
+  push(&vars, &false, sizeof(variable));
 }
 
-int exp_parser_init() { make_builtin_vars(); }
+int exp_parser_init() { 
+  make_builtin_vars(); 
+}
 
 int block(char **buffer) { return 0; }
 
+void *cmp_var_name(void *vars, void *data)
+{
+  char *name = (char*)data;
+  variable *cur_var = (variable*)vars;
+  if (!strcmp(name, cur_var->name)) {
+    printf("founded var with name  = %s\n", name);
+    return cur_var;
+  }
+  return 0;
+}
 int lookup(char *name, float *val) {
   variable *cur_var;
   int res = 0;
-  printf("Finding %s varilable\n", name);
-  for (cur_var = vars; cur_var != NULL; cur_var = cur_var->next) {
-    if (cur_var->name)
-      if (!strcmp(name, cur_var->name)) {
-        *val = cur_var->value;
-        res = 1;
-        break;
-      }
+  //printf("Finding %s varilable\n", name, val);
+  variable *var = NULL;
+  if (var = exist_element(vars, cmp_var_name, name))
+  {
+    *val = var->value;
+    res = 1;
   }
   return res;
 }
 
 float assign_value(char *name, float val) {
   variable *cur_var;
-  variable *tmp;
-  for (cur_var = vars; cur_var != NULL; cur_var = cur_var->next) {
-    tmp = cur_var;
-    if (!strcmp(name, cur_var->name)) {
-      cur_var->name = name;
-      cur_var->value = val;
-      break;
-    }
+  variable tmp;
+  printf("assign value with len = %d for %s\n", strlen(name), name);
+  if ((cur_var = exist_element(vars, cmp_var_name, name))) {
+    cur_var->name = name;
+    cur_var->value = val;
   }
-  if (!cur_var) {
-    tmp->next = malloc(sizeof(variable));
-    tmp = tmp->next;
-    tmp->name = name;
-    tmp->value = val;
-    tmp->next = NULL;
+  else  {
+    printf("create new var [%s] with val = %f on line %d\n", name, val, get_line());
+    tmp.name = name;
+    tmp.value = val;
+    puts("push");
+    push(&vars, &tmp, sizeof(variable));
   }
   return val;
 }

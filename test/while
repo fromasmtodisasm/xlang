@@ -3,14 +3,16 @@ int test_while()
 {
 	print "Check while statement...";
 
-	i = 1;
+	var i = 4;
+  print "test";
+  var j = 0;
+  print "j = " j;
 	while(i < 10)
 	{
 		print "This is while operator!";
 		if ((i >= 5) && (i <=7))
 		{
 			print "(( " i " >= 5) && (" i " <=7))";
-			j=1;
 			while (j < 10)
 			{
 				print j;

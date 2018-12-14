@@ -1,0 +1,9 @@
+#!xlang
+// Testing postfix indexing
+
+int a = 6;
+int main(char a, int b)
+{
+  a = "a";
+  print a;
+}
