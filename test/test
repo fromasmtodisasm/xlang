@@ -1,0 +1,5 @@
+int test()
+{
+  var j = 23;
+  print i;
+}

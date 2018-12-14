@@ -34,7 +34,7 @@ void printList(struct Node *node, void (*fptr)(void *))
 }
 
 
-void *exist_element(struct Node *node, void *(*fptr)(void *, void*), void *data)
+void *foreach_element(struct Node *node, void *(*fptr)(void *, void*), void *data)
 {
     while (node != NULL)
     {

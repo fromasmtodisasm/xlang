@@ -50,12 +50,16 @@ void *cmp_var_name(void *vars, void *data)
   }
   return 0;
 }
+
+void print_var(void *var)
+{
+  printf("var name = %s\n", ((variable*)(var))->name);
+}
 int lookup(char *name, float *val) {
   variable *cur_var;
   int res = 0;
-  //printf("Finding %s varilable\n", name, val);
   variable *var = NULL;
-  if (var = exist_element(vars, cmp_var_name, name))
+  if (var = foreach_element(vars, cmp_var_name, name))
   {
     *val = var->value;
     res = 1;
@@ -66,17 +70,17 @@ int lookup(char *name, float *val) {
 float assign_value(char *name, float val) {
   variable *cur_var;
   variable tmp;
-  printf("assign value with len = %d for %s\n", strlen(name), name);
-  if ((cur_var = exist_element(vars, cmp_var_name, name))) {
+  if ((cur_var = foreach_element(vars, cmp_var_name, name))) {
     cur_var->name = name;
     cur_var->value = val;
   }
   else  {
-    printf("create new var [%s] with val = %f on line %d\n", name, val, get_line());
+    
     tmp.name = name;
     tmp.value = val;
     puts("push");
     push(&vars, &tmp, sizeof(variable));
+
   }
   return val;
 }

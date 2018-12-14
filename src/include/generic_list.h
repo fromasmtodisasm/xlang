@@ -10,5 +10,6 @@ struct Node
 };
 
 void push(struct Node** head_ref, void *new_data, size_t data_size);
-void *exist_element(struct Node *head_ref, void *(*fptr)(void *, void *), void *data);
+void printList(struct Node *node, void (*fptr)(void *));
+void *foreach_element(struct Node *head_ref, void *(*fptr)(void *, void *), void *data);
 

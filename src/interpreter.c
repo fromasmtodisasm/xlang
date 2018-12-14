@@ -184,7 +184,7 @@ int is_print() { return 0; }
 
 int print(node_t *root) {
   int stop = 0;
-
+  puts("print vars or values");
   get_token(/*NEXT_TOKEN*/);
   do {
     char *number = "%f";
@@ -421,7 +421,7 @@ int define_var()
   printf("Recognize var definition...\n");
   if (get_token()->type == lcIDENT)
   {
-    varname = curr_token->text;
+    varname = strdup(curr_token->text);
     if (get_token()->type == lcASSIGN)
     {
       if ((type = get_token()->type) == lcIDENT || type == lcNUMBER)
