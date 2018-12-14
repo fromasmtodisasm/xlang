@@ -30,7 +30,7 @@ struct commands { /* таблица зарезервированных слов */
     "read",     lcREAD,     "break",      lcBREAK,      "goto",     lcGOTO,
     "continue", lcCONTINUE, "begin",      lcBEGINBLOCK, "function", lcFUNCTION,
     "void",     lcVOID,     "interprete", lcINTERPRETE, "sleep",    lcSLEEP,
-    "end",      lcENDBLOCK, "",           lcEND /* конец таблицы */
+    "end",      lcENDBLOCK, "var",         lcVAR,        "",      lcEND /* конец таблицы */
 };
 
 int jump_statement[] = {

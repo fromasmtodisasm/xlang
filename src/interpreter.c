@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <unistd.h> //sleep
 
+#define exptected_func(...) printf("On line %d\n", __LINE__);_expected_func( __VA_ARGS__)
+
 extern char *token_to_string[];
 // static token_t *curr_token;// = curr_token;
 void skip_compound_statement();
@@ -13,9 +15,11 @@ void skip_statement();
 int function_definition();
 int declaration_list();
 
+static int is_type(token_type type);
+
 token_type eat_tokens(token_type skip_to);
 
-void exptected_func(char *exptected) {
+void _expected_func(char *exptected) {
   printf("Error. Expected %s\n", exptected);
 }
 
@@ -318,6 +322,13 @@ way_out statement(compound_origin origin) {
       // printf("exp evaluated\n");
       get_token(/*NEXT_TOKEN*/);
     } break;
+    case lcVAR: {
+      
+      define_var();
+      if ((curr_token = curr_token)->type == lcSEMI) {
+        get_token();
+      }
+    } break;
     default:
       return NORMAL;
     }
@@ -398,4 +409,38 @@ int declaration_list() {
     }
   }
   get_token(/*NEXT_TOKEN*/);
+}
+
+int define_var()
+{
+  int res = 0;
+  int is_get_tok = 1;
+  token_type type;
+  char *varname = "";
+  
+  printf("Recognize var definition...\n");
+  if (get_token()->type == lcIDENT)
+  {
+    varname = curr_token->text;
+    if (get_token()->type == lcASSIGN)
+    {
+      if ((type = get_token()->type) == lcIDENT || type == lcNUMBER)
+      {
+        float value = eval();
+        assign_value(varname, value);
+      } 
+    }
+    else { 
+      assign_value(varname, 0);
+      is_get_tok = FALSE; 
+    }
+    res = TRUE;
+  }
+  else
+  {
+    fprintf(stderr, "Expected identifier\n");
+  }
+  if (is_get_tok)
+    get_token();
+  return res;
 }

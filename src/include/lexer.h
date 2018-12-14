@@ -54,6 +54,7 @@ typedef enum token_type {
   lcWHILE,
   lcCHAR,
   lcINT,
+  lcVAR,
 
   lcLBRACKET,
   lcRBRACKET,
