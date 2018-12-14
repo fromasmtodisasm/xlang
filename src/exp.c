@@ -45,7 +45,7 @@ void *cmp_var_name(void *vars, void *data)
   char *name = (char*)data;
   variable *cur_var = (variable*)vars;
   if (!strcmp(name, cur_var->name)) {
-    printf("founded var with name  = %s\n", name);
+    //printf("founded var with name  = %s\n", name);
     return cur_var;
   }
   return 0;
@@ -78,7 +78,6 @@ float assign_value(char *name, float val) {
     
     tmp.name = name;
     tmp.value = val;
-    puts("push");
     push(&vars, &tmp, sizeof(variable));
 
   }
