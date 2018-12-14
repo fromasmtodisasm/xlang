@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "exp.h"
 #include "fileutils.h"
 #include "interpreter.h"
 #include "preprocessor.h"

@@ -1,6 +1,4 @@
 #include "exp.h"
-#include "lexer.h"
-#include "tree.h"
 
 #include <assert.h>
 #include <ctype.h>

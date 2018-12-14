@@ -3,7 +3,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-// __cplusplus
+#include "exp.h"
 
 typedef enum compound_origin { COMPOUND, ITERATION, SELECTION } compound_origin;
 
