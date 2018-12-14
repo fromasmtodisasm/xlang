@@ -304,7 +304,7 @@ way_out statement(compound_origin origin) {
     }
     case lcSLEEP: {
       do_sleep();
-      if ((curr_token = curr_token)->type == lcSEMI) {
+      if (curr_token->type == lcSEMI) {
         get_token(/*NEXT_TOKEN*/);
       }
     } break;
@@ -324,7 +324,7 @@ way_out statement(compound_origin origin) {
     case lcVAR: {
       
       define_var();
-      if ((curr_token = curr_token)->type == lcSEMI) {
+      if (curr_token->type == lcSEMI) {
         get_token();
       }
     } break;
@@ -390,7 +390,7 @@ int declaration_list() {
     if (is_type(get_token(/*NEXT_TOKEN*/)->type)) {
       if (get_token(/*NEXT_TOKEN*/)->type == lcIDENT) {
         while (get_token(/*NEXT_TOKEN*/)->type == lcCOMMA &&
-               get_token(/*NEXT_TOKEN*/)->type == lcINT &&
+               is_type(get_token(/*NEXT_TOKEN*/)->type) &&
                get_token(/*NEXT_TOKEN*/)->type == lcIDENT)
           ;
         if (curr_token->type != lcRBRACE) {

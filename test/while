@@ -4,8 +4,8 @@ int test_while()
 	print "Check while statement...";
 
 	var i = 4;
-  //var j = 0;
-  print "j = " j;
+  var j = 0;
+  //print "j = " j;
 	while(i < 10)
 	{
 		print "This is while operator!";
