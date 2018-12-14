@@ -34,6 +34,7 @@ int block(char **buffer) { return 0; }
 int lookup(char *name, float *val) {
   variable *cur_var;
   int res = 0;
+  printf("Finding %s varilable\n", name);
   for (cur_var = vars; cur_var != NULL; cur_var = cur_var->next) {
     if (cur_var->name)
       if (!strcmp(name, cur_var->name)) {
@@ -50,16 +51,7 @@ float assign_value(char *name, float val) {
   variable *tmp;
   for (cur_var = vars; cur_var != NULL; cur_var = cur_var->next) {
     tmp = cur_var;
-    /*if (cur_var->name == NULL)
-    {
-            cur_var->name = name;
-            cur_var->value = val;
-            break;
-    }
-    else
-*/
     if (!strcmp(name, cur_var->name)) {
-      // printf("var %s founded with value %f\n", name, cur_var->value);
       cur_var->name = name;
       cur_var->value = val;
       break;
