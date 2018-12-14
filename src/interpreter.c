@@ -1,7 +1,5 @@
 #include "interpreter.h"
 #include "common.h"
-#include "exp.h"
-#include "lexer.h"
 #include "preprocessor.h"
 
 #include <memory.h> //memcpy
@@ -160,33 +158,19 @@ way_out do_while(node_t *root) {
 }
 
 int func_decl() { return 0; }
+/*!
+   \brief Это функция очень великая
 
+*/
 int start(char **buffer) {
-  //#define TEST
   int retval = 0;
 
   exp_parser_init();
 
   if ((lexerInit(*buffer)) != 0) {
-#ifdef TEST
-    node_t *root;
-    printf("eval expression\n");
-    while (get_token()->type != lcEND) {
-      retval = assignment_expression(&root);
-      puts("\nPrinting sytax tree...");
-
-      // prefix_tree(root,0);
-      float res;
-      calculate(root, &res);
-      printf("result = %f\n", res);
-      puts("");
-    }
-    puts("");
-#else
     while (get_token(/*NEXT_TOKEN*/)->type != lcEND) {
       retval = function_definition();
     }
-#endif
   }
 
   return retval;
