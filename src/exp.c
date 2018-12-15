@@ -12,7 +12,7 @@
 #define end_func()                                                             \
   printf("On line [%d]\n", __LINE__) // fprintf(stderr, "Function %s is end on
                                      // line %d\n", __FUNCTION__, __LINE__)
-typedef struct Node listof;
+typedef struct list_t listof;
 
 listof *vars;
 
