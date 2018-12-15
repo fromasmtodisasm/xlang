@@ -8,7 +8,7 @@ int test_while()
 	print "true == " true;
 	print "Check while statement...";
 
-	i = 1;
+	var i = 1;
 	while(i < 10)
 	{
 		print "This is while operator!";
@@ -16,7 +16,7 @@ int test_while()
 		if ((i >= 5) && (i <=7))
 		{
 			print "(( " i " >= 5) && (" i " <=7))";
-			j=1;
+			var j=1;
 			while (j < 10)
 			{
 				print j;

@@ -15,20 +15,20 @@ node_t *create_node() {
 #include <stdio.h>
 #include <string.h>
 
-int btree_insert(struct btree_node **root, void *item, unsigned int size, int (*compare_node)(const void*,const void*)) {
+void *btree_insert(struct btree_node_t **root, void *item, unsigned int size, int (*compare_node)(const void*,const void*)) {
     // Insert the root
     if (*root == NULL) {
-        *root = malloc(sizeof(struct btree_node));
+        *root = malloc(sizeof(struct btree_node_t));
         if (!(*root)) {
             fprintf(stderr,"malloc() fail\n");
-            return 0;
+            return NULL;
         }
         (*root)->left = (*root)->right = NULL;
         (*root)->item = malloc(size);
         if (!((*root)->item)) {
             fprintf(stderr,"malloc() fail\n");
             free(*root);
-            return 0;
+            return NULL;
         }
         memcpy((*root)->item,item,size);
     } else {
@@ -40,34 +40,34 @@ int btree_insert(struct btree_node **root, void *item, unsigned int size, int (*
             btree_insert(&(*root)->right,item,size,compare_node);
         }
     }
-    return 1;
+    return *root;
 }
 
-static void btree_free_node(struct btree_node *node) {
+static void btree_free_node(struct btree_node_t *node) {
     free(node->item);
     free(node);
 }
 
-static struct btree_node* find_min_node(struct btree_node *node) {
+static struct btree_node_t* find_min_node(struct btree_node_t *node) {
     node = node->right;
     while (node) node = node->left;
     return node;
 }
 
-static struct btree_node* find_max_node(struct btree_node *node) {
+static struct btree_node_t* find_max_node(struct btree_node_t *node) {
     node = node->left;
     while (node) node = node->right;
     return node;
 }
 
-struct btree_node* btree_delete_node(struct btree_node *root, void *item, unsigned int size, int (*compare_node)(const void*,const void*)) {
+struct btree_node_t* btree_delete_node(struct btree_node_t *root, void *item, unsigned int size, int (*compare_node)(const void*,const void*)) {
     if (root == NULL) return root;
     else if (compare_node(item,root->item) < 0) root->left = btree_delete_node(root->left,item,size,compare_node);
     else if (compare_node(item,root->item) > 0) root->right = btree_delete_node(root->right,item,size,compare_node);
     else {
         // 1. Deleting a node with two children
         if ( root->left && root->right ) {
-            struct btree_node *min_node = find_min_node(root);
+            struct btree_node_t *min_node = find_min_node(root);
             if (!min_node) {
                 min_node = find_max_node(root);
             }
@@ -75,12 +75,12 @@ struct btree_node* btree_delete_node(struct btree_node *root, void *item, unsign
             root->right = btree_delete_node(root->right,min_node->item,size,compare_node);
         } else if (root->left) {
             // 2. Deleting a node with one child (left)
-            struct btree_node *node_delete = root;
+            struct btree_node_t *node_delete = root;
             root = root->left;
             btree_free_node(node_delete);
         } else if (root->right) {
             // 2. Deleting a node with one child (right)
-            struct btree_node *node_delete = root;
+            struct btree_node_t *node_delete = root;
             root = root->right;
             btree_free_node(node_delete);
         } else {
@@ -92,7 +92,7 @@ struct btree_node* btree_delete_node(struct btree_node *root, void *item, unsign
     return root;
 }
 
-void btree_print(struct btree_node *root, void (*print_node)(const void *)) {
+void btree_print(struct btree_node_t *root, void (*print_node)(const void *)) {
     if (root) {
         print_node(root->item);
         btree_print(root->left,print_node);
@@ -100,7 +100,7 @@ void btree_print(struct btree_node *root, void (*print_node)(const void *)) {
     }
 }
 
-void btree_free(struct btree_node *root) {
+void btree_free(struct btree_node_t *root) {
     if (root) {
         free(root->item);
         btree_free(root->left);
@@ -109,8 +109,8 @@ void btree_free(struct btree_node *root) {
     }
 }
 
-int btree_search(struct btree_node *root, void *item, int (*compare_node)(const void*,const void*)) {
-    if (root == NULL) return 0;
+void *btree_search(struct btree_node_t *root, void *item, int (*compare_node)(const void*,const void*)) {
+    if (root == NULL) return NULL;
     else if (compare_node(item,root->item) > 0) return btree_search(root->right, item, compare_node);
     else if (compare_node(item,root->item) < 0) return btree_search(root->left, item, compare_node);
     else return 1;

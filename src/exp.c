@@ -7,35 +7,30 @@
 #include <stdlib.h>
 #include <string.h>
 
+int cmp_var_name(const void *left, const void *right);
+
 #define begin_func()                                                           \
   fprintf(stderr, "Function is %s line is %d\n", __FUNCTION__, __LINE__)
 #define end_func()                                                             \
   printf("On line [%d]\n", __LINE__) // fprintf(stderr, "Function %s is end on
                                      // line %d\n", __FUNCTION__, __LINE__)
-typedef struct list_t listof;
+#define push_var(var) btree_insert(&vars, &var, sizeof(var), cmp_var_name)
 
+typedef struct btree_node_t listof;
 listof *vars;
 
 int make_builtin_vars() {
-  variable false = { "false", 0 };
-  variable true = { "true", 1, };
-  push(&vars, &true, sizeof(variable));
-  push(&vars, &false, sizeof(variable));
+  variable _false = { "false", 0 };
+  variable _true = { "true", 1, };
+  push_var(_false);
+  push_var(_true);
 }
 
-int exp_parser_init() { 
-  make_builtin_vars(); 
-}
+int exp_parser_init() { make_builtin_vars(); }
 
-void *cmp_var_name(void *vars, void *data)
+int cmp_var_name(const void *left, const void *right)
 {
-  char *name = (char*)data;
-  variable *cur_var = (variable*)vars;
-  if (!strcmp(name, cur_var->name)) {
-    //printf("founded var with name  = %s\n", name);
-    return cur_var;
-  }
-  return 0;
+  return strcmp(((variable*)left)->name, ((variable*)left)->name);
 }
 
 void print_var(void *var)
@@ -46,7 +41,9 @@ int lookup(char *name, float *val) {
   variable *cur_var;
   int res = 0;
   variable *var = NULL;
-  if (var = foreach_element(vars, cmp_var_name, name))
+  variable tmp;
+  tmp.name = name;
+  if (var = btree_search(vars, &tmp, cmp_var_name))
   {
     *val = var->value;
     res = 1;
@@ -57,7 +54,8 @@ int lookup(char *name, float *val) {
 float assign_value(char *name, float val) {
   variable *cur_var;
   variable tmp;
-  if ((cur_var = foreach_element(vars, cmp_var_name, name))) {
+  tmp.name = name;
+  if ((cur_var = btree_search(vars, &tmp, cmp_var_name))) {
     cur_var->name = name;
     cur_var->value = val;
   }
@@ -65,8 +63,7 @@ float assign_value(char *name, float val) {
     
     tmp.name = name;
     tmp.value = val;
-    push(&vars, &tmp, sizeof(variable));
-
+    push_var(tmp);
   }
   return val;
 }
@@ -307,11 +304,9 @@ void calculate(node_t *tree, float *val) {
       break;
     case lcEQ_OP:
       *val = (val1 == val2);
-      printf("eq_op\n");
       break;
     case lcNE_OP:
       *val = (val1 != val2);
-      printf("ne_op\n");
       break;
 
     case lcG_OP:
