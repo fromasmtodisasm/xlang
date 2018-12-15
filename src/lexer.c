@@ -115,62 +115,69 @@ token_t *get_token() {
   static char curr_digit[NUMBER_LEN];
   static char curr_ident[IDENT_LEN];
   static char curr_oper[3];
+  int is_space = 0;
+  int is_comment = 0;
 
   if (*pos == '\0') {
     printf("End of source\n");
   }
-  while (*pos == ' ' || *pos == '\t' || *pos == '\r' || *pos == '\n') {
-    if (*pos == '\n') {
-      curr_context->cur_line++;
-    }
-    pos++;
-  }
-  begin = pos;
-  while (*pos == '#') {
-    pos++;
-    while (*pos) {
+  while (*pos){
+    if (*pos == ' ' || *pos == '\t' || *pos == '\r' || *pos == '\n') {
       if (*pos == '\n') {
-        type = lcCOMMENT;
         curr_context->cur_line++;
-        pos++;
-        break;
       }
       pos++;
     }
-  }
-  while (*pos == '/' && (*(pos + 1) == '/' || *(pos + 1) == '*')) {
-    if (*(pos + 1) == '/') {
-      pos += 2;
+    //begin = pos;
+    else if (*pos == '#') {
+      pos++;
       while (*pos) {
         if (*pos == '\n') {
           type = lcCOMMENT;
+          curr_context->cur_line++;
           pos++;
           break;
         }
         pos++;
       }
-    } else if (*(pos + 1) == '*') {
-      pos += 2;
-      while (*pos) {
-        if (*pos == '*' && *(pos + 1) == '/') {
-          type = lcCOMMENT;
-          pos += 2;
-          break;
-        }
-        pos++;
-      }
     }
-    curr_context->cur_line++;
-    /*if (type == lcEND)
-    type = lcUNKNOWN;
-    */
-  }
+    else if (*pos == '/' && (*(pos + 1) == '/' || *(pos + 1) == '*')) {
+      if (*(pos + 1) == '/') {
+        pos += 2;
+        while (*pos) {
+          if (*pos == '\n') {
+            type = lcCOMMENT;
+            pos++;
+            break;
+          }
+          pos++;
+        }
+      } else if (*(pos + 1) == '*') {
+        pos += 2;
+        while (*pos) {
+          if (*pos == '*' && *(pos + 1) == '/') {
+            type = lcCOMMENT;
+            pos += 2;
+            break;
+          }
+          pos++;
+        }
+      }
+      curr_context->cur_line++;
+      /*if (type == lcEND)
+      type = lcUNKNOWN;
+      */
+    }
+    else break;
+  } 
+  /*
   while (*pos == ' ' || *pos == '\t' || *pos == '\n') {
     if (*pos == '\n') {
       curr_context->cur_line++;
     }
     pos++;
   }
+  */
   begin = pos;
 
   if (*pos == '\0') {
