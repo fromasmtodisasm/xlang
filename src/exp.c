@@ -15,21 +15,10 @@
 typedef struct Node listof;
 
 listof *vars;
-// static token_t *curr_token;// = curr_token;
-
-typedef struct name_val
-{
-  char *name;
-  void *val;
-}name_val;
 
 int make_builtin_vars() {
-  //vars = malloc(sizeof(variable));
-  variable false = {"false", 0};
-  variable true = {
-      "true",
-      1,
-  };
+  variable false = { "false", 0 };
+  variable true = { "true", 1, };
   push(&vars, &true, sizeof(variable));
   push(&vars, &false, sizeof(variable));
 }
@@ -37,8 +26,6 @@ int make_builtin_vars() {
 int exp_parser_init() { 
   make_builtin_vars(); 
 }
-
-int block(char **buffer) { return 0; }
 
 void *cmp_var_name(void *vars, void *data)
 {

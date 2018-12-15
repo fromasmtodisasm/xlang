@@ -10,11 +10,11 @@ typedef enum variable_type {
   VAR_SONST_LITERAL
 } variable_type;
 
-typedef struct _variable {
+typedef struct variable {
   char *name;
   float value;
   int type;
-  struct _variable *next;
+  struct variable *next;
 } variable;
 
 int block(char **buffer);

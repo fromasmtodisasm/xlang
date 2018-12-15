@@ -18,19 +18,18 @@ static char *source;
 context_t context;
 context_t *curr_context;
 token_t *curr_token;
-struct commands { /* таблица зарезервированных слов */
+struct commands { 
   char command[20];
   token_type tok;
 } table[] = {
-    /* В эту таблицу */
-    "if",       lcIF, /* команды должны быть введены на нижнем регистре. */
+    "if",       lcIF,
     "else",     lcELSE,     "for",        lcFOR,        "do",       lcDO,
     "while",    lcWHILE,    "char",       lcCHAR,       "int",      lcINT,
     "return",   lcRETURN,   "quit",       lcABORT,      "print",    lcPRINT,
     "read",     lcREAD,     "break",      lcBREAK,      "goto",     lcGOTO,
     "continue", lcCONTINUE, "begin",      lcBEGINBLOCK, "function", lcFUNCTION,
     "void",     lcVOID,     "interprete", lcINTERPRETE, "sleep",    lcSLEEP,
-    "end",      lcENDBLOCK, "var",         lcVAR,        "",      lcEND /* конец таблицы */
+    "end",      lcENDBLOCK, "var",         lcVAR,        "",      lcEND
 };
 
 int jump_statement[] = {
@@ -85,7 +84,6 @@ token_type is_keyword(char *name) {
   return type;
 }
 
-void tokenize() {}
 int lexerInit(char *src) {
   curr_context = &context;
   curr_context->pos = src;
@@ -95,14 +93,9 @@ int lexerInit(char *src) {
   return 1;
 }
 
-int is_hexdigit(int digit) {}
-
 char *get_pos() { return curr_context->pos; }
 
-void set_pos(char *pos) {
-  // curr_context->curr_token.pos = pos;
-  curr_context->pos = pos;
-}
+void set_pos(char *pos) { curr_context->pos = pos; }
 
 int get_line() { return curr_context->cur_line; }
 
@@ -115,8 +108,6 @@ token_t *get_token() {
   static char curr_digit[NUMBER_LEN];
   static char curr_ident[IDENT_LEN];
   static char curr_oper[3];
-  int is_space = 0;
-  int is_comment = 0;
 
   if (*pos == '\0') {
     printf("End of source\n");
@@ -128,7 +119,6 @@ token_t *get_token() {
       }
       pos++;
     }
-    //begin = pos;
     else if (*pos == '#') {
       pos++;
       while (*pos) {
@@ -164,26 +154,13 @@ token_t *get_token() {
         }
       }
       curr_context->cur_line++;
-      /*if (type == lcEND)
-      type = lcUNKNOWN;
-      */
     }
     else break;
   } 
-  /*
-  while (*pos == ' ' || *pos == '\t' || *pos == '\n') {
-    if (*pos == '\n') {
-      curr_context->cur_line++;
-    }
-    pos++;
-  }
-  */
   begin = pos;
 
   if (*pos == '\0') {
     CURTOK().type = type = lcEND;
-    // printf("End of source\n");
-    // return &CURTOK();
   }
 
   /*
@@ -198,11 +175,6 @@ token_t *get_token() {
     }
     curr_ident[len] = 0;
 
-    /*
-                text = malloc(len + 1);
-                memcpy(text, pos - len, len);
-                ((char*)(text))[len] = '\0';
-    */
     text = curr_ident;
     int tmp;
     if ((tmp = is_keyword(text)) != lcEND) {
@@ -265,7 +237,6 @@ token_t *get_token() {
       }
     }
 
-    // value = (void*)val;
     text = curr_digit;
     type = lcNUMBER;
   } else if (*pos == ',') {
@@ -345,7 +316,6 @@ token_t *get_token() {
         type = lcEQ_OP;
         pos++;
       } else {
-        // fprintf(stderr, "This is assign\n");
         type = lcASSIGN;
       }
       break;
@@ -404,7 +374,6 @@ token_t *get_token() {
     type = lcUNKNOWN;
     pos++;
   }
-  // assert(type != lcEND);
   if (!text && ((type != lcEND) && (type != lcUNKNOWN))) {
 
     assert(type != lcEND);

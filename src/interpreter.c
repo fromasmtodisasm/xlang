@@ -9,7 +9,6 @@
 #define exptected_func(...) printf("On line %d\n", __LINE__);_expected_func( __VA_ARGS__)
 
 extern char *token_to_string[];
-// static token_t *curr_token;// = curr_token;
 void skip_compound_statement();
 void skip_statement();
 int function_definition();
@@ -410,8 +409,7 @@ int declaration_list() {
   get_token(/*NEXT_TOKEN*/);
 }
 
-int define_var()
-{
+int define_var(){
   int res = 0;
   int is_get_tok = 1;
   token_type type;
