@@ -7,7 +7,7 @@
 #include <unistd.h> //sleep
 #include <stdlib.h> //system
 
-#define exptected_func(...) printf("On line %d\n", __LINE__);_expected_func( __VA_ARGS__)
+#define exptected_func(...) printf("On line %d for source line = %d\n", __LINE__, get_line());_expected_func( __VA_ARGS__)
 
 extern char *token_to_string[];
 void skip_compound_statement();

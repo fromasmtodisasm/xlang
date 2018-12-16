@@ -19,7 +19,9 @@ typedef enum token_type {
   lcDIV,
   lcASSIGN,
   lcPLUS_ASSIGN,
+  lcPLUS_PLUS,
   lcMINUS_ASSIGN,
+  lcMINUS_MINUS,
   lcMUL_ASSIGN,
   lcDIV_ASSIGN,
 
@@ -70,6 +72,8 @@ typedef enum token_type {
 
   lcVOID,
   lcPAUSE,
+
+  lcPOINT,
 
   lcUNKNOWN
 } token_type;

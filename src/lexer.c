@@ -188,7 +188,7 @@ token_t *get_token() {
   /*
    * Parse identifier
    */
-  else if (isdigit(*pos) || *pos == '.') {
+  else if ((isdigit(*pos) || *pos == '.') && !isalpha(pos[1])) {
     int val = 0;
     int hex_val = 0;
     int radix = 10;
@@ -258,6 +258,15 @@ token_t *get_token() {
   } else if (*pos == '}') {
     type = lcRBRACKET;
     pos++;
+  } else if (*pos == '[') {
+    type = *pos;
+    pos++;
+  } else if (*pos == ']') {
+    type = *pos;
+    pos++;
+  } else if (*pos == '.') {
+    type = lcPOINT;
+    pos++;
   } else if (*pos == '\"') {
     int len = 0;
     pos++;
@@ -280,6 +289,9 @@ token_t *get_token() {
       if (pos[1] == '=') {
         pos++;
         type = lcPLUS_ASSIGN;
+      } else if (pos[1] == '+') {
+        type = lcPLUS_PLUS; 
+        pos++;
       } else {
         type = lcPLUS;
       }
@@ -289,6 +301,8 @@ token_t *get_token() {
       if (pos[1] == '=') {
         type = lcMINUS_ASSIGN;
         pos++;
+      } else if (pos[1] == '+') {
+        type = lcMINUS_MINUS;
       } else {
         type = lcMINUS;
       }
@@ -386,7 +400,7 @@ token_t *get_token() {
   CURTOK().text = text;
   CURTOK().pos = begin;
   curr_context->pos = pos;
-  //printf("<%s, %s>\n", "text" /*token_to_string[CURTOK().type - BASE_INDEX]*/, text);
+  DEBUG("<%s, %s>\n", "text" /*token_to_string[CURTOK().type - BASE_INDEX]*/, text);
   assert(&CURTOK() != NULL);
   return &CURTOK();
 }

@@ -139,11 +139,86 @@ int primary_expression(node_t **root) {
     break;
   }
   default:
-    ERROR("Error, expected primary on line %d!!!\n", get_line());
+    ERROR("Error, expected primary on line %d!!! ", get_line());
+    ERROR("Meeted %s\n", curr_token->text);
     getchar();
     exit(-1);
   }
   get_token();
+  return res;
+}
+
+int postfix_expression(node_t **root)
+{
+  int res = 0;
+  node_t *node;
+  int need_get = TRUE;
+  
+  res = primary_expression(root);
+
+  switch (curr_token->type)
+  {
+  case lcPLUS_PLUS: {
+  case lcMINUS_MINUS:
+    DEBUG("This id postfix expression: %s\n", curr_token->text);
+  } break;
+  case '[': {
+    get_token();
+    res = primary_expression(root);
+    if (curr_token->type != ']')
+      ERROR("Expected ']'\n");
+  } break;
+  case lcLBRACE: {
+    if (get_token()->type != lcRBRACE)
+    {
+      /*
+      do {
+        res = primary_expression(root);
+      }while(curr_token->type == lcCOMMA);
+      */
+      res = primary_expression(root);
+      while(curr_token->type == lcCOMMA) {
+        get_token();
+        res = primary_expression(root);
+      }
+      if (curr_token->type != lcRBRACE)
+        ERROR("Expected RBRACE\n");
+    }
+    else
+    {
+      printf("Empty arg list\n");
+    }
+  } break;
+  /*
+  case lcPOINT: {
+    if (get_token()->type != lcIDENT) {
+      ERROR("Expected identifier on line %d\n", get_line());
+    } 
+    else {
+      printf("postfix point\n");
+      while (TRUE) {
+        if
+      }
+    }
+  } break;
+  */
+
+  default: {
+    need_get = FALSE; 
+  } break;
+  }
+
+  if (need_get) get_token();
+  return res;
+}
+
+int unary_expression(node_t **root)
+{
+  int res = 0;
+  node_t *node;
+
+  res = postfix_expression(root);
+
   return res;
 }
 
@@ -153,7 +228,7 @@ int multiplicative_expression(node_t **root) {
   node_t *node;
 
   // Build left subtree
-  res = primary_expression(root);
+  res = unary_expression(root);
   while (curr_token->type == lcMUL || curr_token->type == lcDIV) {
     node = create_node();
     assert(curr_token->text != NULL);
@@ -162,7 +237,7 @@ int multiplicative_expression(node_t **root) {
     node->text = strdup(curr_token->text);
     node->type = curr_token->type;
     get_token();
-    primary_expression(&(node->right));
+    unary_expression(&(node->right));
     *root = node;
   }
   assert(*root != NULL);
