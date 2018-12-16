@@ -106,7 +106,6 @@ int lexerInit(char *src);
 char *get_pos();
 void set_pos(char *pos);
 int get_line();
-
 token_t *get_token();
 /*
 union

@@ -18,6 +18,7 @@ static char *source;
 context_t context;
 context_t *curr_context;
 token_t *curr_token;
+
 struct commands { 
   char command[20];
   token_type tok;
@@ -74,6 +75,7 @@ char *token_to_string[] = {"lcEND",
                            "lcABORT",
                            "lcPRINT",
                            "lcUNKNOWN"};
+
 token_type is_keyword(char *name) {
   token_type type = lcEND;
   for (int i = 0; table[i].tok != lcEND; i++) {

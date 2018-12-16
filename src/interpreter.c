@@ -45,6 +45,7 @@ token_type eat_tokens(token_type skip_to) {
     ;
   return type;
 }
+
 void skip_statement() {
   int stop = 0;
   while (!stop) {
@@ -348,6 +349,7 @@ way_out statement(compound_origin origin) {
 abort:
   return out;
 }
+
 way_out compound_statement(compound_origin origin) {
   way_out out = NORMAL;
   int expr_len;
