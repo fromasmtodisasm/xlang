@@ -20,6 +20,9 @@ set(HEADERS
 	include/preprocessor.h
   include/tree.h
   include/generic_list.h
+  include/config.h
+  include/debug.h
+  include/error.h
     )
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 target_include_directories(${PROJECT_NAME} PUBLIC include)

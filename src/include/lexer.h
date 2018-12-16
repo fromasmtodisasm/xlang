@@ -69,6 +69,7 @@ typedef enum token_type {
   lcINTERPRETE,
 
   lcVOID,
+  lcPAUSE,
 
   lcUNKNOWN
 } token_type;

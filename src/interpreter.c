@@ -5,6 +5,7 @@
 #include <memory.h> //memcpy
 #include <stdio.h>
 #include <unistd.h> //sleep
+#include <stdlib.h> //system
 
 #define exptected_func(...) printf("On line %d\n", __LINE__);_expected_func( __VA_ARGS__)
 
@@ -19,7 +20,7 @@ static int is_type(token_type type);
 token_type eat_tokens(token_type skip_to);
 
 void _expected_func(char *exptected) {
-  printf("Error. Expected %s\n", exptected);
+  ERROR("Error. Expected %s\n", exptected);
 }
 
 void skip_if() {
@@ -51,7 +52,7 @@ void skip_statement() {
     case lcLBRACKET: {
       skip_compound_statement();
       if (curr_token->type != lcRBRACKET) {
-        printf("error: expected }\n");
+        ERROR("error: expected }\n");
       }
       /*else
       {
@@ -91,7 +92,7 @@ void skip_compound_statement() {
       if (curr_token->type == lcRBRACKET) {
 
       } else {
-        printf("error: expected }\n");
+        ERROR("error: expected }\n");
       }
     }
   }
@@ -228,6 +229,11 @@ void do_sleep() {
   sleep(ms);
 }
 
+void do_pause(){
+  puts("Pause, press any key");
+  getchar();
+}
+
 int interprete() {
   if (get_token(/*NEXT_TOKEN*/)->type == lcSTRING) {
     start((char **)&(curr_token->text));
@@ -274,7 +280,7 @@ way_out statement(compound_origin origin) {
     case lcLBRACKET: {
       out = compound_statement(origin);
       if (curr_token->type != lcRBRACKET) {
-        printf("error: expected }\n");
+        ERROR("error: expected }\n");
       }
       return out;
     } break;
@@ -307,6 +313,13 @@ way_out statement(compound_origin origin) {
         get_token(/*NEXT_TOKEN*/);
       }
     } break;
+    case lcPAUSE: {
+      do_pause();
+      if (curr_token->type == lcSEMI) {
+        get_token(/*NEXT_TOKEN*/);
+      }
+    }
+    break;
     case lcINTERPRETE: {
       interprete();
     } break;
@@ -351,7 +364,7 @@ way_out compound_statement(compound_origin origin) {
       if (curr_token->type == lcRBRACKET) {
 
       } else {
-        printf("error: expected }\n");
+        ERROR("error: expected }\n");
       }
     }
   }
@@ -414,7 +427,7 @@ int define_var(){
   int is_get_tok = 1;
   token_type type;
   char *varname = "";
-  
+  float value = 0; 
   if (get_token()->type == lcIDENT)
   {
     varname = strdup(curr_token->text);
@@ -422,19 +435,20 @@ int define_var(){
     {
       if ((type = get_token()->type) == lcIDENT || type == lcNUMBER)
       {
-        float value = eval();
+        value = eval();
         assign_value(varname, value);
       } 
     }
     else { 
-      assign_value(varname, 0);
+      assign_value(varname, value);
       is_get_tok = FALSE; 
     }
+    DEBUG("Defined var <%s> with value = [%f]\n", varname, value);
     res = TRUE;
   }
   else
   {
-    fprintf(stderr, "Expected identifier\n");
+    ERROR("Expected identifier\n");
   }
   if (is_get_tok)
     get_token();

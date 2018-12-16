@@ -113,5 +113,5 @@ void *btree_search(struct btree_node_t *root, void *item, int (*compare_node)(co
     if (root == NULL) return NULL;
     else if (compare_node(item,root->item) > 0) return btree_search(root->right, item, compare_node);
     else if (compare_node(item,root->item) < 0) return btree_search(root->left, item, compare_node);
-    else return 1;
+    else return root->item;
 }

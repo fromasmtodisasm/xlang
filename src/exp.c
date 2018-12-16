@@ -1,5 +1,6 @@
+#include "common.h"
+#include "config.h"
 #include "exp.h"
-#include "generic_list.h"
 
 #include <assert.h>
 #include <ctype.h>
@@ -7,17 +8,39 @@
 #include <stdlib.h>
 #include <string.h>
 
-int cmp_var_name(const void *left, const void *right);
 
 #define begin_func()                                                           \
-  fprintf(stderr, "Function is %s line is %d\n", __FUNCTION__, __LINE__)
+  DEBUG(stderr, "Function is %s line is %d\n", __FUNCTION__, __LINE__)
 #define end_func()                                                             \
-  printf("On line [%d]\n", __LINE__) // fprintf(stderr, "Function %s is end on
+  DEBUG("On line [%d]\n", __LINE__) // fprintf(stderr, "Function %s is end on
                                      // line %d\n", __FUNCTION__, __LINE__)
-#define push_var(var) btree_insert(&vars, &var, sizeof(var), cmp_var_name)
+#ifdef BTREE_USE
 
+#include "tree.h"
+
+int cmp_var_name(const void *left, const void *right);
 typedef struct btree_node_t listof;
+
 listof *vars;
+#define push_var(var) btree_insert(&vars, &var, sizeof(var), cmp_var_name)
+#define find_var(var) btree_search(vars, &var, cmp_var_name)
+#define VAR_STORAGE "BTREE_USE"
+
+#elif LIST_USE
+
+#include "generic_list.h"
+
+void *cmp_var_name(const void *vars, const void *data);
+typedef struct list_t listof;
+
+listof *vars;
+#define push_var(var) push(&vars, &var, sizeof(var))
+#define find_var(var) foreach_element(vars, var.name, cmp_var_name)
+#define VAR_STORAGE "LIST_USE"
+
+#endif
+
+const char *var_storage = VAR_STORAGE;
 
 int make_builtin_vars() {
   variable _false = { "false", 0 };
@@ -26,12 +49,34 @@ int make_builtin_vars() {
   push_var(_true);
 }
 
-int exp_parser_init() { make_builtin_vars(); }
+int exp_parser_init() { 
+  DEBUG("Used var storage: %s\n", var_storage);
+  make_builtin_vars(); 
+}
+
+#ifdef BTREE_USE
 
 int cmp_var_name(const void *left, const void *right)
 {
-  return strcmp(((variable*)left)->name, ((variable*)left)->name);
+  return strcmp(((variable*)left)->name, ((variable*)right)->name) == 0;
 }
+
+#endif //BTREE_USE
+
+#ifdef LIST_USE
+
+void *cmp_var_name(const void *vars, const void *data)
+{
+  char *name = (char*)data;
+  variable *cur_var = (variable*)vars;
+  if (!strcmp(name, cur_var->name)) {
+    DEBUG("founded var with name  = %s\n", name);
+    return cur_var;
+  }
+  return 0;
+}
+
+#endif //LIST_USE
 
 void print_var(void *var)
 {
@@ -43,7 +88,7 @@ int lookup(char *name, float *val) {
   variable *var = NULL;
   variable tmp;
   tmp.name = name;
-  if (var = btree_search(vars, &tmp, cmp_var_name))
+  if (var = find_var(tmp))
   {
     *val = var->value;
     res = 1;
@@ -55,7 +100,7 @@ float assign_value(char *name, float val) {
   variable *cur_var;
   variable tmp;
   tmp.name = name;
-  if ((cur_var = btree_search(vars, &tmp, cmp_var_name))) {
+  if (cur_var = find_var(tmp)) {
     cur_var->name = name;
     cur_var->value = val;
   }
@@ -94,7 +139,7 @@ int primary_expression(node_t **root) {
     break;
   }
   default:
-    printf("Error, expected primary on line %d!!!\n", get_line());
+    ERROR("Error, expected primary on line %d!!!\n", get_line());
     getchar();
     exit(-1);
   }
@@ -361,6 +406,6 @@ float eval() {
 
   // functional(root,0);
   calculate(root, &retval);
-  // printf("result = %f\n", retval);
+  DEBUG("result = %f\n", retval);
   return retval;
 }

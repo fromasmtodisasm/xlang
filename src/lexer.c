@@ -29,7 +29,8 @@ struct commands {
     "read",     lcREAD,     "break",      lcBREAK,      "goto",     lcGOTO,
     "continue", lcCONTINUE, "begin",      lcBEGINBLOCK, "function", lcFUNCTION,
     "void",     lcVOID,     "interprete", lcINTERPRETE, "sleep",    lcSLEEP,
-    "end",      lcENDBLOCK, "var",         lcVAR,        "",      lcEND
+    "end",      lcENDBLOCK, "var",         lcVAR,        
+    "pause",    lcPAUSE,    "",        lcEND
 };
 
 int jump_statement[] = {
@@ -107,7 +108,7 @@ token_t *get_token() {
   char *begin = pos;
   static char curr_digit[NUMBER_LEN];
   static char curr_ident[IDENT_LEN];
-  static char curr_oper[3];
+  static char curr_oper[3] = {0};
 
   if (*pos == '\0') {
     printf("End of source\n");
@@ -370,7 +371,7 @@ token_t *get_token() {
   } else if (*pos == '\0') {
     type = lcEND;
   } else {
-    printf("UNKNOWN token\n");
+    ERROR("UNKNOWN token\n");
     type = lcUNKNOWN;
     pos++;
   }
@@ -385,7 +386,7 @@ token_t *get_token() {
   CURTOK().text = text;
   CURTOK().pos = begin;
   curr_context->pos = pos;
-  // printf("<%s, %s>", token_to_string[CURTOK().type - BASE_INDEX], text);
+  //printf("<%s, %s>\n", "text" /*token_to_string[CURTOK().type - BASE_INDEX]*/, text);
   assert(&CURTOK() != NULL);
   return &CURTOK();
 }

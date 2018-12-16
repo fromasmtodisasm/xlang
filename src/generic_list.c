@@ -34,7 +34,8 @@ void printList(struct list_t *node, void (*fptr)(void *))
 }
 
 
-void *foreach_element(struct list_t *node, void *(*fptr)(void *, void*), void *data)
+
+void *foreach_element(struct list_t *node, void *data, void *(*fptr)(const void *, const void*))
 {
     while (node != NULL)
     {
