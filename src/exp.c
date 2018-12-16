@@ -56,8 +56,7 @@ int exp_parser_init() {
 
 #ifdef BTREE_USE
 
-int cmp_var_name(const void *left, const void *right)
-{
+int cmp_var_name(const void *left, const void *right) {
   return strcmp(((variable*)left)->name, ((variable*)right)->name) == 0;
 }
 
@@ -65,8 +64,7 @@ int cmp_var_name(const void *left, const void *right)
 
 #ifdef LIST_USE
 
-void *cmp_var_name(const void *vars, const void *data)
-{
+void *cmp_var_name(const void *vars, const void *data) {
   char *name = (char*)data;
   variable *cur_var = (variable*)vars;
   if (!strcmp(name, cur_var->name)) {
@@ -78,10 +76,10 @@ void *cmp_var_name(const void *vars, const void *data)
 
 #endif //LIST_USE
 
-void print_var(void *var)
-{
+void print_var(void *var) {
   printf("var name = %s\n", ((variable*)(var))->name);
 }
+
 int lookup(char *name, float *val) {
   variable *cur_var;
   int res = 0;
@@ -148,8 +146,7 @@ int primary_expression(node_t **root) {
   return res;
 }
 
-int postfix_expression(node_t **root)
-{
+int postfix_expression(node_t **root) {
   int res = 0;
   node_t *node;
   int need_get = TRUE;
@@ -221,8 +218,7 @@ int postfix_expression(node_t **root)
   return res;
 }
 
-int unary_expression(node_t **root)
-{
+int unary_expression(node_t **root) {
   int res = 0;
   node_t *node;
 
@@ -358,6 +354,7 @@ void make_space(int n) {
     printf(" ");
   }
 }
+
 void print_node(node_t *node, int level) {
   assert(node != NULL);
   // make_space(level);
