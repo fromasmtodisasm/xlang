@@ -176,10 +176,10 @@ int postfix_expression(node_t **root)
         res = primary_expression(root);
       }while(curr_token->type == lcCOMMA);
       */
-      res = primary_expression(root);
+      res = assignment_expression(root);
       while(curr_token->type == lcCOMMA) {
         get_token();
-        res = primary_expression(root);
+        res = assignment_expression(root);
       }
       if (curr_token->type != lcRBRACE)
         ERROR("Expected RBRACE\n");
