@@ -161,6 +161,11 @@ int postfix_expression(node_t **root)
   case lcPLUS_PLUS: {
   case lcMINUS_MINUS:
     DEBUG("This id postfix expression: %s\n", curr_token->text);
+    node = create_node();
+    node->left = (*root);
+    node->text = strdup(curr_token->text);
+    node->type = curr_token->type;
+    *root = node;
   } break;
   case '[': {
     get_token();
@@ -395,85 +400,90 @@ void calculate(node_t *tree, float *val) {
     calculate(tree->left, &val1);
     calculate(tree->right, &val2);
     switch (tree->type) {
-    case lcPLUS:
+    case lcPLUS: {
       *val = val1 + val2;
-      break;
-    case lcMINUS:
+    } break;
+    case lcMINUS: {
       *val = val1 - val2;
-      break;
-    case lcMUL:
+    } break;
+    case lcMUL: {
       *val = val1 * val2;
-      break;
-    case lcDIV:
+    } break;
+    case lcDIV: {
       *val = val1 / val2;
-      break;
-    case lcINC_OP:
+    } break;
+    case lcINC_OP: {
       *val++;
-      break;
-    case lcDEC_OP:
+    } break;
+    case lcDEC_OP: {
       *val--;
-      break;
+    } break;
 
-    case lcAND_OP:
+    case lcAND_OP: {
       *val = (val1 && val2);
-      break;
-    case lcOR_OP:
+    } break;
+    case lcOR_OP: {
       *val = (val1 || val2);
-      break;
-    case lcLE_OP:
+    } break;
+    case lcLE_OP: {
       *val = (val1 <= val2);
-      break;
-    case lcGE_OP:
+    } break;
+    case lcGE_OP: {
       *val = (val1 >= val2);
-      break;
-    case lcEQ_OP:
+    } break;
+    case lcEQ_OP: {
       *val = (val1 == val2);
-      break;
-    case lcNE_OP:
+    } break;
+    case lcNE_OP: {
       *val = (val1 != val2);
-      break;
+    } break;
 
-    case lcG_OP:
+    case lcG_OP: {
       *val = (val1 > val2);
-      break;
-    case lcL_OP:
+    } break;
+    case lcL_OP: {
       *val = (val1 < val2);
-      break;
+    } break;
 
-    case lcNUMBER:
+    case lcNUMBER: {
       *val = atof(tree->text);
-      break;
-    case lcIDENT:
+    } break;
+    case lcIDENT: {
       if (!lookup(tree->text, val)) {
         printf("Undefined var: %s\n", tree->text);
       }
-      break;
+    } break;
 
     case lcASSIGN: {
-      float res;
-      calculate(tree->right, &res);
-      *val = assign_value(tree->left->text, res);
+      calculate(tree->right, &val2);
+      *val = assign_value(tree->left->text, val2);
     } break;
     case lcPLUS_ASSIGN: {
-      float res;
       calculate(tree->right, &val2);
       *val = assign_value(tree->left->text, val1 + val2);
       // printf("plus_asign = %f\n", *val);
     } break;
     case lcMINUS_ASSIGN: {
-      float res;
       calculate(tree->right, &val2);
       *val = assign_value(tree->left->text, val1 - val2);
     } break;
     case lcMUL_ASSIGN: {
-      float res;
       calculate(tree->right, &val2);
       *val = assign_value(tree->left->text, val1 * val2);
     } break;
     case lcDIV_ASSIGN: {
-      float res;
       calculate(tree->right, &val2);
       *val = assign_value(tree->left->text, val1 / val2);
+    } break;
+    case lcPLUS_PLUS: {
+      calculate(tree->left, &val1);
+      *val = val1++;
+      assign_value(tree->left->text, val1);
+    } break;
+    case lcMINUS_MINUS: {
+      calculate(tree->left, &val1);
+      *val = val1--; 
+      assign_value(tree->left->text, val1);
     } break;
     }
   }
