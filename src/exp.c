@@ -189,19 +189,23 @@ int postfix_expression(node_t **root)
       printf("Empty arg list\n");
     }
   } break;
-  /*
   case lcPOINT: {
+  case lcARROW:
     if (get_token()->type != lcIDENT) {
       ERROR("Expected identifier on line %d\n", get_line());
     } 
     else {
-      printf("postfix point\n");
-      while (TRUE) {
-        if
+      get_token();
+      need_get = FALSE;
+      while (curr_token->type == lcPOINT, curr_token->type == lcARROW) {
+        if (get_token()->type == lcIDENT)
+        {
+          get_token();
+        }
+        else break;
       }
     }
   } break;
-  */
 
   default: {
     need_get = FALSE; 

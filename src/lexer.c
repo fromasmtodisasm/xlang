@@ -301,8 +301,12 @@ token_t *get_token() {
       if (pos[1] == '=') {
         type = lcMINUS_ASSIGN;
         pos++;
-      } else if (pos[1] == '+') {
+      } else if (pos[1] == '-') {
         type = lcMINUS_MINUS;
+        pos++;
+      } else if (pos[1] == '>') {
+        type = lcARROW;
+        pos++;
       } else {
         type = lcMINUS;
       }

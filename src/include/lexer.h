@@ -74,6 +74,7 @@ typedef enum token_type {
   lcPAUSE,
 
   lcPOINT,
+  lcARROW,
 
   lcUNKNOWN
 } token_type;
