@@ -106,7 +106,7 @@ way_out do_if(node_t *root) {
   get_token(/*NEXT_TOKEN*/);
   if (curr_token->type == lcLBRACE) {
     get_token(/*NEXT_TOKEN*/);
-    condition = (int)eval();
+    condition = (int)eval()->value.f;
     if ((curr_token = curr_token)->type == lcRBRACE) {
       if (condition) {
         get_token(/*NEXT_TOKEN*/);
@@ -139,7 +139,7 @@ way_out do_while(node_t *root) {
     char *pos_begin = curr_token->pos;
     char *pos_end = pos_begin;
 
-    while (get_token(/*NEXT_TOKEN*/), condition = (int)eval()) {
+    while (get_token(/*NEXT_TOKEN*/), condition = (int)eval()->value.f) {
       if ((curr_token = curr_token)->type == lcRBRACE) {
         get_token(/*NEXT_TOKEN*/);
         if ((out = statement(ITERATION)) == BREAK) {
@@ -190,7 +190,7 @@ int print(node_t *root) {
     char *number = "%f";
     char *string = "%s";
     char *curtype;
-    float expr_val = 0;
+    node_t *expr_val = NULL;
     switch (curr_token->type) {
     case lcSTRING:
       printf("%s", curr_token->text);
@@ -201,7 +201,7 @@ int print(node_t *root) {
     case lcIDENT:
       curtype = number;
       expr_val = eval();
-      printf("%f", expr_val);
+      printf("%f", expr_val->value.f);
       break;
     default:
       puts("");
@@ -218,7 +218,7 @@ int do_read() {
          curr_token->type != lcEND) {
     if (curr_token->type == lcIDENT) {
       scanf("%d", &tmp);
-      assign_value(curr_token->text, tmp);
+      //assign_value(curr_token->text, tmp);
     }
   }
 }
@@ -226,7 +226,7 @@ int do_read() {
 void do_sleep() {
   int ms;
   get_token();
-  ms = eval();
+  ms = eval()->value.f;
   sleep(ms);
 }
 
@@ -326,7 +326,7 @@ way_out statement(compound_origin origin) {
     } break;
     case lcIDENT:
     case lcNUMBER: {
-      res = eval();
+      /*res = */(void)eval();
       if (curr_token->type != lcSEMI) {
         exptected_func("SEMI");
         goto abort;
@@ -429,23 +429,31 @@ int define_var(){
   int is_get_tok = 1;
   token_type type;
   char *varname = "";
-  float value = 0; 
+  node_t *value = NULL; 
   if (get_token()->type == lcIDENT)
   {
     varname = strdup(curr_token->text);
+    node_t *value;
     if (get_token()->type == lcASSIGN)
     {
       if ((type = get_token()->type) == lcIDENT || type == lcNUMBER)
       {
         value = eval();
-        assign_value(varname, value);
+        //assert(value != NULL);
+        value->text = varname;
+        assign_value(value);
       } 
     }
     else { 
-      assign_value(varname, value);
+      value = create_node();
+      value->text = varname;
+      value->value.f = 0.0;
+      assign_value(value);
       is_get_tok = FALSE; 
     }
-    DEBUG("Defined var <%s> with value = [%f]\n", varname, value);
+    puts(__FUNCTION__);
+    assert(value != NULL);
+    DEBUG("Defined var <%s> with value = [%f]\n", value->text, value->value.f);
     res = TRUE;
   }
   else

@@ -19,8 +19,8 @@ typedef struct variable {
 
 int block(char **buffer);
 int assignment_expression(node_t **node);
-int lookup(char *name, float *val);
-float assign_value(char *name, float val);
+int lookup(node_t *node);
+float assign_value(node_t *node);
 int primary_expression(node_t **node);
 int multiplicative_expression(node_t **node);
 int additive_expression(node_t **node);
@@ -28,4 +28,4 @@ int conditional_expression(node_t **node);
 
 int exp_parser_init();
 void prefix_tree(node_t *tree, int level);
-float eval();
+node_t *eval();

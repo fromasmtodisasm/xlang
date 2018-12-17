@@ -76,6 +76,8 @@ typedef enum token_type {
   lcPOINT,
   lcARROW,
 
+  lcCALL,
+
   lcUNKNOWN
 } token_type;
 typedef enum token_category {

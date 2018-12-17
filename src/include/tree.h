@@ -5,7 +5,16 @@ typedef struct node_t node_t;
 struct node_t {
   int type;
   char *text;
-  float value;
+  struct {
+    union {
+      int i;
+      char c;
+      char *s;
+      float f;
+      double d;
+      void *b;
+    };
+  }value;
   node_t *left, *right;
 };
 

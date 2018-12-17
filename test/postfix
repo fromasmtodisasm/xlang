@@ -4,7 +4,10 @@ int test_postfix()
   print i++;
   
   i[1];
-  i();
+  i = 30;
+  print "befor func";
+  print i();
+  print "after call";
   i(i,2,3);
   i.i->i;
   
