@@ -1,24 +1,30 @@
-#include "lexer.h"
-#include "common.h"
+/***************************************************************************/
+/****************************** Includes ***********************************/
+/***************************************************************************/
 #include <assert.h>
 #include <ctype.h>
 #include <malloc.h>
 #include <stdio.h>
 #include <string.h>
 
-/******** Static variables *********/
+#include "lexer.h"
+#include "common.h"
+
+
+/***************************************************************************/
+/***************** Defines used by this module only ************************/
+/***************************************************************************/
 #define CURTOK() (curr_context->curr_token)
 #define NUMTOKS 2
 
-/******** Static variables *********/
-// static token_t *curr_token[2] = { NULL,NULL };
-static char *source;
-
-/******** Global variables *********/
+/***************************************************************************/
+/********** Global Variables defined for this module only ******************/
+/************************ (should be static) *******************************/
+/***************************************************************************/
 context_t context;
 context_t *curr_context;
 token_t *curr_token;
-
+static char *source;
 struct commands { 
   char command[20];
   token_type tok;
@@ -75,6 +81,11 @@ char *token_to_string[] = {"lcEND",
                            "lcABORT",
                            "lcPRINT",
                            "lcUNKNOWN"};
+
+/***************************************************************************/
+/*********************** Function Prototypes *******************************/
+/******  (should be static, if not they should be in '.h' file) ************/
+/***************************************************************************/
 
 token_type is_keyword(char *name) {
   token_type type = lcEND;

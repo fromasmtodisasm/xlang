@@ -1,14 +1,19 @@
-#include "common.h"
-#include "config.h"
-#include "exp.h"
-
+/***************************************************************************/
+/****************************** Includes ***********************************/
+/***************************************************************************/
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "common.h"
+#include "config.h"
+#include "exp.h"
 
+/***************************************************************************/
+/***************** Defines used by this module only ************************/
+/***************************************************************************/
 #define begin_func()                                                           \
   DEBUG(stderr, "Function is %s line is %d\n", __FUNCTION__, __LINE__)
 #define end_func()                                                             \
@@ -33,14 +38,26 @@ listof *vars;
 void *cmp_var_name(const void *vars, const void *data);
 typedef struct list_t listof;
 
-listof *vars;
+static listof *vars;
 #define push_var(var) push(&vars, &var, sizeof(var))
 #define find_var(var) foreach_element(vars, var.name, cmp_var_name)
 #define VAR_STORAGE "LIST_USE"
 
 #endif
 
+/***************************************************************************/
+/********** Global Variables defined for this module only ******************/
+/************************ (should be static) *******************************/
+/***************************************************************************/
 const char *var_storage = VAR_STORAGE;
+
+/***************************************************************************/
+/*********************** Function Prototypes *******************************/
+/******  (should be static, if not they should be in '.h' file) ************/
+/***************************************************************************/
+int exp_parser_init();
+
+static int make_builtin_vars();
 
 int make_builtin_vars() {
   variable _false = { "false", 0 };

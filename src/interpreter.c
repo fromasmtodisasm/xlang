@@ -1,18 +1,32 @@
-#include "interpreter.h"
-#include "common.h"
-#include "preprocessor.h"
-#include "generic_list.h"
-
+/***************************************************************************/
+/****************************** Includes ***********************************/
+/***************************************************************************/
 #include <memory.h> //memcpy
 #include <stdio.h>
 #include <unistd.h> //sleep
 #include <stdlib.h> //system
 
+#include "interpreter.h"
+#include "common.h"
+#include "preprocessor.h"
+#include "generic_list.h"
+
 #define exptected_func(...) printf("On line %d for source line = %d\n", __LINE__, get_line());_expected_func( __VA_ARGS__)
 
+/***************************************************************************/
+/************************* Global Variables ********************************/
+/***************************************************************************/
 extern char *token_to_string[];
-int function_definition();
-int declaration_list();
+
+/***************************************************************************/
+/*********************** Function Prototypes *******************************/
+/******  (should be static, if not they should be in '.h' file) ************/
+/***************************************************************************/
+static int function_definition();
+static int declaration_list();
+static int is_type(token_type type);
+static int do_print(node_t **root);
+
 void print_statements(void *stmnt)
 {
   node_t* st = (node_t*)stmnt;
@@ -21,9 +35,6 @@ void print_statements(void *stmnt)
 
 }
 
-static int is_type(token_type type);
-
-token_type eat_tokens(token_type skip_to);
 
 void _expected_func(char *exptected) {
   ERROR("Error. Expected %s\n", exptected);
