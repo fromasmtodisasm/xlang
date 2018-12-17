@@ -1,10 +1,11 @@
 int test_postfix()
 {
-  var i = 20;
+  var i = 10;
   print i++;
   
-  i[1];
+  //i[1];
   i = 30;
+  print i;
   print "befor func";
   print i();
   print "after call";

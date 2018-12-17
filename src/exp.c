@@ -469,8 +469,9 @@ void calculate(node_t *tree) {
 
     case lcASSIGN: {
       calculate(tree->right);
+      tree->left->value.f = tree->right->value.f;
       *val = assign_value(tree->left);
-      printf("assign res = %f\n", *val);
+      //printf("assign res = %f\n", *val);
     } break;
     case lcPLUS_ASSIGN: {
       calculate(tree->right);
@@ -512,6 +513,7 @@ void calculate(node_t *tree) {
     }
   }
 }
+
 
 node_t *eval() {
   node_t *root;
