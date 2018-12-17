@@ -1,6 +1,7 @@
 #include "interpreter.h"
 #include "common.h"
 #include "preprocessor.h"
+#include "generic_list.h"
 
 #include <memory.h> //memcpy
 #include <stdio.h>
@@ -10,10 +11,15 @@
 #define exptected_func(...) printf("On line %d for source line = %d\n", __LINE__, get_line());_expected_func( __VA_ARGS__)
 
 extern char *token_to_string[];
-void skip_compound_statement();
-void skip_statement();
 int function_definition();
 int declaration_list();
+void print_statements(void *stmnt)
+{
+  node_t* st = (node_t*)stmnt;
+  assert(st != NULL);
+  printf("Current stmnt = %s\n", st->text);
+
+}
 
 static int is_type(token_type type);
 
@@ -23,141 +29,60 @@ void _expected_func(char *exptected) {
   ERROR("Error. Expected %s\n", exptected);
 }
 
-void skip_if() {
-  if (eat_tokens(lcRBRACE) == lcRBRACE) {
-    get_token(/*NEXT_TOKEN*/);
-    skip_statement();
-  }
-}
-
-void skip_while() {
-  if (eat_tokens(lcRBRACE) == lcRBRACE) {
-    get_token(/*NEXT_TOKEN*/);
-    skip_statement();
-  }
-}
-
-token_type eat_tokens(token_type skip_to) {
-  token_type type = lcEND;
-  if ((type = curr_token->type) == skip_to)
-    return type;
-  while (((type = get_token(/*NEXT_TOKEN*/)->type) != skip_to) && type != lcEND)
-    ;
-  return type;
-}
-
-void skip_statement() {
-  int stop = 0;
-  while (!stop) {
-    switch (curr_token->type) {
-    case lcLBRACKET: {
-      skip_compound_statement();
-      if (curr_token->type != lcRBRACKET) {
-        ERROR("error: expected }\n");
-      }
-      /*else
-      {
-
-      }*/
-      return;
-    } break;
-    case lcIF: {
-      skip_if();
-    } break;
-    case lcWHILE: {
-      skip_while();
-    } break;
-    case lcRBRACKET:
-      return;
-    default:
-      if (eat_tokens(lcSEMI) == lcSEMI)
-        break;
-      else
-        return;
-    }
-    get_token(/*NEXT_TOKEN*/);
-  }
-}
-
-void skip_compound_statement() {
-  int bracket_lvl = 0;
-  int res = 0;
-  token_t prev_token;
-
-  memcpy(&prev_token, curr_token, sizeof(token_t));
-  if (!(curr_token->type == lcLBRACKET &&
-        get_token(/*NEXT_TOKEN*/)->type == lcRBRACKET) &&
-      (curr_token->type != lcEND)) {
-    if (prev_token.type == lcLBRACKET) {
-      skip_statement();
-      if (curr_token->type == lcRBRACKET) {
-
-      } else {
-        ERROR("error: expected }\n");
-      }
-    }
-  }
-}
-
-way_out do_if(node_t *root) {
-  int condition = 0;
+way_out do_if(node_t **root) {
+  node_t *if_node = NULL;
+  node_t *statement_node = NULL;
   way_out out = NORMAL;
+
+  if_node = *root;//create_node();
+  if_node->text = curr_token->text; 
+  if_node->type = curr_token->type;
 
   get_token(/*NEXT_TOKEN*/);
   if (curr_token->type == lcLBRACE) {
     get_token(/*NEXT_TOKEN*/);
-    condition = (int)eval()->value.f;
-    if ((curr_token = curr_token)->type == lcRBRACE) {
-      if (condition) {
+    assignment_expression(&if_node->left);
+    if (curr_token->type == lcRBRACE) {
+      get_token(/*NEXT_TOKEN*/);
+      statement_node = create_node();
+      statement_node->type = lcLBRACKET;
+      out = statement(&statement_node->left);
+      if (get_token(/*NEXT_TOKEN*/)->type == lcELSE){
         get_token(/*NEXT_TOKEN*/);
-        if ((out = statement(SELECTION)) == CONTINUE || out == BREAK) {
-          // get_token()/*FIXME: change process getting <PREV_TOKEN>*/;
-        } else if (get_token(/*NEXT_TOKEN*/)->type == lcELSE) {
-          get_token(/*NEXT_TOKEN*/);
-          skip_statement();
-        }
-      } else {
-        get_token(/*NEXT_TOKEN*/);
-        skip_statement();
-        if (get_token(/*NEXT_TOKEN*/)->type == lcELSE) {
-          get_token(/*NEXT_TOKEN*/);
-          out = statement(SELECTION);
-        }
+        statement(&statement_node->right);
       }
     }
   }
+  else { ERROR("Expected LBREACE\n"); }
   ///*get_token(/*NEXT_TOKEN*/);*/
+  
+  if_node->right = statement_node;
+  *root = if_node;
   return out;
 }
 
-way_out do_while(node_t *root) {
-  int condition = 0;
+way_out do_while(node_t **root) {
+  node_t *while_node = NULL;
   way_out out = NORMAL;
+
+  while_node = *root;//create_node();
+  while_node->text = curr_token->text; 
+  while_node->type = curr_token->type;
 
   get_token(/*NEXT_TOKEN*/);
   if (curr_token->type == lcLBRACE) {
-    char *pos_begin = curr_token->pos;
-    char *pos_end = pos_begin;
-
-    while (get_token(/*NEXT_TOKEN*/), condition = (int)eval()->value.f) {
-      if ((curr_token = curr_token)->type == lcRBRACE) {
-        get_token(/*NEXT_TOKEN*/);
-        if ((out = statement(ITERATION)) == BREAK) {
-          break;
-        } else if (out == CONTINUE || out == NORMAL) {
-          pos_end = curr_token->pos;
-          set_pos(pos_begin);
-          get_token(/*NEXT_TOKEN*/);
-          continue;
-        } else if (out == RETURN) {
-          return RETURN;
-        }
-      }
-    }
     get_token(/*NEXT_TOKEN*/);
-    skip_statement();
+    assignment_expression(&while_node->left);
+    //get_token();
+    if (curr_token->type == lcRBRACE) {
+      get_token(/*NEXT_TOKEN*/);
+      //printf("While get statement\n");
+      statement(&while_node->right);
+    }
   }
+  else { ERROR("Expected RBRACE on line %d\n", get_line()); }
 
+  *root = while_node;
   get_token(/*NEXT_TOKEN*/);
   return out;
 }
@@ -171,19 +96,24 @@ int start(char **buffer) {
   int retval = 0;
 
   exp_parser_init();
+  struct list_t *functions;
+  node_t *curr_func;
 
   if ((lexerInit(*buffer)) != 0) {
     while (get_token(/*NEXT_TOKEN*/)->type != lcEND) {
-      retval = function_definition();
+      retval = function_definition(&curr_func);
+      printf("Curr_func name = %s\n", curr_func->text);
+      assert(curr_func != NULL);
+      push(&functions, curr_func, sizeof(node_t)); 
     }
   }
+
+  printf("Func name = %s\n", curr_func->text);
 
   return retval;
 }
 
-int is_print() { return 0; }
-
-int print(node_t *root) {
+int do_print(node_t **root) {
   int stop = 0;
   get_token(/*NEXT_TOKEN*/);
   do {
@@ -243,28 +173,33 @@ int interprete() {
   return 0;
 }
 
-way_out statement(compound_origin origin) {
+way_out statement(node_t **root) {
   int res = 0;
   int expr_len;
   way_out out = NORMAL;
   int stop = 0;
+  struct node_t *statements;
+  struct node_t *curr_statement;
 
-  node_t *root;
+  //printf("in function %s\n", __FUNCTION__);
 
+  statements = curr_statement;
   while (TRUE) {
+  //printf("curr_tok = %s\n", curr_token->text);
+    curr_statement = create_node();
+    curr_statement->text = strdup(curr_token->text);
+    curr_statement->type = curr_token->type;
     switch (curr_token->type) {
     case lcIF: {
-      if ((out = do_if(root)) == CONTINUE || out == BREAK)
-        return out;
+      do_if(&curr_statement);
     } break;
     case lcWHILE: {
-      do_while(root);
+      do_while(&curr_statement);
+      printf("after while tok = %s\n", curr_statement->text);
     } break;
     case lcBREAK: {
       if (get_token(/*NEXT_TOKEN*/)->type == lcSEMI) {
         get_token(/*NEXT_TOKEN*/);
-        skip_statement();
-        return BREAK;
       } else {
         exptected_func("SEMI");
       }
@@ -272,16 +207,29 @@ way_out statement(compound_origin origin) {
     case lcCONTINUE: {
       if (get_token(/*NEXT_TOKEN*/)->type == lcSEMI) {
         get_token(/*NEXT_TOKEN*/);
-        skip_statement();
-        return CONTINUE;
+      } else {
+        exptected_func("SEMI");
+      }
+    } break;
+    case lcRETURN: {
+      get_token();
+      assignment_expression(&curr_statement->left);
+      if (curr_token->type == lcSEMI) {
+        get_token(/*NEXT_TOKEN*/);
       } else {
         exptected_func("SEMI");
       }
     } break;
     case lcLBRACKET: {
-      out = compound_statement(origin);
+      out = compound_statement(&curr_statement);
       if (curr_token->type != lcRBRACKET) {
         ERROR("error: expected }\n");
+      }
+      (*root)->right = (void*)statements;
+      for (curr_statement = statements; curr_statement != NULL; curr_statement = curr_statement->right)
+      {
+        assert(curr_statement->right != NULL);
+        printf("Curr statement = %s\n", curr_statement->text);
       }
       return out;
     } break;
@@ -293,7 +241,8 @@ way_out statement(compound_origin origin) {
       }
     } break;
     case lcPRINT: {
-      print(root);
+      //printf("In print\n");
+      do_print(root);
       if ((curr_token = curr_token)->type == lcSEMI) {
         get_token(/*NEXT_TOKEN*/);
       }
@@ -326,7 +275,7 @@ way_out statement(compound_origin origin) {
     } break;
     case lcIDENT:
     case lcNUMBER: {
-      /*res = */(void)eval();
+      curr_statement = eval();
       if (curr_token->type != lcSEMI) {
         exptected_func("SEMI");
         goto abort;
@@ -336,33 +285,49 @@ way_out statement(compound_origin origin) {
     } break;
     case lcVAR: {
       
-      define_var();
+      define_var(&curr_statement);
       if (curr_token->type == lcSEMI) {
         get_token();
       }
     } break;
-    default:
+    default: {
+      //printf("Stmnt list: \n");
+      //printList(statements, print_statements);
+      //printf("after print\n");
+      (*root)->right = statements;
+      puts("here");
+      for (curr_statement = statements; curr_statement != NULL; curr_statement = curr_statement->right)
+      {
+        //assert(curr_statement->right != NULL);
+        printf("Curr statement = %s\n", curr_statement->text);
+      }
       return NORMAL;
     }
-  }
+    }
+    //assert(curr_statement->text != NULL);
+    //printf("Pushed stmnt %s\n", curr_statement->text);
+    //push(&statements, curr_statement, sizeof(node_t));
+    statements = curr_statement;
+    curr_statement = statements->right;
 
+  }
 abort:
   return out;
 }
 
-way_out compound_statement(compound_origin origin) {
+way_out compound_statement(node_t **root) {
   way_out out = NORMAL;
   int expr_len;
   token_t prev_token;
   int retval = 0;
-
+  //printf("in function %s\n", __FUNCTION__);
   memcpy(&prev_token, curr_token, sizeof(token_t));
   if (curr_token->type == lcLBRACKET &&
       get_token(/*NEXT_TOKEN*/)->type == lcRBRACKET) {
     retval = 0;
   } else {
     if (prev_token.type == lcLBRACKET) {
-      out = statement(origin);
+      out = statement(root);
       if (curr_token->type == lcRBRACKET) {
 
       } else {
@@ -385,15 +350,26 @@ int is_type(token_type type) {
   return res;
 }
 
-int function_definition() {
+int function_definition(node_t **root) {
   way_out out;
+  node_t *arg_list;
+  node_t *block;
+  node_t *function;
+  function = create_node();
   token_type type = curr_token->type;
+  function->type = type;
   if (is_type(type) && get_token(/*NEXT_TOKEN*/)->type == lcIDENT) {
+    function->text = strdup(curr_token->text);
+    printf("Curr func name = %s\n", function->text);
     get_token(/*NEXT_TOKEN*/);
-    declaration_list();
-    out = compound_statement(COMPOUND);
+    declaration_list(&arg_list);
+    out = compound_statement(&block);
   }
-
+  
+  function->left = arg_list;
+  function->right = block;
+  *root = function;
+  printf("end function = %s\n", (*root)->text);
   return 0;
 }
 
@@ -451,7 +427,6 @@ int define_var(){
       assign_value(value);
       is_get_tok = FALSE; 
     }
-    puts(__FUNCTION__);
     assert(value != NULL);
     DEBUG("Defined var <%s> with value = [%f]\n", value->text, value->value.f);
     res = TRUE;

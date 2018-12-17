@@ -2,7 +2,8 @@ int test_postfix()
 {
   var i = 10;
   print i++;
-  
+  break;
+  /* 
   //i[1];
   i = 30;
   print i;
@@ -15,4 +16,6 @@ int test_postfix()
   print i;
   i--;
   print i;
+  */
+  return 10;
 }
