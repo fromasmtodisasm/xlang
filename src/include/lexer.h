@@ -89,6 +89,9 @@ typedef enum token_type {
   lcARROW,
 
   lcCALL,
+  lcBLOCK,
+  lcSTATEMENT,
+  lcVARDEF,
 
   lcUNKNOWN
 } token_type;

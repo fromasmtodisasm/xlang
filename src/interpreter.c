@@ -45,8 +45,8 @@ way_out do_if(node_t **root) {
   node_t *statement_node = NULL;
   way_out out = NORMAL;
 
-  if_node = *root;//create_node();
-  if_node->text = curr_token->text; 
+  if_node = create_node();
+  if_node->text = strdup(curr_token->text); 
   if_node->type = curr_token->type;
 
   get_token(/*NEXT_TOKEN*/);
@@ -76,8 +76,8 @@ way_out do_while(node_t **root) {
   node_t *while_node = NULL;
   way_out out = NORMAL;
 
-  while_node = *root;//create_node();
-  while_node->text = curr_token->text; 
+  while_node = create_node();
+  while_node->text = strdup(curr_token->text);
   while_node->type = curr_token->type;
 
   get_token(/*NEXT_TOKEN*/);
@@ -111,21 +111,24 @@ int start(char **buffer) {
   node_t *curr_func;
 
   if ((lexerInit(*buffer)) != 0) {
+    //get_token(/*NEXT_TOKEN*/);
     while (get_token(/*NEXT_TOKEN*/)->type != lcEND) {
       retval = function_definition(&curr_func);
-      printf("Curr_func name = %s\n", curr_func->text);
+      //printf("Curr_func name = %s\n", curr_func->text);
       assert(curr_func != NULL);
       push(&functions, curr_func, sizeof(node_t)); 
     }
   }
 
-  printf("Func name = %s\n", curr_func->text);
+  //printf("Func name = %s\n", curr_func->text);
 
   return retval;
 }
 
 int do_print(node_t **root) {
   int stop = 0;
+  node_t *print_node = *root = create_node();
+  print_node->text = strdup(curr_token->text);
   get_token(/*NEXT_TOKEN*/);
   do {
     char *number = "%f";
@@ -134,7 +137,8 @@ int do_print(node_t **root) {
     node_t *expr_val = NULL;
     switch (curr_token->type) {
     case lcSTRING:
-      printf("%s", curr_token->text);
+      //puts("print");
+      //printf("%s", curr_token->text);
       get_token(/*NEXT_TOKEN*/);
       break;
 
@@ -142,7 +146,8 @@ int do_print(node_t **root) {
     case lcIDENT:
       curtype = number;
       expr_val = eval();
-      printf("%f", expr_val->value.f);
+      //puts("print");
+      //printf("%f", expr_val->value.f);
       break;
     default:
       puts("");
@@ -184,6 +189,45 @@ int interprete() {
   return 0;
 }
 
+void do_break(node_t **root)
+{
+  node_t *break_node = *root = create_node();
+  break_node->type = curr_token->type;
+  break_node->text = strdup(curr_token->text);
+  if (get_token(/*NEXT_TOKEN*/)->type == lcSEMI) {
+    get_token(/*NEXT_TOKEN*/);
+  } else {
+    exptected_func("SEMI");
+  } 
+}
+
+void do_continue(node_t **root)
+{
+  node_t *continue_node = *root = create_node();
+  continue_node->type = curr_token->type;
+  continue_node->text = strdup(curr_token->text);
+  if (get_token(/*NEXT_TOKEN*/)->type == lcSEMI) {
+    get_token(/*NEXT_TOKEN*/);
+  } else {
+    exptected_func("SEMI");
+  } 
+}
+
+void do_return(node_t **root)
+{
+  node_t *return_node = *root = create_node();
+  return_node->type = curr_token->type;
+  return_node->text = strdup(curr_token->text);
+  get_token();
+  assignment_expression(&return_node->left);
+  if (curr_token->type == lcSEMI) {
+    get_token(/*NEXT_TOKEN*/);
+  } else {
+    exptected_func("SEMI");
+  }
+
+}
+
 way_out statement(node_t **root) {
   int res = 0;
   int expr_len;
@@ -194,53 +238,32 @@ way_out statement(node_t **root) {
 
   //printf("in function %s\n", __FUNCTION__);
 
-  statements = curr_statement;
+  *root = create_node();
+  statements = *root;
+  statements->type = lcBLOCK;
   while (TRUE) {
   //printf("curr_tok = %s\n", curr_token->text);
-    curr_statement = create_node();
-    curr_statement->text = strdup(curr_token->text);
-    curr_statement->type = curr_token->type;
     switch (curr_token->type) {
     case lcIF: {
       do_if(&curr_statement);
     } break;
     case lcWHILE: {
       do_while(&curr_statement);
-      printf("after while tok = %s\n", curr_statement->text);
+      //printf("after while tok = %s\n", curr_statement->text);
     } break;
     case lcBREAK: {
-      if (get_token(/*NEXT_TOKEN*/)->type == lcSEMI) {
-        get_token(/*NEXT_TOKEN*/);
-      } else {
-        exptected_func("SEMI");
-      }
+      do_break(&curr_statement);
     } break;
     case lcCONTINUE: {
-      if (get_token(/*NEXT_TOKEN*/)->type == lcSEMI) {
-        get_token(/*NEXT_TOKEN*/);
-      } else {
-        exptected_func("SEMI");
-      }
+      do_continue(&curr_statement); 
     } break;
     case lcRETURN: {
-      get_token();
-      assignment_expression(&curr_statement->left);
-      if (curr_token->type == lcSEMI) {
-        get_token(/*NEXT_TOKEN*/);
-      } else {
-        exptected_func("SEMI");
-      }
+      do_return(&curr_statement); 
     } break;
     case lcLBRACKET: {
-      out = compound_statement(&curr_statement);
+      out = compound_statement(root);
       if (curr_token->type != lcRBRACKET) {
         ERROR("error: expected }\n");
-      }
-      (*root)->right = (void*)statements;
-      for (curr_statement = statements; curr_statement != NULL; curr_statement = curr_statement->right)
-      {
-        assert(curr_statement->right != NULL);
-        printf("Curr statement = %s\n", curr_statement->text);
       }
       return out;
     } break;
@@ -253,7 +276,7 @@ way_out statement(node_t **root) {
     } break;
     case lcPRINT: {
       //printf("In print\n");
-      do_print(root);
+      do_print(&curr_statement);
       if ((curr_token = curr_token)->type == lcSEMI) {
         get_token(/*NEXT_TOKEN*/);
       }
@@ -291,7 +314,6 @@ way_out statement(node_t **root) {
         exptected_func("SEMI");
         goto abort;
       }
-      // printf("exp evaluated\n");
       get_token(/*NEXT_TOKEN*/);
     } break;
     case lcVAR: {
@@ -305,21 +327,31 @@ way_out statement(node_t **root) {
       //printf("Stmnt list: \n");
       //printList(statements, print_statements);
       //printf("after print\n");
-      (*root)->right = statements;
-      puts("here");
-      for (curr_statement = statements; curr_statement != NULL; curr_statement = curr_statement->right)
+      //(*root)->right = statements;
+      /* 
+      node_t *tmp;
+      puts("**********");
+      puts("Begin statement list");
+      for (tmp = (*root); tmp->right != NULL; tmp = tmp->left)
       {
-        //assert(curr_statement->right != NULL);
-        printf("Curr statement = %s\n", curr_statement->text);
+        assert(tmp != NULL);
+        //assert(tmp->text != NULL);
+        printf("\t-%s\n", tmp->right->text);
       }
+      puts("**********");
+      puts("End statement list");
+      */
+      
       return NORMAL;
     }
     }
-    //assert(curr_statement->text != NULL);
+    assert(curr_statement != NULL);
     //printf("Pushed stmnt %s\n", curr_statement->text);
     //push(&statements, curr_statement, sizeof(node_t));
-    statements = curr_statement;
-    curr_statement = statements->right;
+    //printf("Curr stmnt = %s\n", curr_statement->text);
+    statements->right = curr_statement;
+    statements->left = create_node();
+    statements  = statements->left;
 
   }
 abort:
@@ -331,21 +363,25 @@ way_out compound_statement(node_t **root) {
   int expr_len;
   token_t prev_token;
   int retval = 0;
-  //printf("in function %s\n", __FUNCTION__);
+  printf("in function %s\n", __FUNCTION__);
   memcpy(&prev_token, curr_token, sizeof(token_t));
   if (curr_token->type == lcLBRACKET &&
       get_token(/*NEXT_TOKEN*/)->type == lcRBRACKET) {
     retval = 0;
+    *root = create_node();
   } else {
     if (prev_token.type == lcLBRACKET) {
       out = statement(root);
       if (curr_token->type == lcRBRACKET) {
-
+        //puts("End compound!");
+        //get_token();
       } else {
         ERROR("error: expected }\n");
       }
     }
   }
+  //get_token();
+  printf("leave function %s\n", __FUNCTION__);
   return out;
 }
 
@@ -371,16 +407,28 @@ int function_definition(node_t **root) {
   function->type = type;
   if (is_type(type) && get_token(/*NEXT_TOKEN*/)->type == lcIDENT) {
     function->text = strdup(curr_token->text);
-    printf("Curr func name = %s\n", function->text);
+    printf("Curr func name = (%s)\n\n", function->text);
     get_token(/*NEXT_TOKEN*/);
     declaration_list(&arg_list);
     out = compound_statement(&block);
   }
   
+    node_t *tmp;
+    puts("**********");
+    puts("Begin statement list");
+    for (tmp = block; tmp->right != NULL; tmp = tmp->left)
+    {
+      assert(tmp != NULL);
+      //assert(tmp->text != NULL);
+      printf("\t-%s\n", tmp->right->text);
+    }
+    puts("**********");
+    puts("End statement list");
+
   function->left = arg_list;
   function->right = block;
   *root = function;
-  printf("end function = %s\n", (*root)->text);
+  printf("\nend function = (%s)", (*root)->text);
   return 0;
 }
 
@@ -411,7 +459,7 @@ int declaration_list() {
   get_token(/*NEXT_TOKEN*/);
 }
 
-int define_var(){
+int define_var(node_t **root){
   int res = 0;
   int is_get_tok = 1;
   token_type type;
@@ -420,13 +468,17 @@ int define_var(){
   if (get_token()->type == lcIDENT)
   {
     varname = strdup(curr_token->text);
+    //printf("varname = %s\n", varname);
+    *root = create_node();
+    (*root)->text = "VarAssign";
+    (*root)->type = lcVARDEF;
     node_t *value;
     if (get_token()->type == lcASSIGN)
     {
       if ((type = get_token()->type) == lcIDENT || type == lcNUMBER)
       {
         value = eval();
-        //assert(value != NULL);
+        assert(value != NULL);
         value->text = varname;
         assign_value(value);
       } 
@@ -439,6 +491,8 @@ int define_var(){
       is_get_tok = FALSE; 
     }
     assert(value != NULL);
+    (*root)->left = value;
+
     DEBUG("Defined var <%s> with value = [%f]\n", value->text, value->value.f);
     res = TRUE;
   }
