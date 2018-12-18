@@ -119,9 +119,9 @@ token_t *get_token() {
   void *value = NULL;
   char *text = NULL;
   char *begin = pos;
-  static char curr_digit[NUMBER_LEN];
-  static char curr_ident[IDENT_LEN];
-  static char curr_oper[3] = {0};
+  char curr_digit[NUMBER_LEN];
+  char curr_ident[IDENT_LEN];
+  //static char curr_oper[3] = {0};
 
   if (*pos == '\0') {
     printf("End of source\n");
@@ -189,7 +189,7 @@ token_t *get_token() {
     }
     curr_ident[len] = 0;
 
-    text = curr_ident;
+    text = strdup(curr_ident);
     int tmp;
     if ((tmp = is_keyword(text)) != lcEND) {
       type = tmp;
@@ -251,7 +251,7 @@ token_t *get_token() {
       }
     }
 
-    text = curr_digit;
+    text = strdup(curr_digit);
     type = lcNUMBER;
   } else if (*pos == ',') {
     type = lcCOMMA;
@@ -294,7 +294,7 @@ token_t *get_token() {
 
     text = malloc(len + 1);
     memcpy(text, pos - len - 1, len);
-    ((char *)(text))[len] = '\0';
+    text[len] = '\0';
     type = lcSTRING;
   } else if (type == lcEND) {
     switch (*pos) {
@@ -410,8 +410,8 @@ token_t *get_token() {
 
     assert(type != lcEND);
     assert(pos > begin);
-    memcpy(curr_oper, begin, pos - begin);
-    text = curr_oper;
+    text = strndup(begin, pos - begin);
+    //text[pos-begin] = '\0';
   }
   CURTOK().type = type;
   CURTOK().text = text;

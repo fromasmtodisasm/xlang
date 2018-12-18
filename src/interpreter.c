@@ -189,8 +189,7 @@ int interprete() {
   return 0;
 }
 
-void do_break(node_t **root)
-{
+void do_break(node_t **root) {
   node_t *break_node = *root = create_node();
   break_node->type = curr_token->type;
   break_node->text = strdup(curr_token->text);
@@ -201,8 +200,7 @@ void do_break(node_t **root)
   } 
 }
 
-void do_continue(node_t **root)
-{
+void do_continue(node_t **root) {
   node_t *continue_node = *root = create_node();
   continue_node->type = curr_token->type;
   continue_node->text = strdup(curr_token->text);
@@ -213,8 +211,18 @@ void do_continue(node_t **root)
   } 
 }
 
-void do_return(node_t **root)
-{
+void do_abort(node_t **root) {
+  node_t *abort_node = *root = create_node();
+  abort_node->type = curr_token->type;
+  abort_node->text = strdup(curr_token->text);
+  if (get_token(/*NEXT_TOKEN*/)->type == lcSEMI) {
+    get_token(/*NEXT_TOKEN*/);
+  } else {
+    exptected_func("SEMI");
+  } 
+}
+
+void do_return(node_t **root) {
   node_t *return_node = *root = create_node();
   return_node->type = curr_token->type;
   return_node->text = strdup(curr_token->text);
@@ -286,11 +294,8 @@ way_out statement(node_t **root) {
 
     } break;
     case lcABORT: {
-      get_token(/*NEXT_TOKEN*/);
-      puts("This is abort!");
-      out = -1;
-      goto abort;
-    }
+      do_abort(&curr_statement);
+    } break;
     case lcSLEEP: {
       do_sleep();
       if (curr_token->type == lcSEMI) {
@@ -302,17 +307,15 @@ way_out statement(node_t **root) {
       if (curr_token->type == lcSEMI) {
         get_token(/*NEXT_TOKEN*/);
       }
-    }
-    break;
+    } break;
     case lcINTERPRETE: {
       interprete();
     } break;
-    case lcIDENT:
-    case lcNUMBER: {
+    case lcIDENT: {
+    case lcNUMBER: 
       curr_statement = eval();
       if (curr_token->type != lcSEMI) {
         exptected_func("SEMI");
-        goto abort;
       }
       get_token(/*NEXT_TOKEN*/);
     } break;
@@ -324,10 +327,7 @@ way_out statement(node_t **root) {
       }
     } break;
     default: {
-      //printf("Stmnt list: \n");
-      //printList(statements, print_statements);
-      //printf("after print\n");
-      //(*root)->right = statements;
+
       /* 
       node_t *tmp;
       puts("**********");
@@ -343,19 +343,13 @@ way_out statement(node_t **root) {
       */
       
       return NORMAL;
-    }
+    } break;
     }
     assert(curr_statement != NULL);
-    //printf("Pushed stmnt %s\n", curr_statement->text);
-    //push(&statements, curr_statement, sizeof(node_t));
-    //printf("Curr stmnt = %s\n", curr_statement->text);
     statements->right = curr_statement;
     statements->left = create_node();
     statements  = statements->left;
-
   }
-abort:
-  return out;
 }
 
 way_out compound_statement(node_t **root) {
@@ -420,7 +414,7 @@ int function_definition(node_t **root) {
     {
       assert(tmp != NULL);
       //assert(tmp->text != NULL);
-      printf("\t-%s\n", tmp->right->text);
+      printf("\t-< %s >\n", tmp->right->text);
     }
     puts("**********");
     puts("End statement list");
