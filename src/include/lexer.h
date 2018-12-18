@@ -93,6 +93,8 @@ typedef enum token_type {
   lcSTATEMENT,
   lcVARDEF,
 
+  lcUNIT,
+
   lcUNKNOWN
 } token_type;
 typedef enum token_category {

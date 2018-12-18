@@ -1,4 +1,9 @@
 void statements(int a)
 {
-
+  {
+    a + b + c + d;
+  }
+  {
+    a + b + c + d;
+  }
 }

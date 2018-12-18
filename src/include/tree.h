@@ -30,8 +30,8 @@ struct node_t {
   node_t *left, *right;
 };
 
-node_t *create_node();
-
+node_t *create_node(int type, char *text);
+void print_tree(node_t *node, int level);
 struct btree_node_t {
     struct btree_node_t *left;
     struct btree_node_t *right;

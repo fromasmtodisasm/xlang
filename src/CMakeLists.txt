@@ -3,6 +3,7 @@ include_directories("${PROJECT_SOURCE_DIR}/include")
 set(SOURCES
     exp.c
     fileutils.c
+    syntax_parser.c
     interpreter.c
     lexer.c
     main.c
@@ -15,6 +16,7 @@ set(HEADERS
 	include/common.h
 	include/exp.h
 	include/fileutils.h
+  include/syntax_parser.h
 	include/interpreter.h
 	include/lexer.h
 	include/preprocessor.h

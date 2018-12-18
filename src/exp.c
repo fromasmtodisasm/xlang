@@ -137,11 +137,9 @@ int primary_expression(node_t **root) {
   case lcNUMBER:
   case lcSTRING:
   case lcIDENT: {
-    *root = create_node();
     assert(curr_token->text != NULL);
+    *root = create_node(curr_token->type, strdup(curr_token->text));
     assert(*root != NULL);
-    (*root)->text = strdup(curr_token->text);
-    (*root)->type = curr_token->type;
     break;
   }
   case lcLBRACE: {
@@ -176,10 +174,8 @@ int postfix_expression(node_t **root) {
   case lcPLUS_PLUS: {
   case lcMINUS_MINUS:
     DEBUG("This id postfix expression: %s\n", curr_token->text);
-    node = create_node();
+    node = create_node(curr_token->type, strdup(curr_token->text));
     node->left = (*root);
-    node->text = strdup(curr_token->text);
-    node->type = curr_token->type;
     *root = node;
   } break;
   case '[': {
@@ -192,10 +188,8 @@ int postfix_expression(node_t **root) {
     if (get_token()->type != lcRBRACE)
     {
       //list_t *args;  
-      node = create_node();
+      node = create_node(lcCALL, strdup(curr_token->text));
       node->left = (*root);
-      node->text = strdup(curr_token->text);
-      node->type = lcCALL;
       *root = node;
       
       res = assignment_expression(root);
@@ -209,10 +203,8 @@ int postfix_expression(node_t **root) {
     else
     {
       printf("Empty arg list\n");
-      node = create_node();
+      node = create_node(lcCALL, strdup(curr_token->text));
       node->left = (*root);
-      node->text = strdup(curr_token->text);
-      node->type = lcCALL;
       *root = node;
     }
   } break;
@@ -260,12 +252,10 @@ int multiplicative_expression(node_t **root) {
   // Build left subtree
   res = unary_expression(root);
   while (curr_token->type == lcMUL || curr_token->type == lcDIV) {
-    node = create_node();
     assert(curr_token->text != NULL);
+    node = create_node(curr_token->type, strdup(curr_token->text));
     assert(node != NULL);
     node->left = (*root);
-    node->text = strdup(curr_token->text);
-    node->type = curr_token->type;
     get_token();
     unary_expression(&(node->right));
     *root = node;
@@ -281,12 +271,10 @@ int additive_expression(node_t **root) {
   res = multiplicative_expression(root);
   assert(*root != NULL);
   while (curr_token->type == lcPLUS || curr_token->type == lcMINUS) {
-    node = create_node();
     assert(curr_token->text != NULL);
+    node = create_node(curr_token->type, strdup(curr_token->text));
     assert(node != NULL);
     node->left = *root;
-    node->text = strdup(curr_token->text);
-    node->type = curr_token->type;
     get_token();
     multiplicative_expression(&(node->right));
     *root = node;
@@ -309,15 +297,10 @@ int conditional_expression(node_t **root) {
   res = additive_expression(root);
 
   while (is_relop(type = curr_token->type)) {
-    node = create_node();
     assert(curr_token->text != NULL);
+    node = create_node(curr_token->type, strdup(curr_token->text));
     assert(node != NULL);
     node->left = *root;
-
-    node->text = strdup(curr_token->text);
-
-    node->type = curr_token->type;
-
     get_token(/*NEXT_TOKEN*/);
     additive_expression(&(node->right));
     *root = node;
@@ -347,21 +330,15 @@ int assignment_expression(node_t **root) {
     char *prev_pos = get_pos();
     memcpy(&prev_token, curr_token, sizeof(token_t));
 
-    *root = create_node();
-    (*root)->text = strdup(curr_token->text);
-    (*root)->type = curr_token->type;
+    *root = create_node(curr_token->type, strdup(curr_token->text));
     token_type type = get_token()->type;
     if (type == lcASSIGN || type == lcPLUS_ASSIGN || type == lcMINUS_ASSIGN ||
         type == lcMUL_ASSIGN || type == lcDIV_ASSIGN) {
-      node = create_node();
       assert(curr_token->text != NULL);
+      node = create_node(curr_token->type, strdup(curr_token->text));
       assert(node != NULL);
       node->left = *root;
-      node->text = strdup(curr_token->text);
-      node->type = curr_token->type;
-
       get_token(/*NEXT_TOKEN*/);
-
       assignment_expression(&(node->right));
       *root = node;
       return res;

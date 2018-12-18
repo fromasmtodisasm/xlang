@@ -1,19 +1,29 @@
-#include "tree.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <malloc.h>
+#include <assert.h>
 
-node_t *create_node() {
+#include "tree.h"
+
+node_t *create_node(int type, char *text) {
   node_t *node;
 
   node = malloc(sizeof(node_t));
   node->left = NULL;
   node->right = NULL;
+  node->type = type;
+  node->text = text;
   node->value.i = 0;
   return node;
 }
 
+
+/*
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+*/
 
 void *btree_insert(struct btree_node_t **root, void *item, unsigned int size, int (*compare_node)(const void*,const void*)) {
     // Insert the root

@@ -6,6 +6,7 @@
 #include "fileutils.h"
 #include "interpreter.h"
 #include "preprocessor.h"
+//#include "syntax_parser.h"
 
 #if !defined _MSC_VER
 #define getline mygetline
@@ -58,10 +59,13 @@ int main(int argc, char **argv) {
   if (argc > 1) {
     expression = buf;
     int cur_file = 1;
+    node_t *syntax_tree = NULL;
     for (; cur_file < argc; cur_file++) {
       printf("Load %s \n", argv[cur_file]);
       if (source = loadProgram(argv[cur_file])) {
-        start(&source);
+        syntax_tree = parse(&source);
+        printf("\nParsed!!!\n");
+        interprete(syntax_tree);
       }
     }
   } else {
@@ -69,7 +73,7 @@ int main(int argc, char **argv) {
     source = malloc(buffer_size);
     usage(basename(argv[0]));
     while (fgets(source, buffer_size, stdin) != NULL) {
-      if (start(&source) == -1)
+      if (parse(&source) == NULL)
         break;
     }
   }
