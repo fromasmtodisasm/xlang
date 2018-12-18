@@ -32,10 +32,10 @@ void print_statements(node_t *node, int leve) {
   node_t *tmp = NULL;
   for (tmp = node; tmp->right != NULL; tmp = tmp->left)
   {
-    puts("test");
+    //puts("test");
     assert(tmp != NULL);
-    //assert(tmp->text != NULL);
-    //printf("%s\n", tmp->right->text);
+    assert(tmp->text != NULL);
+    printf("%s\n", tmp->right->text);
     print_tree(tmp->right, 0);
   }
 }
@@ -44,6 +44,6 @@ int interprete(node_t *syntax_tree) {
   printf("Start interpreting...\n"); 
   assert(syntax_tree->text != NULL);
   printf("root text: %s\n", syntax_tree->text);
-  print_statements(syntax_tree,0);  
+  print_statements(syntax_tree->right->right,0);  
   return 0;
 }

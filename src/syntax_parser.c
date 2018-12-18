@@ -89,14 +89,14 @@ way_out do_while(node_t **root) {
 }
 
 node_t *parse(char **buffer) {
-  struct node_t *functions = NULL;
-  struct node_t *globals = NULL;
-  node_t *curr_func;
+  node_t *external_defs = NULL;
+  node_t *curr_node = NULL;
   node_t *program = NULL;
   token_type type;
   char *ident_name = NULL;
   
-  program = create_node(lcUNIT, "program"); 
+  external_defs = program = create_node(lcUNIT, "program"); 
+  
   exp_parser_init();
   if ((lexerInit(*buffer)) != 0) {
     while (get_token(/*NEXT_TOKEN*/)->type != lcEND) {
@@ -106,14 +106,22 @@ node_t *parse(char **buffer) {
         ident_name  = strdup(curr_token->text);
         printf("Curr ident name = (%s)\n\n", ident_name);
         if (get_token(/*NEXT_TOKEN*/)->type == lcLBRACE) {
-          curr_func = create_node(lcFUNCTION, ident_name);
-          function_definition(&curr_func);
+          curr_node = create_node(lcFUNCTION, ident_name);
+          function_definition(&curr_node);
         }
         else {
-          var_definition(&globals);
+          curr_node = create_node(lcVARDEF, "var_def");
+          var_definition(&curr_node);
         }
+
+      }
+      else {
+        ERROR("Expected function or var definition\n");
       }
       /**********************************************/ 
+      external_defs->right = curr_node;
+      external_defs->left = create_node(curr_token->type, "external_def");
+      external_defs  = curr_node->left;
     }
   }
   return program;
