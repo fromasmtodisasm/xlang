@@ -47,7 +47,8 @@ way_out do_if(node_t **root) {
   get_token(/*NEXT_TOKEN*/);
   if (curr_token->type == lcLBRACE) {
     get_token(/*NEXT_TOKEN*/);
-    assignment_expression(&if_node->left);
+    if_node->left = create_node(lcEXP, "expression");
+    if_node->left->right = eval();
     if (curr_token->type == lcRBRACE) {
       get_token(/*NEXT_TOKEN*/);
       statement_node = create_node(lcBLOCK, "block");
@@ -55,6 +56,7 @@ way_out do_if(node_t **root) {
       if (get_token(/*NEXT_TOKEN*/)->type == lcELSE){
         get_token(/*NEXT_TOKEN*/);
         if_node->text = "IFELSE";
+        if_node->type = lcIFELSE;
         statement(&statement_node->right);
       }
     }

@@ -63,6 +63,7 @@ typedef enum token_type {
 
   lcIF,
   lcELSE,
+  lcIFELSE,
   lcFOR,
   lcDO,
   lcWHILE,

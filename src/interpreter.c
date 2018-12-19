@@ -7,109 +7,102 @@
 #include "common.h"
 #include "interpreter.h"
 //#include "syntax_parser.h"
+//
+#define PRINT_PAD(lvl,...) { int i = lvl; \
+  for (; i > 1; printf("| "), i--); printf("+");} \
+  printf(__VA_ARGS__);
 
-static node_t *int_expression(node_t *root);
+static node_t *exec_expression(node_t *root,int level);
 static void int_print(node_t *root);
 void do_statements(node_t *node, int leve);
 void do_statement(node_t *node, int level); 
 
-node_t *int_expression(node_t *root) {
-  calculate(root); 
+node_t *exec_expression(node_t *root,int level) {
+  //calculate(root); 
+  if (root != NULL) {
+    PRINT_PAD(level,"node is < %s >\n", root->text);
+    exec_expression(root->left,level+1);
+    exec_expression(root->right,level+1);
+    //PRINT_PAD(level,"node is < %s >\n", root->text);
+  }
+  calculate(root);
   return root;
 }
 
+/*
 void exec_while(node_t *root, int level) {
   printf("in while\n");
   int cond;
-  //printf("cond = %d\n", cond = (int)(int_expression(root->left)->value.f));
+  //printf("cond = %d\n", cond = (int)(exec_expression(root->left)->value.f));
   do_statement(root->left, level + 1);
   do_statement(root->right, level + 1);
 }
+*/
 
 void int_print(node_t *root) {
 
 }
 void do_statement(node_t *node, int level); 
 
-void do_statement(node_t *node, int level) {
-  //printf("in function %s\n", __FUNCTION__);
-  if (node != NULL)
-  {
-    assert(node->text != NULL);
-    int i = level;
-    for (; i > 0; printf(" "), i--);
-    printf("node is < %s >\n", node->text);
-    switch(node->type)
-    {
-      case lcPRINT: {
-        printf("this is print operator\n");
-        calculate(node->left);
-      } break;
-      case lcWHILE: {
-        //exec_while(node, level);
-        puts("begin while");
-        do_statement(node->left, level + 1);
-        puts("after left");
-        do_statement(node->right, level + 1);
-        assert(node->right != NULL);
-        puts("end while");
-        //do_statements(node->right, level + 1); 
-      } break;
-      case lcEXP:
-      {
-        calculate(node->right);
-        printf("val exp = %f\n", node->right->value.f);
-      } break;
-      case lcBLOCK:
-      {
-        printf("this is block\n");
-        do_statement(node->right, level + 1);
-      } break;
-      case lcSTMNT:
-      {
-        puts("in statement");
-        do_statement(node->left, level);
-      }
+void exec_while(node_t *node, int level)
+{
+  //exec_while(node, level);
+  PRINT_PAD(level,"begin while\n");
+  //PRINT_PAD(level,"check condition\n");
+  do_statements(node->left, level + 1);
+  do_statements(node->right, level + 1);
+  assert(node->right != NULL);
+  PRINT_PAD(level,"end while\n");
+  //do_statements(node->right, level + 1); 
 
-    }
-
-    do_statement(node->left, level + 1);
-    do_statement(node->right, level + 1);
-  }
 }
 
-void do_statements(node_t *node_, int level) {
-  node_t *node = node_;// = node_->left;
+void exec_if(node_t *node, int level)
+{
+  //exec_while(node, level);
+  PRINT_PAD(level,"begin if\n");
+  //PRINT_PAD(level,"check condition\n");
+  //do_statements(node->left, level + 1);
+
+  if ((int)exec_expression(node->left->right, level)->value.f != 0) {
+    do_statements(node->right, level + 1);
+  }
+  assert(node->right != NULL);
+  PRINT_PAD(level,"end if\n");
+  //do_statements(node->right, level + 1); 
+
+}
+
+void do_statements(node_t *node, int level) {
   //printf("in function %s\n", __FUNCTION__);
-  if (node_ == NULL) return;
+  if (node != NULL) {
   //for (node= node_; node != NULL && node != NULL; node = node->left)
   //{
-    puts("head");
+    PRINT_PAD(level,"begin\n");
     if (node != NULL) {
       //assert(node->text != NULL);
       int i = level;
-      for (; i > 0; printf(" "), i--);
-      printf("node is < %s >\n", node->text);
-      switch(node->right->type)
+      PRINT_PAD(level,"node is < %s >\n", node->text);
+      switch(node->type)
       {
         case lcPRINT: {
-          printf("this is print operator\n");
+          PRINT_PAD(level,"this is print operator\n");
           calculate(node->left);
         } break;
         case lcWHILE: {
-          //exec_while(node, level);
-          puts("begin while");
-          do_statement(node->left, level + 1);
-          do_statements(node->right, level + 1);
-          assert(node->right != NULL);
-          puts("end while");
-          //do_statements(node->right, level + 1); 
+          exec_while(node,level);
+          return;
+        } break;
+        case lcIF: {
+          exec_if(node,level); 
+          return;
         } break;
         case lcEXP:
         {
-          //calculate(node->right->right);
-      do_statements(node->left, level + 1);
-          printf("val exp = %f\n", node->right->right->value.f);
+          calculate(node->right->right);
+          //do_statements(node->left, level + 1);
+          exec_expression(node->right, level);
+          PRINT_PAD(level,"val exp = %f\n", node->right->right->value.f);
         } break;
         case lcBLOCK:
         {
@@ -117,27 +110,34 @@ void do_statements(node_t *node_, int level) {
         } break;
         case lcSTMNT:
         {
-          puts("in statement");
-          do_statements(node->right->right, level);
+          PRINT_PAD(level,"in statement\n");
+          do_statements(node->right, level);
         }break;
+        case lcVARDEF:
+        {
+          PRINT_PAD(level,"var define\n");
+          return;
+        } break;
         default:
           printf("unknown stmnt is %s with code = %d\n", node->right->text, node->right->type);
           printf("unknown code = %d\n", lcUNKNOWN);
 
       }
-      puts("end");
+      //PRINT_PAD(level,"end\n");
       //assert(node->left != NULL);
       do_statements(node->left, level + 1);
       //do_statements(node->right, level + 1);
+      PRINT_PAD(level,"end\n");
 
       }
     //}
+  }
 }
 
 void extern_defs(node_t *root)
 {
   node_t *node = root;
-  printf("root = %s\n------\n", root->right->text);
+  printf("root = %s\n------\n", root->text);
   for( ; node->right != NULL; node = node->left)
   {
     switch (node->right->type) {
@@ -163,7 +163,7 @@ int interprete(node_t *syntax_tree) {
   assert(syntax_tree != NULL);
   printf("Start interpreting...\n"); 
   assert(syntax_tree->text != NULL);
-  printf("root text: %s\n", syntax_tree->right->text);
+  printf("root text: %s\n", syntax_tree->text);
   //assert(syntax_tree->right != NULL);
   extern_defs(syntax_tree);
   //do_statements(syntax_tree->right,0);  
