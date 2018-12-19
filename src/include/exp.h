@@ -42,6 +42,7 @@ int conditional_expression(node_t **node);
 
 int exp_parser_init();
 void prefix_tree(node_t *tree, int level);
+void calculate(node_t *root);
 node_t *eval();
 
 /***************************************************************************/

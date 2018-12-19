@@ -340,7 +340,9 @@ int assignment_expression(node_t **root) {
       node->left = *root;
       get_token(/*NEXT_TOKEN*/);
       assignment_expression(&(node->right));
-      *root = node;
+      node_t *exp = create_node(lcEXP, "expression");
+      exp->right = node;
+      *root = exp;
       return res;
     } else {
       memcpy(curr_token, &prev_token, sizeof(token_t));
@@ -514,7 +516,7 @@ node_t *eval() {
   float retval = assignment_expression(&root);
 
   // functional(root,0);
-  calculate(root);
+  //calculate(root);
   DEBUG("result = %f\n", root->value.f);
   return root;
 }

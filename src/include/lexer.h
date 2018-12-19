@@ -94,6 +94,8 @@ typedef enum token_type {
   lcVARDEF,
 
   lcUNIT,
+  lcEXP,
+  lcSTMNT,
 
   lcUNKNOWN
 } token_type;

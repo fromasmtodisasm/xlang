@@ -71,14 +71,20 @@ way_out do_while(node_t **root) {
   way_out out = NORMAL;
 
   while_node = create_node(curr_token->type, "while");
-
+  puts("created while");
   get_token(/*NEXT_TOKEN*/);
   if (curr_token->type == lcLBRACE) {
     get_token(/*NEXT_TOKEN*/);
-    assignment_expression(&while_node->left);
+    //assignment_expression(&while_node->left);
+    while_node->left = create_node(lcEXP, "expression");
+    while_node->left->right = eval();
+    //statement(&while_node->left);
     if (curr_token->type == lcRBRACE) {
       get_token(/*NEXT_TOKEN*/);
       statement(&while_node->right);
+      assert(while_node->right != NULL);
+      printf("text is %s\n",while_node->right->text);
+      //puts("create while block");
     }
   }
   else { ERROR("Expected RBRACE on line %d\n", get_line()); }
@@ -96,6 +102,7 @@ node_t *parse(char **buffer) {
   char *ident_name = NULL;
   
   external_defs = program = create_node(lcUNIT, "program"); 
+  printf("code type = %d\n", lcUNIT);
   
   exp_parser_init();
   if ((lexerInit(*buffer)) != 0) {
@@ -119,11 +126,13 @@ node_t *parse(char **buffer) {
         ERROR("Expected function or var definition\n");
       }
       /**********************************************/ 
+      printf("code of ident type = %d\n", curr_node->type);
       external_defs->right = curr_node;
-      external_defs->left = create_node(curr_token->type, "external_def");
-      external_defs  = curr_node->left;
+      external_defs->left = create_node(curr_node->type, "external_def");
+      external_defs  = external_defs->left;
     }
   }
+  printf("end. code of pr right = %d\n", program->right->type);
   return program;
 }
 
@@ -235,7 +244,7 @@ way_out statement(node_t **root) {
   way_out out = NORMAL;
   node_t *statements = *root; /* List of statements */ 
   node_t *curr_statement;     /* Current recognized statement */
-
+  puts("in stmnt");
   while (!end_block) {
     switch (curr_token->type) {
     case lcIF: {
@@ -255,6 +264,9 @@ way_out statement(node_t **root) {
     } break;
     case lcLBRACKET: {
       out = compound_statement(&statements);
+      *root = statements;
+      printf("after comp tok = %s\n", statements->text);
+      //curr_statement = statements;
       if (curr_token->type != lcRBRACKET) {
         ERROR("error: expected }\n");
       }
@@ -290,11 +302,14 @@ way_out statement(node_t **root) {
     } break;
     case lcIDENT: {
     case lcNUMBER: 
-      curr_statement = eval();
+      curr_statement = create_node(lcEXP, "expression");
+      puts("created expression");
+      curr_statement->right = eval();
       if (curr_token->type != lcSEMI) {
         exptected_func("SEMI");
       }
       get_token(/*NEXT_TOKEN*/);
+      puts("number end");
     } break;
     case lcVAR: {
       
@@ -325,9 +340,10 @@ way_out statement(node_t **root) {
     //assert(curr_statement != NULL);
     if (!end_block) {
       statements->right = curr_statement;
-      statements->left = create_node(curr_token->type, "statement");
+      statements->left = create_node(lcSTMNT, "statement");
       statements  = statements->left;
     }
+
   }
   return out;
 }
@@ -340,9 +356,12 @@ way_out compound_statement(node_t **root) {
   memcpy(&prev_token, curr_token, sizeof(token_t));
   if (curr_token->type == lcLBRACKET) {
     block = create_node(lcBLOCK, "block");
+    //printf("created block\n");
     /**************************************/
     get_token();
-    out = statement(&block);
+    block->right=create_node(lcSTMNT, "statement");
+    out = statement(&block->right);
+    //printf("block right = %s\n", block->right->right->text);
     if (curr_token->type == lcRBRACKET) {
       //puts("End compound!");
       //get_token();
@@ -379,7 +398,7 @@ int function_definition(node_t **root) {
   node_t *block;
   node_t *function;
   function = *root;
-
+  printf("func code = %d\n", function->type);
     printf("Curr func name = (%s)\n\n", function->text);
     declaration_list(&arg_list);
     out = compound_statement(&block);
@@ -397,7 +416,7 @@ int function_definition(node_t **root) {
 
   function->left = arg_list;
   function->right = block;
-  *root = function;
+  //*root = function;
   printf("\nend function = (%s)", (*root)->text);
   return 0;
 }
@@ -473,5 +492,5 @@ int define_var(node_t **root){
 }
 
 void var_definition(node_t **root) {
-  while(get_token()->type != lcSEMI);
+  //while(get_token()->type != lcSEMI);
 }
