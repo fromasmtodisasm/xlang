@@ -12,7 +12,11 @@
 #include "generic_list.h"
 #include "debug.h"
 
-#define exptected_func(...) printf("On line %d for source line = %d\n", __LINE__, get_line());_expected_func( __VA_ARGS__)
+/***************************************************************************/
+/***************** Defines used by this module only ************************/
+/***************************************************************************/
+#define exptected_func(...) DEBUG_TRACE("On line %d for source line = %d\n", __LINE__, get_line());_expected_func( __VA_ARGS__)
+#define GET_TOKEN() (DEBUG_TRACE("Get from %s\n", __FUNCTION__), get_token())
 
 /***************************************************************************/
 /************************* Global Variables ********************************/
@@ -44,22 +48,28 @@ way_out do_if(node_t **root) {
    * Create and fill IF node
   */
   if_node = create_node(curr_token->type, "if"/*strdup(curr_token->text)*/);
-
-  get_token(/*NEXT_TOKEN*/);
+  
+  DEBUG_LOG("PARSE IF STATEMENT\n");
+  GET_TOKEN(/*NEXT_TOKEN*/);
   if (curr_token->type == lcLBRACE) {
-    get_token(/*NEXT_TOKEN*/);
+    GET_TOKEN(/*NEXT_TOKEN*/);
     if_node->left = create_node(lcEXP, "expression");
     if_node->left->right = eval();
     if (curr_token->type == lcRBRACE) {
-      get_token(/*NEXT_TOKEN*/);
+      GET_TOKEN(/*NEXT_TOKEN*/);
       statement_node = create_node(lcBLOCK, "block");
+      DEBUG_LOG("STATEMENT BLOCK CREATED\n");
       out = statement(&statement_node->left);
-      if (get_token(/*NEXT_TOKEN*/)->type == lcELSE){
-        get_token(/*NEXT_TOKEN*/);
-        if_node->text = "IFELSE";
+      DEBUG_TRACE("BEFORE ELSE\n");
+      if (GET_TOKEN(/*NEXT_TOKEN*/)->type == lcELSE){
+        //DEBUG_TRACE("AFTER ELSE");
+        //puts("TEST");
+        GET_TOKEN(/*NEXT_TOKEN*/);
+        if_node->text = "ifelse";
         if_node->type = lcIFELSE;
+        DEBUG_TRACE("CALL STATEMENT\n");
         statement(&statement_node->right);
-        get_token();
+        GET_TOKEN();
       }
     }
   }
@@ -76,15 +86,15 @@ way_out do_while(node_t **root) {
 
   while_node = create_node(curr_token->type, "while");
   puts("created while");
-  get_token(/*NEXT_TOKEN*/);
+  GET_TOKEN(/*NEXT_TOKEN*/);
   if (curr_token->type == lcLBRACE) {
-    get_token(/*NEXT_TOKEN*/);
+    GET_TOKEN(/*NEXT_TOKEN*/);
     //assignment_expression(&while_node->left);
     while_node->left = create_node(lcEXP, "expression");
     while_node->left->right = eval();
     //statement(&while_node->left);
     if (curr_token->type == lcRBRACE) {
-      get_token(/*NEXT_TOKEN*/);
+      GET_TOKEN(/*NEXT_TOKEN*/);
       statement(&while_node->right);
       assert(while_node->right != NULL);
       printf("text is %s\n",while_node->right->text);
@@ -94,7 +104,7 @@ way_out do_while(node_t **root) {
   else { ERROR("Expected RBRACE on line %d\n", get_line()); }
 
   *root = while_node;
-  get_token(/*NEXT_TOKEN*/);
+  GET_TOKEN(/*NEXT_TOKEN*/);
   return out;
 }
 
@@ -110,13 +120,13 @@ node_t *parse(char **buffer) {
   
   exp_parser_init();
   if ((lexerInit(*buffer)) != 0) {
-    while (get_token(/*NEXT_TOKEN*/)->type != lcEND) {
+    while (GET_TOKEN(/*NEXT_TOKEN*/)->type != lcEND) {
       /**********************************************/ 
       type = curr_token->type;
-      if (is_type(type) && get_token(/*NEXT_TOKEN*/)->type == lcIDENT) {
+      if (is_type(type) && GET_TOKEN(/*NEXT_TOKEN*/)->type == lcIDENT) {
         ident_name  = strdup(curr_token->text);
         DEBUG_TRACE("Curr ident name = (%s)\n\n", ident_name);
-        if (get_token(/*NEXT_TOKEN*/)->type == lcLBRACE) {
+        if (GET_TOKEN(/*NEXT_TOKEN*/)->type == lcLBRACE) {
           curr_node = create_node(lcFUNCTION, ident_name);
           function_definition(&curr_node);
         }
@@ -144,7 +154,8 @@ int do_print(node_t **root) {
   int stop = 0;
   node_t *print_node = *root = create_node(lcPRINT, "print");
   print_node->text = strdup(curr_token->text);
-  get_token(/*NEXT_TOKEN*/);
+  DEBUG_TRACE("get next token\n");
+  GET_TOKEN(/*NEXT_TOKEN*/);
 
   /*
       curr_statement = create_node(lcEXP, "expression");
@@ -166,7 +177,7 @@ int do_print(node_t **root) {
     case lcSTRING:
       //puts("print");
       //printf("%s", curr_token->text);
-      get_token(/*NEXT_TOKEN*/);
+      GET_TOKEN(/*NEXT_TOKEN*/);
       break;
 
     case lcNUMBER:
@@ -186,13 +197,14 @@ int do_print(node_t **root) {
       return TRUE;
     }
   } while (TRUE);
+  DEBUG_TRACE("LEAVE FUNCTION\n");
 }
 
 int do_read() {
   int stop = 0;
   int tmp;
 
-  while (get_token(/*NEXT_TOKEN*/)->type != lcSEMI &&
+  while (GET_TOKEN(/*NEXT_TOKEN*/)->type != lcSEMI &&
          curr_token->type != lcEND) {
     if (curr_token->type == lcIDENT) {
       scanf("%d", &tmp);
@@ -203,7 +215,7 @@ int do_read() {
 
 void do_sleep() {
   int ms;
-  get_token();
+  GET_TOKEN();
   ms = eval()->value.f;
   sleep(ms);
 }
@@ -214,17 +226,17 @@ void do_pause(){
 }
 
 int do_interprete() {
-  if (get_token(/*NEXT_TOKEN*/)->type == lcSTRING) {
+  if (GET_TOKEN(/*NEXT_TOKEN*/)->type == lcSTRING) {
     parse((char **)&(curr_token->text));
   }
-  get_token(/*NEXT_TOKEN*/);
+  GET_TOKEN(/*NEXT_TOKEN*/);
   return 0;
 }
 
 void do_break(node_t **root) {
   node_t *break_node = *root = create_node(curr_token->type, strdup(curr_token->text));
-  if (get_token(/*NEXT_TOKEN*/)->type == lcSEMI) {
-    get_token(/*NEXT_TOKEN*/);
+  if (GET_TOKEN(/*NEXT_TOKEN*/)->type == lcSEMI) {
+    GET_TOKEN(/*NEXT_TOKEN*/);
   } else {
     exptected_func("SEMI");
   } 
@@ -232,8 +244,8 @@ void do_break(node_t **root) {
 
 void do_continue(node_t **root) {
   node_t *continue_node = *root = create_node(curr_token->type, strdup(curr_token->text));
-  if (get_token(/*NEXT_TOKEN*/)->type == lcSEMI) {
-    get_token(/*NEXT_TOKEN*/);
+  if (GET_TOKEN(/*NEXT_TOKEN*/)->type == lcSEMI) {
+    GET_TOKEN(/*NEXT_TOKEN*/);
   } else {
     exptected_func("SEMI");
   } 
@@ -241,8 +253,8 @@ void do_continue(node_t **root) {
 
 void do_abort(node_t **root) {
   node_t *abort_node = *root = create_node(curr_token->type, strdup(curr_token->text));
-  if (get_token(/*NEXT_TOKEN*/)->type == lcSEMI) {
-    get_token(/*NEXT_TOKEN*/);
+  if (GET_TOKEN(/*NEXT_TOKEN*/)->type == lcSEMI) {
+    GET_TOKEN(/*NEXT_TOKEN*/);
   } else {
     exptected_func("SEMI");
   } 
@@ -250,10 +262,10 @@ void do_abort(node_t **root) {
 
 void do_return(node_t **root) {
   node_t *return_node = *root = create_node(curr_token->type, strdup(curr_token->text));
-  get_token();
+  GET_TOKEN();
   assignment_expression(&return_node->left);
   if (curr_token->type == lcSEMI) {
-    get_token(/*NEXT_TOKEN*/);
+    GET_TOKEN(/*NEXT_TOKEN*/);
   } else {
     exptected_func("SEMI");
   }
@@ -265,7 +277,7 @@ way_out statement(node_t **root) {
   way_out out = NORMAL;
   node_t *statements = *root; /* List of statements */ 
   node_t *curr_statement;     /* Current recognized statement */
-  DEBUG_TRACE("in stmnt\n");
+  DEBUG_TRACE("IN STATEMENT\n");
   while (!end_block) {
     switch (curr_token->type) {
     case lcIF: {
@@ -294,9 +306,10 @@ way_out statement(node_t **root) {
       end_block = TRUE;
     } break;
     case lcPRINT: {
+      DEBUG_TRACE("Parse print");
       do_print(&curr_statement);
       if ((curr_token = curr_token)->type == lcSEMI) {
-        get_token(/*NEXT_TOKEN*/);
+        GET_TOKEN(/*NEXT_TOKEN*/);
       }
     } break;
     case lcREAD: {
@@ -309,13 +322,13 @@ way_out statement(node_t **root) {
     case lcSLEEP: {
       do_sleep();
       if (curr_token->type == lcSEMI) {
-        get_token(/*NEXT_TOKEN*/);
+        GET_TOKEN(/*NEXT_TOKEN*/);
       }
     } break;
     case lcPAUSE: {
       do_pause();
       if (curr_token->type == lcSEMI) {
-        get_token(/*NEXT_TOKEN*/);
+        GET_TOKEN(/*NEXT_TOKEN*/);
       }
     } break;
     case lcINTERPRETE: {
@@ -329,32 +342,22 @@ way_out statement(node_t **root) {
       if (curr_token->type != lcSEMI) {
         exptected_func("SEMI");
       }
-      get_token(/*NEXT_TOKEN*/);
+      GET_TOKEN(/*NEXT_TOKEN*/);
     } break;
     case lcVAR: {
       
       define_var(&curr_statement);
       if (curr_token->type == lcSEMI) {
-        get_token();
+        GET_TOKEN();
       }
     } break;
     default: {
 
-      /* 
-      node_t *tmp;
-      puts("**********");
-      puts("Begin statement list");
-      for (tmp = (*root); tmp->right != NULL; tmp = tmp->left)
-      {
-        assert(tmp != NULL);
-        //assert(tmp->text != NULL);
-        printf("\t-%s\n", tmp->right->text);
-      }
-      puts("**********");
-      puts("End statement list");
-      */
+       
       out = NORMAL;
       end_block = TRUE;
+      DEBUG_TRACE("DEFAULT MARK\n");
+      //return out;
     } break;
     }
     //assert(curr_statement != NULL);
@@ -378,13 +381,13 @@ way_out compound_statement(node_t **root) {
     block = create_node(lcBLOCK, "block");
     //printf("created block\n");
     /**************************************/
-    get_token();
+    GET_TOKEN();
     block->right=create_node(lcSTMNT, "statement");
     out = statement(&block->right);
     //printf("block right = %s\n", block->right->right->text);
     if (curr_token->type == lcRBRACKET) {
       //puts("End compound!");
-      //get_token();
+      //GET_TOKEN();
     } 
     else {
       ERROR("error: expected }\n");
@@ -444,11 +447,11 @@ int declaration_list() {
   token_type type;
   int retval = -1;
   if (curr_token->type == lcLBRACE) {
-    if (is_type(get_token(/*NEXT_TOKEN*/)->type)) {
-      if (get_token(/*NEXT_TOKEN*/)->type == lcIDENT) {
-        while (get_token(/*NEXT_TOKEN*/)->type == lcCOMMA &&
-               is_type(get_token(/*NEXT_TOKEN*/)->type) &&
-               get_token(/*NEXT_TOKEN*/)->type == lcIDENT)
+    if (is_type(GET_TOKEN(/*NEXT_TOKEN*/)->type)) {
+      if (GET_TOKEN(/*NEXT_TOKEN*/)->type == lcIDENT) {
+        while (GET_TOKEN(/*NEXT_TOKEN*/)->type == lcCOMMA &&
+               is_type(GET_TOKEN(/*NEXT_TOKEN*/)->type) &&
+               GET_TOKEN(/*NEXT_TOKEN*/)->type == lcIDENT)
           ;
         if (curr_token->type != lcRBRACE) {
           exptected_func("RBRACE");
@@ -464,7 +467,7 @@ int declaration_list() {
       }
     }
   }
-  get_token(/*NEXT_TOKEN*/);
+  GET_TOKEN(/*NEXT_TOKEN*/);
 }
 
 int define_var(node_t **root){
@@ -473,15 +476,15 @@ int define_var(node_t **root){
   token_type type;
   char *varname = "";
   node_t *value = NULL; 
-  if (get_token()->type == lcIDENT)
+  if (GET_TOKEN()->type == lcIDENT)
   {
     varname = strdup(curr_token->text);
     printf("varname = %s\n", varname);
     *root = create_node(lcVARDEF, "var_assign");
     node_t *value;
-    if (get_token()->type == lcASSIGN)
+    if (GET_TOKEN()->type == lcASSIGN)
     {
-      if ((type = get_token()->type) == lcIDENT || type == lcNUMBER || type == lcSTRING)
+      if ((type = GET_TOKEN()->type) == lcIDENT || type == lcNUMBER || type == lcSTRING)
       {
         value = eval();
         assert(value != NULL);
@@ -506,10 +509,10 @@ int define_var(node_t **root){
     ERROR("Expected identifier\n");
   }
   if (is_get_tok)
-    get_token();
+    GET_TOKEN();
   return res;
 }
 
 void var_definition(node_t **root) {
-  //while(get_token()->type != lcSEMI);
+  //while(GET_TOKEN()->type != lcSEMI);
 }

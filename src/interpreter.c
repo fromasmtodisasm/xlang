@@ -9,9 +9,9 @@
 #include "debug.h"
 //#include "syntax_parser.h"
 //
-#define PRINT_PAD(lvl,dbg,...) { int i = lvl; \
-  for (; i > 1; DEBUG_ALL("| "), i--); DEBUG_ALL("+");} \
-  DEBUG(dbg,__VA_ARGS__); 
+#define PRINT_PAD(level,dbg,...) { int i = level; \
+  for (; i > 1; DEBUG_NONE("| "), i--); DEBUG_NONE("+"); \
+  DEBUG(dbg, __VA_ARGS__);} 
 
 static node_t *exec_expression(node_t *root,int level);
 static void int_print(node_t *root);

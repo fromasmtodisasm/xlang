@@ -10,14 +10,15 @@
 #include "common.h"
 #include "config.h"
 #include "exp.h"
+#include "debug.h"
 
 /***************************************************************************/
 /***************** Defines used by this module only ************************/
 /***************************************************************************/
 #define begin_func()                                                           \
-  DEBUG(stderr, "Function is %s line is %d\n", __FUNCTION__, __LINE__)
+  DEBUG_TRACE(stderr, "Function is %s line is %d\n", __FUNCTION__, __LINE__)
 #define end_func()                                                             \
-  DEBUG("On line [%d]\n", __LINE__) // fprintf(stderr, "Function %s is end on
+  DEBUG_TRACE("On line [%d]\n", __LINE__) // fprintf(stderr, "Function %s is end on
                                      // line %d\n", __FUNCTION__, __LINE__)
 #ifdef BTREE_USE
 
@@ -131,7 +132,7 @@ float assign_value(node_t *node) {
 
 int primary_expression(node_t **root) {
   int res = 0;
-
+  //DEBUG_TRACE("\n");
   switch (curr_token->type) {
 
   case lcNUMBER:
@@ -143,7 +144,7 @@ int primary_expression(node_t **root) {
     break;
   }
   case lcLBRACE: {
-    get_token(/*NEXT_TOKEN*/);
+    GET_TOKEN(/*NEXT_TOKEN*/);
     res = assignment_expression(root);
     if (curr_token->type != lcRBRACE) {
       printf("Error, expected ')'\n");
@@ -158,7 +159,7 @@ int primary_expression(node_t **root) {
     getchar();
     exit(-1);
   }
-  get_token();
+  GET_TOKEN();
   return res;
 }
 
@@ -166,6 +167,7 @@ int postfix_expression(node_t **root) {
   int res = 0;
   node_t *node;
   int need_get = TRUE;
+  //DEBUG_TRACE("\n");
   
   res = primary_expression(root);
 
@@ -179,13 +181,13 @@ int postfix_expression(node_t **root) {
     *root = node;
   } break;
   case '[': {
-    get_token();
+    GET_TOKEN();
     res = primary_expression(root);
     if (curr_token->type != ']')
       ERROR("Expected ']'\n");
   } break;
   case lcLBRACE: {
-    if (get_token()->type != lcRBRACE)
+    if (GET_TOKEN()->type != lcRBRACE)
     {
       //list_t *args;  
       node = create_node(lcCALL, strdup(curr_token->text));
@@ -194,7 +196,7 @@ int postfix_expression(node_t **root) {
       
       res = assignment_expression(root);
       while(curr_token->type == lcCOMMA) {
-        get_token();
+        GET_TOKEN();
         res = assignment_expression(root);
       }
       if (curr_token->type != lcRBRACE)
@@ -210,16 +212,16 @@ int postfix_expression(node_t **root) {
   } break;
   case lcPOINT: {
   case lcARROW:
-    if (get_token()->type != lcIDENT) {
+    if (GET_TOKEN()->type != lcIDENT) {
       ERROR("Expected identifier on line %d\n", get_line());
     } 
     else {
-      get_token();
+      GET_TOKEN();
       need_get = FALSE;
       while (curr_token->type == lcPOINT, curr_token->type == lcARROW) {
-        if (get_token()->type == lcIDENT)
+        if (GET_TOKEN()->type == lcIDENT)
         {
-          get_token();
+          GET_TOKEN();
         }
         else break;
       }
@@ -231,13 +233,14 @@ int postfix_expression(node_t **root) {
   } break;
   }
 
-  if (need_get) get_token();
+  if (need_get) GET_TOKEN();
   return res;
 }
 
 int unary_expression(node_t **root) {
   int res = 0;
   node_t *node;
+  //DEBUG_TRACE("\n");
 
   res = postfix_expression(root);
 
@@ -249,6 +252,7 @@ int multiplicative_expression(node_t **root) {
   int stop = 0;
   node_t *node;
 
+  //DEBUG_TRACE("\n");
   // Build left subtree
   res = unary_expression(root);
   while (curr_token->type == lcMUL || curr_token->type == lcDIV) {
@@ -256,7 +260,7 @@ int multiplicative_expression(node_t **root) {
     node = create_node(curr_token->type, strdup(curr_token->text));
     assert(node != NULL);
     node->left = (*root);
-    get_token();
+    GET_TOKEN();
     unary_expression(&(node->right));
     *root = node;
   }
@@ -268,6 +272,7 @@ int additive_expression(node_t **root) {
   int res = 0;
   node_t *node;
 
+  //DEBUG_TRACE("\n");
   res = multiplicative_expression(root);
   assert(*root != NULL);
   while (curr_token->type == lcPLUS || curr_token->type == lcMINUS) {
@@ -275,7 +280,7 @@ int additive_expression(node_t **root) {
     node = create_node(curr_token->type, strdup(curr_token->text));
     assert(node != NULL);
     node->left = *root;
-    get_token();
+    GET_TOKEN();
     multiplicative_expression(&(node->right));
     *root = node;
   }
@@ -294,6 +299,8 @@ int conditional_expression(node_t **root) {
   int res = 0;
   node_t *node;
   token_type type = curr_token->type;
+
+  //DEBUG_TRACE("\n");
   res = additive_expression(root);
 
   while (is_relop(type = curr_token->type)) {
@@ -301,7 +308,7 @@ int conditional_expression(node_t **root) {
     node = create_node(curr_token->type, strdup(curr_token->text));
     assert(node != NULL);
     node->left = *root;
-    get_token(/*NEXT_TOKEN*/);
+    GET_TOKEN(/*NEXT_TOKEN*/);
     additive_expression(&(node->right));
     *root = node;
 
@@ -318,9 +325,11 @@ int assignment_expression(node_t **root) {
   token_t prev_token;
 
   node_t *node;
+  //DEBUG_TRACE("\n");
 
   name = curr_token->text;
   if (curr_token->type == lcSEMI) {
+    //get_token();
     return res;
   }
   if (curr_token->type == lcIDENT) {
@@ -328,17 +337,20 @@ int assignment_expression(node_t **root) {
     int tmp = 0;
     name = curr_token->text;
     char *prev_pos = get_pos();
-    memcpy(&prev_token, curr_token, sizeof(token_t));
-
-    *root = create_node(curr_token->type, strdup(curr_token->text));
-    token_type type = get_token()->type;
+    //memcpy(&prev_token, curr_token, sizeof(token_t));
+    res = conditional_expression(root);
+    DEBUG_PROD("root = %s\n", (*root)->text);
+    DEBUG_PROD("CURRENT TOKEN = %s\n", curr_token->text);
+    //system("sleep 1");
+    //*root = create_node(curr_token->type, strdup(curr_token->text));
+    token_type type = curr_token->type;
     if (type == lcASSIGN || type == lcPLUS_ASSIGN || type == lcMINUS_ASSIGN ||
         type == lcMUL_ASSIGN || type == lcDIV_ASSIGN) {
       assert(curr_token->text != NULL);
       node = create_node(curr_token->type, strdup(curr_token->text));
       assert(node != NULL);
       node->left = *root;
-      get_token(/*NEXT_TOKEN*/);
+      GET_TOKEN(/*NEXT_TOKEN*/);
       assignment_expression(&(node->right));
       node_t *exp = create_node(lcEXP, "expression");
       node->left->type = node->right->type;
@@ -346,11 +358,11 @@ int assignment_expression(node_t **root) {
       *root = exp;
       return res;
     } else {
-      memcpy(curr_token, &prev_token, sizeof(token_t));
-      set_pos(prev_pos);
+      //memcpy(curr_token, &prev_token, sizeof(token_t));
+      //set_pos(prev_pos);
     }
   }
-  res = conditional_expression(root);
+  else { res = conditional_expression(root); }
   return res;
 }
 

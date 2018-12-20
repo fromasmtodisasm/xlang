@@ -3,9 +3,16 @@ int statements(char test)
   var b = 5;
   b++;
   print b;
-
+  3 + b;
   var c = "string";
-  while (b < 20) { b++; if (b < 15) print b; else print 2;}
+  while (b < 20) { 
+    b++; 
+    if (b < 15) 
+      print b; 
+    
+    else {
+      print 2;}
+  }
 
   //if (5!=5){print 10 30 20;} else { print b; }
   //if (3==3) {print 999;}

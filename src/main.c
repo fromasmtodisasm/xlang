@@ -12,6 +12,8 @@
 #define getline mygetline
 #endif
 
+#define DEBUGING_LEVEL DEBUG_DEVELOP
+
 int getline(FILE *fp) {
   int ch = EOF;
   int len = 0;
@@ -58,9 +60,7 @@ int main(int argc, char **argv) {
   char *expression = source;
   FILE *test;
 
-  //SET_DEBUG_LVL(DEBUG_PROD);
-  //SET_DEBUG_LVL(DEBUG_TRACE);
-  SET_DEBUG_LVL(DEBUG_ALL);
+  SET_DEBUG_LVL(DEBUGING_LEVEL);
   
   if (argc > 1) {
     expression = buf;
