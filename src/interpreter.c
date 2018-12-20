@@ -10,7 +10,7 @@
 //#include "syntax_parser.h"
 //
 #define PRINT_PAD(level,dbg,...) { int i = level; \
-  for (; i > 1; DEBUG_NONE("| "), i--); DEBUG_NONE("+"); \
+  for (; i > 1; DEBUG_DEVELOP("| "), i--); DEBUG_DEVELOP("+"); \
   DEBUG(dbg, __VA_ARGS__);} 
 
 static node_t *exec_expression(node_t *root,int level);
@@ -205,6 +205,7 @@ int interprete(node_t *syntax_tree) {
   assert(syntax_tree->text != NULL);
   printf("root text: %s\n", syntax_tree->text);
   //assert(syntax_tree->right != NULL);
+  //sleep(2);
   node_t test_var;
   test_var.text = "e";
   if (lookup(&test_var))

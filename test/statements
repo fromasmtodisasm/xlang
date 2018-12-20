@@ -9,9 +9,8 @@ int statements(char test)
     b++; 
     if (b < 15) 
       print b; 
-    
-    else {
-      print 2;}
+    else 
+      print 2;
   }
 
   //if (5!=5){print 10 30 20;} else { print b; }

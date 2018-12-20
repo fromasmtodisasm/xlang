@@ -59,18 +59,21 @@ way_out do_if(node_t **root) {
       GET_TOKEN(/*NEXT_TOKEN*/);
       statement_node = create_node(lcBLOCK, "block");
       DEBUG_LOG("STATEMENT BLOCK CREATED\n");
+      statement_node->left = create_node(lcSTMNT, "statement");
+      assert(statement_node->left != NULL);
       out = statement(&statement_node->left);
       DEBUG_TRACE("BEFORE ELSE\n");
-      if (GET_TOKEN(/*NEXT_TOKEN*/)->type == lcELSE){
-        //DEBUG_TRACE("AFTER ELSE");
-        //puts("TEST");
+      if (curr_token->type == lcELSE){
+        DEBUG_TRACE("AFTER ELSE");
         GET_TOKEN(/*NEXT_TOKEN*/);
         if_node->text = "ifelse";
         if_node->type = lcIFELSE;
         DEBUG_TRACE("CALL STATEMENT\n");
+        statement_node->right = create_node(lcSTMNT, "statement");
         statement(&statement_node->right);
         GET_TOKEN();
       }
+      else { DEBUG_TRACE("WITHOUT ELSE\n"); }
     }
   }
   else { ERROR("Expected LBREACE\n"); }
@@ -278,6 +281,7 @@ way_out statement(node_t **root) {
   node_t *statements = *root; /* List of statements */ 
   node_t *curr_statement;     /* Current recognized statement */
   DEBUG_TRACE("IN STATEMENT\n");
+  //assert(*root != NULL);
   while (!end_block) {
     switch (curr_token->type) {
     case lcIF: {
@@ -308,9 +312,10 @@ way_out statement(node_t **root) {
     case lcPRINT: {
       DEBUG_TRACE("Parse print");
       do_print(&curr_statement);
-      if ((curr_token = curr_token)->type == lcSEMI) {
+      if (curr_token->type == lcSEMI) {
         GET_TOKEN(/*NEXT_TOKEN*/);
       }
+      DEBUG_TRACE("AFTER GET\n");
     } break;
     case lcREAD: {
       do_read();
@@ -357,11 +362,14 @@ way_out statement(node_t **root) {
       out = NORMAL;
       end_block = TRUE;
       DEBUG_TRACE("DEFAULT MARK\n");
-      //return out;
+      //system("sleep 2");
+      return out;
     } break;
     }
-    //assert(curr_statement != NULL);
+    assert(curr_statement != NULL);
+    assert(statements != NULL);
     if (!end_block) {
+      DEBUG_TRACE("THIS IS NOT END BLOCK\n");
       statements->right = curr_statement;
       statements->left = create_node(lcSTMNT, "statement");
       statements  = statements->left;

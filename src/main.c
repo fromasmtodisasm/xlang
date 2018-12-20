@@ -12,7 +12,7 @@
 #define getline mygetline
 #endif
 
-#define DEBUGING_LEVEL DEBUG_DEVELOP
+#define DEBUGING_LEVEL DEBUG_TRACE
 
 int getline(FILE *fp) {
   int ch = EOF;
