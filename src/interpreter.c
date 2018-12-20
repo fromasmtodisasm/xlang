@@ -16,6 +16,14 @@ static node_t *exec_expression(node_t *root,int level);
 static void int_print(node_t *root);
 void do_statements(node_t *node, int leve);
 void do_statement(node_t *node, int level); 
+void exec_print(node_t *root, int level)
+{
+  node_t *exp;
+  for ( exp = root; exp->right != NULL; exp = exp->left) { 
+    node_t *res = exec_expression(exp->right,level);   
+    PRINT_PAD(level,"res = %f\n", res->value.f);
+  }
+}
 
 node_t *exec_expression(node_t *root,int level) {
   //calculate(root); 
@@ -25,6 +33,7 @@ node_t *exec_expression(node_t *root,int level) {
     exec_expression(root->right,level+1);
     //PRINT_PAD(level,"node is < %s >\n", root->text);
   }
+  
   calculate(root);
   return root;
 }
@@ -61,6 +70,7 @@ void exec_if(node_t *node, int level)
 {
   //exec_while(node, level);
   PRINT_PAD(level,"begin if\n");
+  printf("here\n");
   //PRINT_PAD(level,"check condition\n");
   //do_statements(node->left, level + 1);
 
@@ -69,6 +79,27 @@ void exec_if(node_t *node, int level)
   }
   assert(node->right != NULL);
   PRINT_PAD(level,"end if\n");
+  //do_statements(node->right, level + 1); 
+
+}
+
+void exec_ifelse(node_t *node, int level)
+{
+  //exec_while(node, level);
+  PRINT_PAD(level,"begin ifelse\n");
+  //PRINT_PAD(level,"check condition\n");
+  //do_statements(node->left, level + 1);
+
+  if ((int)exec_expression(node->left->right, level)->value.f != 0) {
+    PRINT_PAD(level,"this is left branch\n");
+    do_statements(node->right->left, level + 1);
+  }
+  else {
+    PRINT_PAD(level,"this is right branch\n");
+    do_statements(node->right->right, level + 1);
+  }
+  assert(node->right != NULL);
+  PRINT_PAD(level,"end ifelse\n");
   //do_statements(node->right, level + 1); 
 
 }
@@ -87,7 +118,9 @@ void do_statements(node_t *node, int level) {
       {
         case lcPRINT: {
           PRINT_PAD(level,"this is print operator\n");
-          calculate(node->left);
+          //calculate(node->left);
+          exec_print(node->right, level);
+          //return;
         } break;
         case lcWHILE: {
           exec_while(node,level);
@@ -97,12 +130,17 @@ void do_statements(node_t *node, int level) {
           exec_if(node,level); 
           return;
         } break;
+        case lcIFELSE: {
+          exec_ifelse(node,level); 
+          return;
+        } break;
         case lcEXP:
         {
           calculate(node->right->right);
           //do_statements(node->left, level + 1);
           exec_expression(node->right, level);
-          PRINT_PAD(level,"val exp = %f\n", node->right->right->value.f);
+          puts("in exp");
+          PRINT_PAD(level,"val exp = %f\n", node->right->value.f);
         } break;
         case lcBLOCK:
         {
@@ -110,8 +148,10 @@ void do_statements(node_t *node, int level) {
         } break;
         case lcSTMNT:
         {
-          PRINT_PAD(level,"in statement\n");
-          do_statements(node->right, level);
+          if (node->right != NULL) {
+            PRINT_PAD(level,"in statement run of %s\n", node->right->text);
+            do_statements(node->right, level);
+          }
         }break;
         case lcVARDEF:
         {
@@ -125,7 +165,8 @@ void do_statements(node_t *node, int level) {
       }
       //PRINT_PAD(level,"end\n");
       //assert(node->left != NULL);
-      do_statements(node->left, level + 1);
+      if (node->left!= NULL) do_statements(node->left, level + 1);
+      //else { puts("left = 0");}
       //do_statements(node->right, level + 1);
       PRINT_PAD(level,"end\n");
 
@@ -165,6 +206,13 @@ int interprete(node_t *syntax_tree) {
   assert(syntax_tree->text != NULL);
   printf("root text: %s\n", syntax_tree->text);
   //assert(syntax_tree->right != NULL);
+  node_t test_var;
+  test_var.text = "e";
+  if (lookup(&test_var))
+  {
+    printf("var e is present\n");
+  }
+  else { printf("not present\n");}
   extern_defs(syntax_tree);
   //do_statements(syntax_tree->right,0);  
   return 0;

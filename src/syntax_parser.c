@@ -58,6 +58,7 @@ way_out do_if(node_t **root) {
         if_node->text = "IFELSE";
         if_node->type = lcIFELSE;
         statement(&statement_node->right);
+        get_token();
       }
     }
   }
@@ -143,11 +144,23 @@ int do_print(node_t **root) {
   node_t *print_node = *root = create_node(lcPRINT, "print");
   print_node->text = strdup(curr_token->text);
   get_token(/*NEXT_TOKEN*/);
+
+  /*
+      curr_statement = create_node(lcEXP, "expression");
+      puts("created expression");
+      curr_statement->right = eval();
+  node_t *expr_val = NULL;
+  print_node->right = expr_val;
+  */
+
+  node_t *expr_val = NULL;
+  print_node->right = expr_val = create_node(lcEXP, "expression");
+
   do {
     char *number = "%f";
     char *string = "%s";
     char *curtype;
-    node_t *expr_val = NULL;
+    //node_t *expr_val = NULL;
     switch (curr_token->type) {
     case lcSTRING:
       //puts("print");
@@ -158,8 +171,13 @@ int do_print(node_t **root) {
     case lcNUMBER:
     case lcIDENT:
       curtype = number;
-      expr_val = eval();
+      expr_val->right = eval();
+      expr_val->left = create_node(lcEXP, "expression");
+
+      printf("%f\n", expr_val->right->value.f);
+      expr_val = expr_val->left;
       //puts("print");
+      //assert(expr_val != NULL);
       //printf("%f", expr_val->value.f);
       break;
     default:
@@ -459,12 +477,12 @@ int define_var(node_t **root){
   if (get_token()->type == lcIDENT)
   {
     varname = strdup(curr_token->text);
-    //printf("varname = %s\n", varname);
+    printf("varname = %s\n", varname);
     *root = create_node(lcVARDEF, "var_assign");
     node_t *value;
     if (get_token()->type == lcASSIGN)
     {
-      if ((type = get_token()->type) == lcIDENT || type == lcNUMBER)
+      if ((type = get_token()->type) == lcIDENT || type == lcNUMBER || type == lcSTRING)
       {
         value = eval();
         assert(value != NULL);

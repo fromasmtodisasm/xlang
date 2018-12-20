@@ -491,6 +491,7 @@ void calculate(node_t *tree) {
       *val = assign_value(tree->left);
     } break;
     case lcPLUS_PLUS: {
+      puts("this is plusplus_op");
       calculate(tree->left);
       *val = tree->left->value.f++;
       assign_value(tree->left);
@@ -516,7 +517,7 @@ node_t *eval() {
   float retval = assignment_expression(&root);
 
   // functional(root,0);
-  //calculate(root);
-  DEBUG("result = %f\n", root->value.f);
+  calculate(root);
+  //printf("result = %f\n", root->value.f);
   return root;
 }

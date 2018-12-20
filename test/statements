@@ -1,19 +1,9 @@
+int statements(char test)
+{
+  var b = 5;
+  b++;
+  print b;
 
-int e ;
-
-int b(){
-  /*while (3==1)
-  {
-    a = 10;
-    a+a;
-  }
-  */
-  if (3 == 3)
-  {
-    var e = 30;
-    if (3==3) 
-    {
-
-    }
-  }
+  if (5!=5){print 10 30 20;} else { print b; }
+  //if (3==3) {print 999;}
 }
