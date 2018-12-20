@@ -67,7 +67,7 @@ int make_builtin_vars() {
 }
 
 int exp_parser_init() { 
-  DEBUG("Used var storage: %s\n", var_storage);
+  DEBUG_ALL("Used var storage: %s\n", var_storage);
   make_builtin_vars(); 
 }
 
@@ -85,7 +85,7 @@ void *cmp_var_name(const void *vars, const void *data) {
   char *name = (char*)data;
   variable *cur_var = (variable*)vars;
   if (!strcmp(name, cur_var->name)) {
-    DEBUG("founded var with name  = %s\n", name);
+    DEBUG_ALL("founded var with name  = %s\n", name);
     return cur_var;
   }
   return 0;
@@ -173,7 +173,7 @@ int postfix_expression(node_t **root) {
   {
   case lcPLUS_PLUS: {
   case lcMINUS_MINUS:
-    DEBUG("This id postfix expression: %s\n", curr_token->text);
+    DEBUG_ALL("This id postfix expression: %s\n", curr_token->text);
     node = create_node(curr_token->type, strdup(curr_token->text));
     node->left = (*root);
     *root = node;
@@ -341,6 +341,7 @@ int assignment_expression(node_t **root) {
       get_token(/*NEXT_TOKEN*/);
       assignment_expression(&(node->right));
       node_t *exp = create_node(lcEXP, "expression");
+      node->left->type = node->right->type;
       exp->right = node;
       *root = exp;
       return res;
@@ -455,6 +456,7 @@ void calculate(node_t *tree) {
     } break;
 
     case lcNUMBER: {
+      tree->type = lcNUMBER;
       *val = atof(tree->text);
     } break;
     case lcIDENT: {
@@ -491,7 +493,6 @@ void calculate(node_t *tree) {
       *val = assign_value(tree->left);
     } break;
     case lcPLUS_PLUS: {
-      puts("this is plusplus_op");
       calculate(tree->left);
       *val = tree->left->value.f++;
       assign_value(tree->left);

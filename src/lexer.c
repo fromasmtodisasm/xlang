@@ -417,7 +417,7 @@ token_t *get_token() {
   CURTOK().text = text;
   CURTOK().pos = begin;
   curr_context->pos = pos;
-  DEBUG("<%s, %s>\n", "text" /*token_to_string[CURTOK().type - BASE_INDEX]*/, text);
+  DEBUG_ALL("<%s, %s>\n", "text" /*token_to_string[CURTOK().type - BASE_INDEX]*/, text);
   assert(&CURTOK() != NULL);
   return &CURTOK();
 }

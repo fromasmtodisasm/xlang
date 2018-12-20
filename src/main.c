@@ -6,7 +6,7 @@
 #include "fileutils.h"
 #include "interpreter.h"
 #include "preprocessor.h"
-//#include "syntax_parser.h"
+#include "debug.h"
 
 #if !defined _MSC_VER
 #define getline mygetline
@@ -30,7 +30,9 @@ int getline(FILE *fp) {
 char *loadProgram(char *name) {
   FILE *program;
   char *source = NULL;
+  //DEBUG_PROD(__FUNCTION__);
   if ((program = preprocess(name)) != NULL) {
+    DEBUG_PROD("Preprocessed %s\n", name);
     source = file2str(program);
   }
   return source;
@@ -56,17 +58,22 @@ int main(int argc, char **argv) {
   char *expression = source;
   FILE *test;
 
+  //SET_DEBUG_LVL(DEBUG_PROD);
+  //SET_DEBUG_LVL(DEBUG_TRACE);
+  SET_DEBUG_LVL(DEBUG_ALL);
+  
   if (argc > 1) {
     expression = buf;
     int cur_file = 1;
     node_t *syntax_tree = NULL;
     for (; cur_file < argc; cur_file++) {
-      printf("Load %s \n", argv[cur_file]);
+      DEBUG_PROD("Load %s \n", argv[cur_file]);
       if (source = loadProgram(argv[cur_file])) {
         syntax_tree = parse(&source);
-        printf("\nParsed!!!\n");
+        DEBUG_PROD("\nParsed!!!\n");
         interprete(syntax_tree);
       }
+      else { DEBUG_PROD("Failed load"); }
     }
   } else {
     int buffer_size = 1024;

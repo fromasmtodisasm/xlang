@@ -10,6 +10,7 @@ set(SOURCES
     preprocessor.c
     tree.c
     generic_list.c
+    debug.c
     )
 set(HEADERS
 	include/

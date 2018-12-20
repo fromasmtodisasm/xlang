@@ -10,6 +10,7 @@
 #include "common.h"
 #include "preprocessor.h"
 #include "generic_list.h"
+#include "debug.h"
 
 #define exptected_func(...) printf("On line %d for source line = %d\n", __LINE__, get_line());_expected_func( __VA_ARGS__)
 
@@ -103,9 +104,9 @@ node_t *parse(char **buffer) {
   node_t *program = NULL;
   token_type type;
   char *ident_name = NULL;
-  
+  DEBUG_TRACE("in function %s\n", __FUNCTION__); 
   external_defs = program = create_node(lcUNIT, "program"); 
-  printf("code type = %d\n", lcUNIT);
+  //printf("code type = %d\n", lcUNIT);
   
   exp_parser_init();
   if ((lexerInit(*buffer)) != 0) {
@@ -114,7 +115,7 @@ node_t *parse(char **buffer) {
       type = curr_token->type;
       if (is_type(type) && get_token(/*NEXT_TOKEN*/)->type == lcIDENT) {
         ident_name  = strdup(curr_token->text);
-        printf("Curr ident name = (%s)\n\n", ident_name);
+        DEBUG_TRACE("Curr ident name = (%s)\n\n", ident_name);
         if (get_token(/*NEXT_TOKEN*/)->type == lcLBRACE) {
           curr_node = create_node(lcFUNCTION, ident_name);
           function_definition(&curr_node);
@@ -129,13 +130,13 @@ node_t *parse(char **buffer) {
         ERROR("Expected function or var definition\n");
       }
       /**********************************************/ 
-      printf("code of ident type = %d\n", curr_node->type);
+      DEBUG_ALL("code of ident type = %d\n", curr_node->type);
       external_defs->right = curr_node;
       external_defs->left = create_node(curr_node->type, "external_def");
       external_defs  = external_defs->left;
     }
   }
-  printf("end. code of pr right = %d\n", program->right->type);
+  DEBUG_ALL("end. code of pr right = %d\n", program->right->type);
   return program;
 }
 
@@ -174,7 +175,7 @@ int do_print(node_t **root) {
       expr_val->right = eval();
       expr_val->left = create_node(lcEXP, "expression");
 
-      printf("%f\n", expr_val->right->value.f);
+      DEBUG_ALL("%f\n", expr_val->right->value.f);
       expr_val = expr_val->left;
       //puts("print");
       //assert(expr_val != NULL);
@@ -264,7 +265,7 @@ way_out statement(node_t **root) {
   way_out out = NORMAL;
   node_t *statements = *root; /* List of statements */ 
   node_t *curr_statement;     /* Current recognized statement */
-  puts("in stmnt");
+  DEBUG_TRACE("in stmnt\n");
   while (!end_block) {
     switch (curr_token->type) {
     case lcIF: {
@@ -285,7 +286,7 @@ way_out statement(node_t **root) {
     case lcLBRACKET: {
       out = compound_statement(&statements);
       *root = statements;
-      printf("after comp tok = %s\n", statements->text);
+      DEBUG_TRACE("after comp tok = %s\n", statements->text);
       //curr_statement = statements;
       if (curr_token->type != lcRBRACKET) {
         ERROR("error: expected }\n");
@@ -323,13 +324,12 @@ way_out statement(node_t **root) {
     case lcIDENT: {
     case lcNUMBER: 
       curr_statement = create_node(lcEXP, "expression");
-      puts("created expression");
+      DEBUG_ALL("created expression");
       curr_statement->right = eval();
       if (curr_token->type != lcSEMI) {
         exptected_func("SEMI");
       }
       get_token(/*NEXT_TOKEN*/);
-      puts("number end");
     } break;
     case lcVAR: {
       
@@ -372,7 +372,7 @@ way_out compound_statement(node_t **root) {
   way_out out = NORMAL;
   token_t prev_token;
   node_t *block;
-  printf("in function %s\n", __FUNCTION__);
+  DEBUG_TRACE("in function %s\n", __FUNCTION__);
   memcpy(&prev_token, curr_token, sizeof(token_t));
   if (curr_token->type == lcLBRACKET) {
     block = create_node(lcBLOCK, "block");
@@ -395,7 +395,7 @@ way_out compound_statement(node_t **root) {
   }
   //if (block->right != NULL) printf("block text = %s\n", block->right->text);
   //else printf("Empty block\n");
-  printf("leave function %s\n", __FUNCTION__);
+  DEBUG_TRACE("leave function %s\n", __FUNCTION__);
   *root = block;
   return out;
 }
@@ -418,8 +418,7 @@ int function_definition(node_t **root) {
   node_t *block;
   node_t *function;
   function = *root;
-  printf("func code = %d\n", function->type);
-    printf("Curr func name = (%s)\n\n", function->text);
+    DEBUG_TRACE("Curr func name = (%s)\n\n", function->text);
     declaration_list(&arg_list);
     out = compound_statement(&block);
     
@@ -437,7 +436,7 @@ int function_definition(node_t **root) {
   function->left = arg_list;
   function->right = block;
   //*root = function;
-  printf("\nend function = (%s)", (*root)->text);
+  DEBUG_TRACE("\nend function = (%s)", (*root)->text);
   return 0;
 }
 
@@ -499,7 +498,7 @@ int define_var(node_t **root){
     assert(value != NULL);
     (*root)->left = value;
 
-    DEBUG("Defined var <%s> with value = [%f]\n", value->text, value->value.f);
+    DEBUG_ALL("Defined var <%s> with value = [%f]\n", value->text, value->value.f);
     res = TRUE;
   }
   else
