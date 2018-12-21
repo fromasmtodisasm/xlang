@@ -144,11 +144,13 @@ node_t *parse(char **buffer) {
         ERROR("Expected function or var definition\n");
       }
       /**********************************************/ 
-      DEBUG_TRACE("code of ident type = %d\n", curr_node->type);
-      assert(curr_node != NULL);
-      external_defs->right = curr_node;
-      external_defs->left = create_node(curr_node->type, "external_def");
-      external_defs  = external_defs->left;
+      if (curr_node != NULL) {
+        DEBUG_TRACE("code of ident type = %d\n", curr_node->type);
+
+        external_defs->right = curr_node;
+        external_defs->left = create_node(curr_node->type, "external_def");
+        external_defs  = external_defs->left;
+      }
     }
   }
   if (program->right != NULL) {
@@ -527,5 +529,6 @@ int define_var(node_t **root){
 }
 
 void var_definition(node_t **root) {
-  for( ;curr_token->type != lcSEMI; GET_TOKEN());
+  //for( ;curr_token->type != lcSEMI; GET_TOKEN());
+  define_var(root);
 }
