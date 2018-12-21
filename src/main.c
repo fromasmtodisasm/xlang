@@ -23,6 +23,16 @@
 #define DEBUGING_LEVEL DEBUG_TRACE
 
 /***************************************************************************/
+/*********************** Typedefs/Structures *******************************/
+/***************************************************************************/
+struct command
+{
+  char *name;
+  char *desc;
+  void (*function) (void);
+};
+
+/***************************************************************************/
 /************************* Global Variables ********************************/
 /***************************************************************************/
 struct globalArgs_t {
@@ -35,6 +45,8 @@ struct globalArgs_t {
     int usage;
     int isCLI;                  /* Command line interface mode */
 } globalArgs;
+
+
 
 FILE *debug_file;
 
@@ -57,6 +69,7 @@ int process_args(int argc, char **argv) {
   int res;
   int opt;
   int d_level=DEBUGING_LEVEL;
+  int empty_cmd = TRUE;
     
   struct {
     char *text;
@@ -70,49 +83,49 @@ int process_args(int argc, char **argv) {
     "PROD",     DEBUG_PROD,
     NULL 
   };
-  opt = getopt( argc, argv, optString );
-  while( opt != -1 ) {
-    switch( opt ) {
-      case 'o':
-          globalArgs.debugFileName = optarg;
-          break;
-      case 'v':
-      {
-        int i;
-        for (i = 0; verbosity[i].text != NULL; i++)
-        {
-          if (!strcmp(verbosity[i].text, optarg))
-          {
-            d_level = verbosity[i].level;
-            DEBUG_PROD("Debug level: [%s]\n", verbosity[i].text);
-            break;
-          }
-        }
-        break;
-      }
-      case 'c':
-        globalArgs.isCLI = TRUE;
-        break;
-      case 'h':   /* intentional passage to the next case-блок */
-      case '?':
-          globalArgs.usage = TRUE;
-          usage(basename(argv[0]));
-          break;
-      default:
-          /* it's really impossible to get here */
-          break;
-    }
-
+  if (argc > 1) {
     opt = getopt( argc, argv, optString );
+    while( opt != -1 ) {
+      empty_cmd = FALSE;
+      switch( opt ) {
+        case 'o':
+            globalArgs.debugFileName = optarg;
+            break;
+        case 'v':
+        {
+          int i;
+          for (i = 0; verbosity[i].text != NULL; i++)
+          {
+            if (!strcmp(verbosity[i].text, optarg))
+            {
+              d_level = verbosity[i].level;
+              DEBUG_PROD("Debug level: [%s]\n", verbosity[i].text);
+              break;
+            }
+          }
+          break;
+        }
+        case 'c':
+          globalArgs.isCLI = TRUE;
+          break;
+        case 'h':   /* intentional passage to the next case-блок */
+        case '?':
+            globalArgs.usage = TRUE;
+            break;
+        default:
+            /* it's really impossible to get here */
+            break;
+      }
+      opt = getopt( argc, argv, optString );
+    }
   }
+  else 
+    globalArgs.usage = TRUE; 
 
   globalArgs.inputFiles = argv + optind;
   globalArgs.numInputFiles = argc - optind;
-
-  DEBUG_PROD("Arg processed\n");
-
-
   SET_DEBUG_LVL(d_level);
+  DEBUG_PROD("Arg processed\n");
 
   return res;
 }
@@ -160,20 +173,20 @@ int main(int argc, char **argv) {
   int exit_code = EXIT_SUCCESS;
 
   debug_file = stderr;
-  globalArgs.debugFileName = NULL;
-  globalArgs.outFile = NULL;
+  globalArgs.debugFileName = "out.log";
+  globalArgs.outFile = stdout;
   globalArgs.verbosity = 0;
   globalArgs.inputFiles = NULL;
   globalArgs.numInputFiles = 0;
   globalArgs.usage = 0;
 
-  //DEBUG_PROD("OPEN DEBUG FILE\n");
-  DEBUG_TRACE("Open debug file\n");
-  OPEN_DEBUG_FILE("debug.out");
   SET_DEBUG_LVL(DEBUG_ALL);
   
   DEBUG_PROD("PROCESS ARGS\n");
   process_args(argc, argv);
+  printf("debug file is %s\n",globalArgs.debugFileName);
+  printf("%d FILE TO INTERPRETE\n", globalArgs.numInputFiles);
+  OPEN_DEBUG_FILE(globalArgs.debugFileName);
   if (!globalArgs.usage) {
     if (!globalArgs.isCLI) {
       if (globalArgs.numInputFiles > 0) {
@@ -188,7 +201,9 @@ int main(int argc, char **argv) {
           }
           else { DEBUG_PROD("Failed load"); }
         }
-      } else { DEBUG_PROD("NO INPUTS FILES"); }
+      } else { 
+        DEBUG_PROD("NO INPUT FILES"); 
+      }
     } else {
       int buffer_size = 1024;
       source = malloc(buffer_size);
@@ -198,11 +213,15 @@ int main(int argc, char **argv) {
           DEBUG_PROD("\nPARSED\n"); 
           interprete(syntax_tree);
         }
-        else  break;
+        else {
+          DEBUG_PROD("PARSE ERROR\n");
+        }
       }
+      /* Go to new line */
+      puts("");
     }
   }
-  /* Go to new line */
-  puts("");
+  else  usage(basename(argv[0]));
+  fclose(debug_file);
   return 0;
 }
