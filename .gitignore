@@ -20,3 +20,11 @@ src/make.sh
 *.out
 tmp/
 *.log
+
+*.vcxproj
+Cmakefiles/
+*.filters
+*.sln
+*.
+CMakeCache.txt
+*.cmake
