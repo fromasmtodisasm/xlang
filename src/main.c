@@ -186,12 +186,13 @@ int main(int argc, char **argv) {
   process_args(argc, argv);
   printf("debug file is %s\n",globalArgs.debugFileName);
   printf("%d FILE TO INTERPRETE\n", globalArgs.numInputFiles);
-  OPEN_DEBUG_FILE(globalArgs.debugFileName);
+  //OPEN_DEBUG_FILE(globalArgs.debugFileName);
   if (!globalArgs.usage) {
     if (!globalArgs.isCLI) {
       if (globalArgs.numInputFiles > 0) {
         int cur_file = 0;
         node_t *syntax_tree = NULL;
+        OPEN_DEBUG_FILE(globalArgs.debugFileName);
         for (; cur_file < globalArgs.numInputFiles; cur_file++) {
           DEBUG_PROD("Load %s \n", argv[cur_file]);
           if (source = loadProgram(globalArgs.inputFiles[cur_file])) {
