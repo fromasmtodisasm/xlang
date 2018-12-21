@@ -19,7 +19,7 @@ typedef enum variable_type {
   VAR_INT,
   VAR_STRING,
   VAR_BOOL,
-  VAR_CONST,
+  //VAR_CONST,
   VAR_SONST_LITERAL
 } variable_type;
 

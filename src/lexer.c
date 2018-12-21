@@ -89,7 +89,8 @@ char *token_to_string[] = {"lcEND",
 
 token_type is_keyword(char *name) {
   token_type type = lcEND;
-  for (int i = 0; table[i].tok != lcEND; i++) {
+  int i;
+  for (i = 0; table[i].tok != lcEND; i++) {
     if (!strcmp(name, table[i].command)) {
       type = table[i].tok;
       break;
@@ -183,6 +184,7 @@ token_t *get_token() {
 
   else if (isalpha(*pos) || *pos == '_') {
     int len = 0;
+	token_type tmp;
     while (isalpha(*pos) || *pos == '_' || isdigit(*pos)) {
       if (len < IDENT_LEN)
         curr_ident[len++] = *pos++;
@@ -190,7 +192,7 @@ token_t *get_token() {
     curr_ident[len] = 0;
 
     text = strdup(curr_ident);
-    int tmp;
+    
     if ((tmp = is_keyword(text)) != lcEND) {
       type = tmp;
     } else {
@@ -272,10 +274,10 @@ token_t *get_token() {
     type = lcRBRACKET;
     pos++;
   } else if (*pos == '[') {
-    type = *pos;
+    type = (token_type)*pos;
     pos++;
   } else if (*pos == ']') {
-    type = *pos;
+    type = (token_type)*pos;
     pos++;
   } else if (*pos == '.') {
     type = lcPOINT;
@@ -292,7 +294,7 @@ token_t *get_token() {
       pos++;
     }
 
-    text = malloc(len + 1);
+    text = (char*)malloc(len + 1);
     memcpy(text, pos - len - 1, len);
     text[len] = '\0';
     type = lcSTRING;

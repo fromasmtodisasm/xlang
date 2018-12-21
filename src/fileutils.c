@@ -1,5 +1,7 @@
 #include "fileutils.h"
 #include <malloc.h>
+#include <string.h>
+#include "common.h"
 #include "debug.h"
 
 char *file2str(FILE *file) {
@@ -20,3 +22,14 @@ char *file2str(FILE *file) {
 
   return str;
 }
+
+
+char *strndup(const char *str, size_t n) {
+  char *out;
+  size_t len = strlen(str);
+  if (len > n) len = n;
+  out = (char*)malloc(len);
+  strncpy(out, str, len);
+  return out;
+}
+  

@@ -3,8 +3,9 @@
 /***************************************************************************/
 #include <memory.h> //memcpy
 #include <stdio.h>
-#include <unistd.h> //sleep
+//#include <unistd.h> //sleep
 #include <stdlib.h> //system
+#include <string.h>
 
 #include "syntax_parser.h"
 #include "common.h"
@@ -27,8 +28,8 @@ extern char *token_to_string[];
 /*********************** Function Prototypes *******************************/
 /******  (should be static, if not they should be in '.h' file) ************/
 /***************************************************************************/
-static int function_definition();
-static int declaration_list();
+static int function_definition(node_t **root);
+static int declaration_list(node_t **root);
 static int is_type(token_type type);
 static int do_print(node_t **root);
 void var_definition(node_t **root);
@@ -163,19 +164,11 @@ node_t *parse(char **buffer) {
 int do_print(node_t **root) {
   int stop = 0;
   node_t *print_node = *root = create_node(lcPRINT, "print");
+  node_t *expr_val = NULL;
   print_node->text = strdup(curr_token->text);
   DEBUG_TRACE("get next token\n");
   GET_TOKEN(/*NEXT_TOKEN*/);
-
-  /*
-      curr_statement = create_node(lcEXP, "expression");
-      puts("created expression");
-      curr_statement->right = eval();
-  node_t *expr_val = NULL;
-  print_node->right = expr_val;
-  */
-
-  node_t *expr_val = NULL;
+  
   print_node->right = expr_val = create_node(lcEXP, "expression");
 
   do {
@@ -221,13 +214,14 @@ int do_read() {
       //assign_value(curr_token->text, tmp);
     }
   }
+  return 0;
 }
 
 void do_sleep() {
   int ms;
   GET_TOKEN();
   ms = eval()->value.f;
-  sleep(ms);
+  //sleep(ms);
 }
 
 void do_pause(){
@@ -435,30 +429,23 @@ int function_definition(node_t **root) {
   node_t *arg_list;
   node_t *block;
   node_t *function;
+  node_t *tmp;
   function = *root;
-    DEBUG_TRACE("Curr func name = (%s)\n\n", function->text);
-    declaration_list(&arg_list);
-    out = compound_statement(&block);
-    
-    node_t *tmp;
-    assert(block != NULL);
-    /*
-    puts("**********");
-    puts("Begin statement list");
-    printf("[%s]\n", block->text);
-    print_statements(block, 0); 
-    puts("**********");
-    puts("End statement list");
-    */
+  
+
+  DEBUG_TRACE("Curr func name = (%s)\n\n", function->text);
+  declaration_list(&arg_list);
+  out = compound_statement(&block);
+
+  assert(block != NULL);
 
   function->left = arg_list;
   function->right = block;
-  //*root = function;
   DEBUG_TRACE("\nend function = (%s)", (*root)->text);
   return 0;
 }
 
-int declaration_list() {
+int declaration_list(node_t **root) {
   token_type type;
   int retval = -1;
   if (curr_token->type == lcLBRACE) {
@@ -493,10 +480,10 @@ int define_var(node_t **root){
   node_t *value = NULL; 
   if (GET_TOKEN()->type == lcIDENT)
   {
+    node_t *value;
     varname = strdup(curr_token->text);
     printf("varname = %s\n", varname);
     *root = create_node(lcVARDEF, "var_assign");
-    node_t *value;
     if (GET_TOKEN()->type == lcASSIGN)
     {
       if ((type = GET_TOKEN()->type) == lcIDENT || type == lcNUMBER || type == lcSTRING)

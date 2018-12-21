@@ -25,7 +25,7 @@ way_out do_if();
 way_out do_while();
 way_out statement(node_t **root);
 way_out compound_statement(node_t **root);
-int define_var();
+int define_var(node_t **root);
 
 /***************************************************************************/
 /********************* Externally Defined Globals **************************/

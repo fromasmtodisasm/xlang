@@ -5,7 +5,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#if defined _MSC_VER
+#include "win32/getopt.h"
+#else
 #include <unistd.h>
+#endif
+
 
 #include "common.h"
 #include "fileutils.h"
@@ -66,7 +72,7 @@ static char *basename(char *path);
 static const char *optString = "Il:o:v:ch?";
 
 int process_args(int argc, char **argv) {
-  int res;
+  int res = 0;
   int opt;
   int d_level=DEBUGING_LEVEL;
   int empty_cmd = TRUE;
@@ -155,7 +161,8 @@ void usage(char *prog_name) {
 
 char *basename(char *path) {
   int pos = 0;
-  for (int i = strlen(path) - 1; i >= 0; i--) {
+  int i;
+  for (i = strlen(path) - 1; i >= 0; i--) {
     if (path[i] == '\\') {
       break;
     }
@@ -207,8 +214,8 @@ int main(int argc, char **argv) {
       }
     } else {
       int buffer_size = 1024;
-      source = malloc(buffer_size);
       node_t *syntax_tree = NULL;
+	  source = (char*)malloc(buffer_size);
       while (printf(">"), fgets(source, buffer_size, stdin) != NULL) {
         if ((syntax_tree = parse(&source)) != NULL){
           DEBUG_PROD("\nPARSED\n"); 

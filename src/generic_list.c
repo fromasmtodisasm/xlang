@@ -13,10 +13,11 @@ void push(struct list_t** head_ref, void *new_data, size_t data_size)
 
     // Copy contents of new_data to newly allocated memory.
     // Assumption: char takes 1 byte.
-    int i;
-    for (i=0; i<data_size; i++)
-        *(char *)(new_node->data + i) = *(char *)(new_data + i);
-
+	{	
+		int i;
+		for (i=0; i<data_size; i++)
+			*(char *)((char*)new_node->data + i) = *(char *)((char *)new_data + i);
+	}
     // Change head pointer as new node is added at the beginning
     (*head_ref)    = new_node;
 }

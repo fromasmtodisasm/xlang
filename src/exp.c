@@ -41,7 +41,7 @@ typedef struct list_t listof;
 
 static listof *vars;
 #define push_var(var) push(&vars, &var, sizeof(var))
-#define find_var(var) foreach_element(vars, var.name, cmp_var_name)
+#define find_var(var) (variable*)foreach_element(vars, var.name, cmp_var_name)
 #define VAR_STORAGE "LIST_USE"
 
 #endif
@@ -65,11 +65,13 @@ int make_builtin_vars() {
   variable _true = { "true", 1, };
   push_var(_false);
   push_var(_true);
+  return TRUE;
 }
 
 int exp_parser_init() { 
   DEBUG_ALL("Used var storage: %s\n", var_storage);
   make_builtin_vars(); 
+  return TRUE;
 }
 
 #ifdef BTREE_USE
@@ -335,24 +337,26 @@ int assignment_expression(node_t **root) {
   if (curr_token->type == lcIDENT) {
     char *name;
     int tmp = 0;
-    name = curr_token->text;
+	token_type type = curr_token->type;
     char *prev_pos = get_pos();
+	name = curr_token->text;
     //memcpy(&prev_token, curr_token, sizeof(token_t));
     res = conditional_expression(root);
     DEBUG_PROD("root = %s\n", (*root)->text);
     DEBUG_PROD("CURRENT TOKEN = %s\n", curr_token->text);
     //system("sleep 1");
     //*root = create_node(curr_token->type, strdup(curr_token->text));
-    token_type type = curr_token->type;
+    //token_type type = curr_token->type;
     if (type == lcASSIGN || type == lcPLUS_ASSIGN || type == lcMINUS_ASSIGN ||
         type == lcMUL_ASSIGN || type == lcDIV_ASSIGN) {
+	  node_t *exp;
       assert(curr_token->text != NULL);
       node = create_node(curr_token->type, strdup(curr_token->text));
       assert(node != NULL);
       node->left = *root;
       GET_TOKEN(/*NEXT_TOKEN*/);
       assignment_expression(&(node->right));
-      node_t *exp = create_node(lcEXP, "expression");
+      exp = create_node(lcEXP, "expression");
       node->left->type = node->right->type;
       exp->right = node;
       *root = exp;

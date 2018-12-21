@@ -41,7 +41,7 @@ struct btree_node_t {
 /***************************************************************************/
 /*************************** Prototypes ************************************/
 /***************************************************************************/
-node_t *create_node();
+//node_t *create_node();
 static void btree_free_node(struct btree_node_t *node);
 static struct btree_node_t* find_min_node(struct btree_node_t *node);
 static struct btree_node_t* find_max_node(struct btree_node_t *node);

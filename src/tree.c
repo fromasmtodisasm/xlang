@@ -9,7 +9,7 @@
 node_t *create_node(int type, char *text) {
   node_t *node;
 
-  node = malloc(sizeof(node_t));
+  node = (node_t*)malloc(sizeof(node_t));
   node->left = NULL;
   node->right = NULL;
   node->type = type;
@@ -24,11 +24,11 @@ node_t *create_node(int type, char *text) {
 #include <stdio.h>
 #include <string.h>
 */
-
+/*
 void *btree_insert(struct btree_node_t **root, void *item, unsigned int size, int (*compare_node)(const void*,const void*)) {
     // Insert the root
     if (*root == NULL) {
-        *root = malloc(sizeof(struct btree_node_t));
+        *root = (btree_node_t*)malloc(sizeof(struct btree_node_t));
         if (!(*root)) {
             fprintf(stderr,"malloc() fail\n");
             return NULL;
@@ -125,3 +125,4 @@ void *btree_search(struct btree_node_t *root, void *item, int (*compare_node)(co
     else if (compare_node(item,root->item) < 0) return btree_search(root->left, item, compare_node);
     else return root->item;
 }
+*/
