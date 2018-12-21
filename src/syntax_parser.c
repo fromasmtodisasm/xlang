@@ -123,7 +123,8 @@ node_t *parse(char **buffer) {
   
   exp_parser_init();
   if ((lexerInit(*buffer)) != 0) {
-    while (GET_TOKEN(/*NEXT_TOKEN*/)->type != lcEND) {
+    while ((GET_TOKEN(/*NEXT_TOKEN*/)), curr_token->type != lcEND) {
+      DEBUG_TRACE("PARSE EXTERNAL DEFINITION\n");
       /**********************************************/ 
       type = curr_token->type;
       if (is_type(type) && GET_TOKEN(/*NEXT_TOKEN*/)->type == lcIDENT) {
@@ -143,13 +144,17 @@ node_t *parse(char **buffer) {
         ERROR("Expected function or var definition\n");
       }
       /**********************************************/ 
-      DEBUG_ALL("code of ident type = %d\n", curr_node->type);
+      DEBUG_TRACE("code of ident type = %d\n", curr_node->type);
+      assert(curr_node != NULL);
       external_defs->right = curr_node;
       external_defs->left = create_node(curr_node->type, "external_def");
       external_defs  = external_defs->left;
     }
   }
-  DEBUG_ALL("end. code of pr right = %d\n", program->right->type);
+  if (program->right != NULL) {
+    DEBUG_ALL("end. code of pr right = %d\n", program->right->type);
+  }
+  else { DEBUG_TRACE("EMPTY COMPILATION UNIT"); }
   return program;
 }
 
@@ -522,5 +527,5 @@ int define_var(node_t **root){
 }
 
 void var_definition(node_t **root) {
-  //while(GET_TOKEN()->type != lcSEMI);
+  for( ;curr_token->type != lcSEMI; GET_TOKEN());
 }

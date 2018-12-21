@@ -39,16 +39,6 @@ node_t *exec_expression(node_t *root,int level) {
   return root;
 }
 
-/*
-void exec_while(node_t *root, int level) {
-  printf("in while\n");
-  int cond;
-  //printf("cond = %d\n", cond = (int)(exec_expression(root->left)->value.f));
-  do_statement(root->left, level + 1);
-  do_statement(root->right, level + 1);
-}
-*/
-
 void int_print(node_t *root) {
 
 }
@@ -67,19 +57,13 @@ void exec_while(node_t *node, int level)
 
 void exec_if(node_t *node, int level)
 {
-  //exec_while(node, level);
   PRINT_PAD(level,DEBUG_TRACE,"begin if\n");
-  //printf("here\n");
-  //PRINT_PAD(level,DEBUG_TRACE,"check condition\n");
-  //do_statements(node->left, level + 1);
-
+  
   if ((int)exec_expression(node->left->right, level)->value.f != 0) {
     do_statements(node->right, level + 1);
   }
   assert(node->right != NULL);
   PRINT_PAD(level,DEBUG_TRACE,"end if\n");
-  //do_statements(node->right, level + 1); 
-
 }
 
 void exec_ifelse(node_t *node, int level)
@@ -183,17 +167,17 @@ void extern_defs(node_t *root)
     switch (node->right->type) {
       case lcVARDEF:
         {
-          puts("this is vardef");
+          DEBUG_LOG("this is vardef\n");
         }break; 
       case lcFUNCTION:
         {
-          printf("this is func %s\n", node->right->text);
+          DEBUG_LOG("this is func %s\n", node->right->text);
           do_statements(node->right->right,1);
         } break;
       default:
         {
-          printf("code type %d\n", node->right->type);
-          puts("unknown node");
+          DEBUG_LOG("code type %d\n", node->right->type);
+          DEBUG_LOG("unknown node");
         }
     }
   }
@@ -201,19 +185,18 @@ void extern_defs(node_t *root)
 
 int interprete(node_t *syntax_tree) {
   assert(syntax_tree != NULL);
-  printf("Start interpreting...\n"); 
+  DEBUG_LOG("Start interpreting...\n"); 
   assert(syntax_tree->text != NULL);
-  printf("root text: %s\n", syntax_tree->text);
+  DEBUG_TRACE("root text: %s\n", syntax_tree->text);
   //assert(syntax_tree->right != NULL);
   //sleep(2);
-  node_t test_var;
-  test_var.text = "e";
-  if (lookup(&test_var))
-  {
-    printf("var e is present\n");
+  if (syntax_tree->right != NULL) {
+    DEBUG_TRACE("BEGIN TREE TRAVERSE\n");
+    extern_defs(syntax_tree);
+    DEBUG_TRACE("END TREE TRAVERSE\n");
   }
-  else { printf("not present\n");}
-  extern_defs(syntax_tree);
+  else 
+    DEBUG_PROD("NOTING PARSE\n");
   //do_statements(syntax_tree->right,0);  
   return 0;
 }

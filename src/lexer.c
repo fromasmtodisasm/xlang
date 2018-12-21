@@ -419,6 +419,6 @@ token_t *get_token() {
   curr_context->pos = pos;
   DEBUG_DEVELOP("< %s, %s >\n", "text" /*token_to_string[CURTOK().type - BASE_INDEX]*/, text);
   assert(&CURTOK() != NULL);
-  //DEBUG_TRACE("LEAVE GET TOKEN\n");
+  if (type == lcEND) DEBUG_TRACE("End of source\n");
   return &CURTOK();
 }

@@ -17,3 +17,5 @@ build/*
 docs/
 *.dg
 src/make.sh
+*.out
+tmp/
