@@ -413,7 +413,7 @@ token_t *get_token() {
     assert(type != lcEND);
     assert(pos > begin);
     text = strndup(begin, pos - begin);
-    //text[pos-begin] = '\0';
+    text[pos-begin] = '\0';
   }
   CURTOK().type = type;
   CURTOK().text = text;

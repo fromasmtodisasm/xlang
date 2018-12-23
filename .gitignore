@@ -28,3 +28,6 @@ Cmakefiles/
 *.
 CMakeCache.txt
 *.cmake
+/src/Debug
+/src/xlang.dir/Debug
+/Win32/Debug
