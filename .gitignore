@@ -12,3 +12,13 @@ vs2008/Debug/*
 *.bak
 *.o
 build/*
+/CMakeFiles
+/src/CMakeFiles
+/src/Debug
+/src/xlang.dir/Debug
+/Win32/Debug
+*.vcxproj
+*.filters
+*.sln
+*.cmake
+*.txt
