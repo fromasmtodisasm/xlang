@@ -88,13 +88,20 @@ int assign_value(char *name, int val)
 int primary_expression()
 {
 	int res = 0;
-
+	int sign = 0; // -1 - negative, 0 without sign
+	if (curr_token->type == lcPLUS || curr_token->type == lcMINUS) {
+		if (curr_token->type == lcMINUS)
+			sign = -1;
+		get_token();
+	}
 	switch (curr_token->type)
 	{
 
 	case lcNUMBER:
 	{
-		res = (int)curr_token->text;
+		//res = (int)curr_token->text;
+		//GENCODE
+		printf("\tpush %c%d\n", sign==-1 ? '-' : ' ', atoi(curr_token->text));
 		break;
 	}
 	case lcIDENT:
@@ -105,6 +112,8 @@ int primary_expression()
 
 			//exit(-1);
 		}
+			//GENCODE
+			printf("\tpush %c%s\n", sign==-1 ? '-' : ' ', curr_token->text);
 		break;
 	}
 	case lcLBRACE:
@@ -142,12 +151,16 @@ int multiplicative_expression()
 		{
 			get_token(/*NEXT_TOKEN*/);
 			res *= primary_expression();
+			//gencode
+			printf("\tmul\n");
 			break;
 		}
 		case lcDIV:
 		{
 			get_token(/*NEXT_TOKEN*/);
-			res /= primary_expression();
+			primary_expression();
+			//gencode
+			printf("\tdiv\n");
 			break;
 		}
 		default:
@@ -172,12 +185,16 @@ int additive_expression()
 		{
 			get_token(/*NEXT_TOKEN*/);
 			res += multiplicative_expression();
+			//gencode
+			printf("\tadd\n");
 			break;
 		}
 		case lcMINUS:
 		{
 			get_token(/*NEXT_TOKEN*/);
 			res -= multiplicative_expression();
+			//gencode
+			printf("\tsub\n");
 			break;
 		}
 		default:
@@ -217,30 +234,66 @@ int conditional_expression()
 
 		case lcAND_OP:
 			res &= additive_expression();
+			//gencode
+			printf("\tcmp\n");
+			//gencode
+			printf("\tand\n");
 			break;
 		case lcOR_OP:
 			res |= additive_expression();
+			//gencode
+			printf("\tcmp\n");
+			//gencode
+			printf("\tor\n");
 			break;
 		case lcEQ_OP:
 			res = res == additive_expression();
+			//gencode
+			printf("\tcmp\n");
+			//gencode
+			printf("\tcmp\n");
 			break;
 		case lcL_OP:
 			res  = res < additive_expression();
+			//gencode
+			printf("\tcmp\n");
+			//gencode
+			printf("\tjl\n");
 			break;
 		case lcG_OP:
 			res = res > additive_expression();
+			//gencode
+			printf("\tcmp\n");
+			//gencode
+			printf("\tja\n");
 			break;
 		case lcLE_OP:
 			res = res <= additive_expression();
+			//gencode
+			printf("\tcmp\n");
+			//gencode
+			printf("\tjbe\n");
 			break;
 		case lcGE_OP:
 			res = res >= additive_expression();
+			//gencode
+			printf("\tcmp\n");
+			//gencode
+			printf("\tjae\n");
 			break;
 		case lcN_OP:
 			res != additive_expression();
+			//gencode
+			printf("\tcmp\n");
+			//gencode
+			printf("\tjnz\n");
 			break;
 		case lcNE_OP:
 			res = res != additive_expression();
+			//gencode
+			printf("\tcmp\n");
+			//gencode
+			printf("\tjne\n");
 		default:
 			break;
 		}
@@ -278,18 +331,46 @@ int assignment_expression()
 			{
 			case lcASSIGN:
 				res = assignment_expression();
+				//gencode
+				printf("\tpush %s\n", name);
+				printf("\tsave\n");
 				break;
 			case lcPLUS_ASSIGN:
 				res = tmp += res = assignment_expression();
+				//gencode
+				printf("\tpush %s\n", name);
+				printf("\tload\n");
+				printf("\tadd\n");
+				printf("\tpush %s\n", name);
+				printf("\tsave\n");
+				
 				break;
 			case lcMINUS_ASSIGN:
 				res = tmp -= assignment_expression();
+				//gencode
+				printf("\tpush %s\n", name);
+				printf("\tload\n");
+				printf("\tsub\n");
+				printf("\tpush %s\n", name);
+				printf("\tsave\n");
 				break;
 			case lcMUL_ASSIGN:
 				res = tmp *= assignment_expression();
+				//gencode
+				printf("\tpush %s\n", name);
+				printf("\tload\n");
+				printf("\tmul\n");
+				printf("\tpush %s\n", name);
+				printf("\tsave\n");
 				break;
 			case lcDIV_ASSIGN:
 				res = tmp /= assignment_expression();
+				//gencode
+				printf("\tpush %s\n", name);
+				printf("\tload\n");
+				printf("\tdiv\n");
+				printf("\tpush %s\n", name);
+				printf("\tsave\n");
 				break;
 			default:
 				break;

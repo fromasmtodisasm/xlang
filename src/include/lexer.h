@@ -1,9 +1,22 @@
-#pragma once
+#ifndef _LEXER_H_
+#define _LEXER_H_
 
+/***************************************************************************/
+/************************** Other Includes *********************************/
+/***************************************************************************/
+
+/***************************************************************************/
+/***************************** Defines *************************************/
+/***************************************************************************/
 #define BASE_INDEX 257
-typedef enum token_direct {PREV, CURR, NEXT}token_direct;
-typedef enum token_type
-{
+#define IDENT_LEN 64
+#define NUMBER_LEN 20
+
+/***************************************************************************/
+/*********************** Typedefs/Structures *******************************/
+/***************************************************************************/
+typedef enum token_direct { PREV, CURR, NEXT } token_direct;
+typedef enum token_type {
 	lcEND = BASE_INDEX,
 	lcDELIM,
 	lcSEMI,
@@ -18,7 +31,9 @@ typedef enum token_type
 	lcDIV,
 	lcASSIGN,
 	lcPLUS_ASSIGN,
+	lcPLUS_PLUS,
 	lcMINUS_ASSIGN,
+	lcMINUS_MINUS,
 	lcMUL_ASSIGN,
 	lcDIV_ASSIGN,
 
@@ -28,11 +43,11 @@ typedef enum token_type
 	lcDEC_OP,
 	lcPTR_OP,
 	lcAND_OP,
-	lcOR_OP ,
-	lcLE_OP ,
-	lcGE_OP ,
-	lcEQ_OP ,
-	lcNE_OP ,
+	lcOR_OP,
+	lcLE_OP,
+	lcGE_OP,
+	lcEQ_OP,
+	lcNE_OP,
 
 	lcG_OP,
 	lcN_OP,
@@ -45,20 +60,23 @@ typedef enum token_type
 
 	lcLBRACE,
 	lcRBRACE,
-	
+
 	lcIF,
 	lcELSE,
+	lcIFELSE,
 	lcFOR,
 	lcDO,
 	lcWHILE,
 	lcCHAR,
 	lcINT,
-	
+	lcVAR,
+
 	lcLBRACKET,
 	lcRBRACKET,
 	lcABORT,
 	lcPRINT,
 	lcREAD,
+	lcSLEEP,
 
 	lcBEGINBLOCK,
 	lcENDBLOCK,
@@ -66,40 +84,52 @@ typedef enum token_type
 	lcINTERPRETE,
 
 	lcVOID,
+	lcPAUSE,
+
+	lcPOINT,
+	lcARROW,
+
+	lcCALL,
+	lcBLOCK,
+	lcSTATEMENT,
+	lcVARDEF,
+
+	lcUNIT,
+	lcEXP,
+	lcSTMNT,
 
 	lcUNKNOWN
-}token_type;
+} token_type;
 typedef enum token_category {
 	catIDENT,
 	catKEYWORD,
 	catCONST,
 	catOPERATOR,
 	catDELIM
-}token_category;
+} token_category;
 
-typedef struct token_t
-{
+typedef struct token_t {
 	token_type type;
-	void *text;
+	char *text;
 	token_category category;
 	char *pos;
-}token_t;
-typedef struct context
-{
+} token_t;
+typedef struct context {
 	token_t curr_token;
 	char *pos;
 	int cur_line;
 	struct context *prev, *next;
-}context_t;
+} context_t;
 
-extern token_t *curr_token;
-
+/***************************************************************************/
+/*************************** Prototypes ************************************/
+/***************************************************************************/
 token_type is_keyword(char *name);
 int lexerInit(char *src);
-char * get_pos();
-void set_pos(char* pos);
-
-token_t* get_token();
+char *get_pos();
+void set_pos(char *pos);
+int get_line();
+token_t *get_token();
 /*
 union
 {
@@ -108,3 +138,10 @@ char *string;
 float float_number
 }value;
 */
+
+/***************************************************************************/
+/********************* Externally Defined Globals **************************/
+/***************************************************************************/
+extern token_t *curr_token;
+
+#endif /* _LEXER_H_ */
