@@ -123,7 +123,7 @@ token_type is_keyword(string_ref name) {
 	return type;
 }
 
-int lexerInit(char *src) {
+int lexer_init(char *src) {
 	curr_context = &context;
 	curr_context->pos = src;
 	curr_context->cur_line = 1;

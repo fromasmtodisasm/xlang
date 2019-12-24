@@ -19,27 +19,8 @@ static void MATCH(token_type tok)
 #define STACK_SIZE 64 
 #define FUNCTIONS_COUNT 128 
 
-// static token_t *curr_token;// = curr_token;
-void skip_compound_statement();
-void skip_statement();
-int function_definition();
-int declaration_list();
-
-static void CREATE_PRIMITIVE_TYPE(char* name, builtin_types t);
 
 //#define CREATE_PRIMITIVE_TYPE(n, t) string_ref_assign(tmp_type->name, n); tmp_type->object_type = PRIMITIVE; tmp_type->btype = t; add_type(global_context, tmp_type);
-
-typedef struct function_t function_t;
-typedef struct block_t function_body_t;
-
-typedef struct function_t
-{
-  string_ref name;
-  variable* args;
-  type_t return_type;
-  function_body_t* body;
-
-}function_t;
 
 typedef struct interpreter_context
 {
@@ -47,15 +28,56 @@ typedef struct interpreter_context
     int num_types;
     int types_capacity;
 
-    function_t* functions[FUNCTIONS_COUNT];
+    int num_funcs;
+    function_t functions[FUNCTIONS_COUNT];
+    function_t* current_function;
     function_t* entry_point;
 
     int stack[STACK_SIZE];
+    int sp;
 }interpreter_context;
 
 extern char *token_to_string[];
 static type_t* tmp_type = NULL;
 interpreter_context* global_context;
+
+void skip_compound_statement();
+void skip_statement();
+int function_definition();
+int declaration_list();
+
+static void CREATE_PRIMITIVE_TYPE(char* name, builtin_types t);
+void call_cfunction(interpreter_context* ctx, function_t* func);
+
+void push_integer(interpreter_context* ctx, int value);
+
+int myCFunction(interpreter_context* ctx)
+{
+  printf("this is %s\n", __FUNCTION__);
+  push_integer(ctx, 123);
+  return 1;
+}
+
+bool register_cfunction(interpreter_context *ctx, CFunction* function, const char* name)
+{
+  function_t* func = &ctx->functions[ctx->num_funcs++];
+  
+  func->name = string_ref_create(name);
+  func->cfunc = function;
+  func->type = C_FUNCTION;
+}
+
+bool is_cfunction(interpreter_context* ctx, string_ref name)
+{
+  for (int i = 0; i < ctx->num_funcs; i++)
+  {
+    if (!strncmp(ctx->functions[i].name.pos, name.pos, ctx->functions[i].name.len) && ctx->functions[i].type == C_FUNCTION)
+    {
+      return true;
+    }
+  }
+  return false;
+}
 
 interpreter_context* create_interpreter_context()
 {
@@ -66,6 +88,10 @@ interpreter_context* create_interpreter_context()
         ctx->num_types = 0;
         ctx->types_capacity = TYPES_CAPACITY;
         ctx->types = malloc(sizeof(type_t) * TYPES_CAPACITY);
+        ctx->num_funcs = 0;
+        ctx->entry_point = NULL;
+        ctx->current_function = NULL;
+        ctx->sp = 0;
     }
     return ctx;
 }
@@ -98,6 +124,7 @@ static void interpreter_init()
     CREATE_PRIMITIVE_TYPE("uint", UINT_TYPE);
     CREATE_PRIMITIVE_TYPE("uchar", UCHAR_TYPE);
     CREATE_PRIMITIVE_TYPE("float", FLOAT_TYPE);
+    register_cfunction(global_context, myCFunction, "myCFunction");
 //#undef CREATE_PRIMITIVE_TYPE 
 }
 
@@ -269,7 +296,13 @@ int start(char **buffer) {
   exp_parser_init();
   interpreter_init();
 
-  if ((lexerInit(*buffer)) != 0) {
+  string_ref name = string_ref_create("myCFunction");
+  function_t* func = find_cfunction(global_context, name);
+
+  if (is_cfunction(global_context, name))
+    call_cfunction(global_context, func);
+
+  if ((lexer_init(*buffer)) != 0) {
     while (get_token(/*NEXT_TOKEN*/)->type != lcEND) {
       switch (curr_token->type)
       {
@@ -525,3 +558,42 @@ static void CREATE_PRIMITIVE_TYPE(char* name, builtin_types t)
     tmp_type->btype = t;
     add_type(global_context, tmp_type);
 }
+
+void call_cfunction(interpreter_context* ctx, function_t* func)
+{
+  if (func != NULL)
+  {
+    int result = func->cfunc(ctx);
+    printf("function results count = %d, value = %d\n", result, ctx->stack[ctx->sp - 1]);
+    ctx->sp -= result;
+  }
+}
+
+void push_integer(interpreter_context* ctx, int value)
+{
+  if (ctx->sp < STACK_SIZE)
+  {
+    ctx->stack[ctx->sp++] = value;
+  }
+}
+
+void pop_integer(interpreter_context* ctx)
+{
+  if (ctx->sp >= 0)
+  {
+    ctx->sp++;
+  }
+}
+
+function_t* find_cfunction(interpreter_context* ctx, string_ref name)
+{
+  for (int i = 0; i < ctx->num_funcs; i++)
+  {
+    function_t* func = &ctx->functions[i];
+    if (!strncmp(func->name.pos, name.pos, func->name.len))
+    {
+      return func;
+    }
+  }
+}
+

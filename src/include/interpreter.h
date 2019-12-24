@@ -1,5 +1,7 @@
 #pragma once
 #include "lexer.h"
+#include "exp.h"
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,6 +56,29 @@ typedef struct type_t
     struct type_t* types;
 }type_t;
 
+typedef struct block_t function_body_t;
+typedef struct interpreter_context interpreter_context;
+typedef int (*CFunction)(interpreter_context*);
+
+typedef enum {
+  USER_FUNCTION,
+  BUILTIN_FUNCTION,
+  C_FUNCTION
+} function_type_t;
+
+typedef struct function_t
+{
+  function_type_t type;
+  string_ref name;
+  variable* args;
+  type_t return_type;
+  union
+  {
+    function_body_t* body;
+    CFunction cfunc;
+  };
+}function_t;
+
 
 int start(char ** buffer);
 way_out do_if();
@@ -65,3 +90,7 @@ way_out compound_statement(compound_origin origin);
 }
 #endif
 
+bool register_cfunction(interpreter_context *ctx, CFunction* func, const char* name);
+bool is_cfunction(interpreter_context* ctx, string_ref name);
+void call_cfunction(interpreter_context* ctx, function_t* func);
+function_t* find_cfunction(interpreter_context* ctx, string_ref name);

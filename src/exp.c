@@ -1,5 +1,6 @@
 #include "exp.h"
 #include "lexer.h"
+#include "interpreter.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,24 +9,25 @@
 
 
 variable *vars;
+extern interpreter_context* global_context;
 //static token_t *curr_token;// = curr_token;
 
 int make_builtin_vars()
 {
 	vars = malloc(sizeof(variable));
-	variable false =
+	variable False =
 	{
 		.name = string_ref_create("false"),
     .value = 0
 	};
-	variable true = {
+	variable True = {
 		.name = string_ref_create("true"),
 		.value = 1,
 	};
 
-	memcpy(vars, &true, sizeof(variable));
+	memcpy(vars, &True, sizeof(variable));
   vars->next = malloc(sizeof(variable));
-	memcpy(vars->next, &false, sizeof(variable));
+	memcpy(vars->next, &False, sizeof(variable));
 }
 
 int exp_parser_init()
@@ -107,9 +109,28 @@ int primary_expression()
 	}
 	case lcIDENT:
 	{
-		if ((lookup(curr_token->text, &res)) == 0)
+    token_t prev_token = *curr_token;
+
+    if (get_token()->type == lcLBRACE)
+    {
+      if (get_token()->type != lcRBRACE)
+      {
+        printf("error, rbrace expected\n");
+        exit(-1);
+      }
+      if (is_cfunction(global_context, prev_token.text))
+      {
+        function_t* func = find_cfunction(global_context, prev_token.text);
+        call_cfunction(global_context, func);
+      }
+    }
+		else 
 		{
-			printf("Error, undefined variable <%s>\n", curr_token->text);
+      *curr_token = prev_token;
+      if ((lookup(curr_token->text, &res)) == 0)
+      {
+        printf("Error, undefined variable <%.*s>\n", curr_token->text.len, curr_token->text.pos);
+      }
 
 			//exit(-1);
 		}

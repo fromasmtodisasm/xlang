@@ -137,7 +137,7 @@ string_ref string_ref_create(char* str);
 /*************************** Prototypes ************************************/
 /***************************************************************************/
 token_type is_keyword(string_ref name);
-int lexerInit(char *src);
+int lexer_init(char *src);
 char *get_pos();
 void set_pos(char *pos);
 int get_line();
