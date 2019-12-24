@@ -13,18 +13,19 @@ variable *vars;
 int make_builtin_vars()
 {
 	vars = malloc(sizeof(variable));
-	static variable false =
+	variable false =
 	{
-		"false",
-		0
+		.name = string_ref_create("false"),
+    .value = 0
 	};
-	static variable true = {
-		"true",
-		1,
+	variable true = {
+		.name = string_ref_create("true"),
+		.value = 1,
 	};
 
-	vars = &true;
-	true.next = &false;
+	memcpy(vars, &true, sizeof(variable));
+  vars->next = malloc(sizeof(variable));
+	memcpy(vars->next, &false, sizeof(variable));
 }
 
 int exp_parser_init()
@@ -113,7 +114,7 @@ int primary_expression()
 			//exit(-1);
 		}
 			//GENCODE
-			printf("\tpush %c%s\n", sign==-1 ? '-' : ' ', curr_token->text);
+			printf("\tpush %c%.*s\n", sign==-1 ? '-' : ' ', curr_token->text.len, curr_token->text.pos);
 		break;
 	}
 	case lcLBRACE:
@@ -331,44 +332,44 @@ int assignment_expression()
 			case lcASSIGN:
 				res = assignment_expression();
 				//gencode
-				printf("\tpush %s\n", name);
+				printf("\tpush %*.s\n", name.len, name);
 				printf("\tsave\n");
 				break;
 			case lcPLUS_ASSIGN:
 				res = tmp += res = assignment_expression();
 				//gencode
-				printf("\tpush %s\n", name);
+				printf("\tpush %*.s\n", name.len, name);
 				printf("\tload\n");
 				printf("\tadd\n");
-				printf("\tpush %s\n", name);
+				printf("\tpush %*.s\n", name.len, name);
 				printf("\tsave\n");
 				
 				break;
 			case lcMINUS_ASSIGN:
 				res = tmp -= assignment_expression();
 				//gencode
-				printf("\tpush %s\n", name);
+				printf("\tpush %*.s\n", name.len, name);
 				printf("\tload\n");
 				printf("\tsub\n");
-				printf("\tpush %s\n", name);
+				printf("\tpush %*.s\n", name.len, name);
 				printf("\tsave\n");
 				break;
 			case lcMUL_ASSIGN:
 				res = tmp *= assignment_expression();
 				//gencode
-				printf("\tpush %s\n", name);
+				printf("\tpush %*.s\n", name.len, name);
 				printf("\tload\n");
 				printf("\tmul\n");
-				printf("\tpush %s\n", name);
+				printf("\tpush %*.s\n", name.len, name);
 				printf("\tsave\n");
 				break;
 			case lcDIV_ASSIGN:
 				res = tmp /= assignment_expression();
 				//gencode
-				printf("\tpush %s\n", name);
+				printf("\tpush %*.s\n", name.len, name);
 				printf("\tload\n");
 				printf("\tdiv\n");
-				printf("\tpush %s\n", name);
+				printf("\tpush %*.s\n", name.len, name);
 				printf("\tsave\n");
 				break;
 			default:

@@ -98,6 +98,8 @@ typedef enum token_type {
 	lcEXP,
 	lcSTMNT,
 
+  lcSTRUCT,
+
 	lcUNKNOWN
 } token_type;
 typedef enum token_category {

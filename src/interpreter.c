@@ -258,6 +258,11 @@ way_out do_while() {
 
 int func_decl() { return 0; }
 
+void struct_declaration()
+{
+
+}
+
 int start(char **buffer) {
   int retval = 0;
 
@@ -266,7 +271,17 @@ int start(char **buffer) {
 
   if ((lexerInit(*buffer)) != 0) {
     while (get_token(/*NEXT_TOKEN*/)->type != lcEND) {
-      retval = function_definition();
+      switch (curr_token->type)
+      {
+      case lcSTRUCT:
+      {
+        struct_declaration();
+      }
+      break;
+      default:
+        retval = function_definition();
+        break;
+      }
     }
   }
 
@@ -285,7 +300,7 @@ int print() {
     char *curtype;
     int expr_val = 0;
     if (curr_token->type == lcSTRING) {
-      printf("%s", curr_token->text);
+      printf("%.*s", curr_token->text.len, curr_token->text.pos);
       get_token(/*NEXT_TOKEN*/);
     } else {
       curtype = number;
