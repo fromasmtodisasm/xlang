@@ -6,15 +6,100 @@
 
 #include <memory.h> //memcpy
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
 
 #define FATAL_ERROR(str) (fprintf(stderr, "Fatal error on line %d: %s\n", str), exit(-1))
-#define MATCH(tok) curr_token->type != tok ? FATAL_ERROR("") : get_token(); 
-extern char *token_to_string[];
+//#define MATCH(tok) curr_token->type != tok ? FATAL_ERROR("error") : get_token(); 
+static void MATCH(token_type tok) 
+{
+    curr_token->type != tok ? FATAL_ERROR("error") : (void)get_token();
+}
+#define TYPES_CAPACITY 256
+#define STACK_SIZE 64 
+#define FUNCTIONS_COUNT 128 
+
 // static token_t *curr_token;// = curr_token;
 void skip_compound_statement();
 void skip_statement();
 int function_definition();
 int declaration_list();
+
+static void CREATE_PRIMITIVE_TYPE(char* name, builtin_types t);
+
+//#define CREATE_PRIMITIVE_TYPE(n, t) string_ref_assign(tmp_type->name, n); tmp_type->object_type = PRIMITIVE; tmp_type->btype = t; add_type(global_context, tmp_type);
+
+typedef struct function_t function_t;
+typedef struct block_t function_body_t;
+
+typedef struct function_t
+{
+  string_ref name;
+  variable* args;
+  type_t return_type;
+  function_body_t* body;
+
+}function_t;
+
+typedef struct interpreter_context
+{
+    type_t* types;
+    int num_types;
+    int types_capacity;
+
+    function_t* functions[FUNCTIONS_COUNT];
+    function_t* entry_point;
+
+    int stack[STACK_SIZE];
+}interpreter_context;
+
+extern char *token_to_string[];
+static type_t* tmp_type = NULL;
+interpreter_context* global_context;
+
+interpreter_context* create_interpreter_context()
+{
+    interpreter_context *ctx = malloc(sizeof(interpreter_context));
+    global_context = ctx;
+    if (ctx != NULL)
+    {
+        ctx->num_types = 0;
+        ctx->types_capacity = TYPES_CAPACITY;
+        ctx->types = malloc(sizeof(type_t) * TYPES_CAPACITY);
+    }
+    return ctx;
+}
+
+static void add_type(interpreter_context* ctx, type_t* t)
+{
+    ctx->types[ctx->num_types++] = *t;
+}
+
+static type_t* create_type()
+{
+    type_t* result = malloc(sizeof(type_t));
+
+    if (result != NULL)
+    {
+        string_ref_assign(result->name, "unknown");
+        result->names = NULL;
+        result->object_type = UNKNOWN_OBJECT;
+        result->types = NULL;
+    }
+}
+
+
+static void interpreter_init()
+{
+    create_interpreter_context();
+    tmp_type = create_type();
+    CREATE_PRIMITIVE_TYPE("int", INT_TYPE);
+    CREATE_PRIMITIVE_TYPE("char", CHAR_TYPE);
+    CREATE_PRIMITIVE_TYPE("uint", UINT_TYPE);
+    CREATE_PRIMITIVE_TYPE("uchar", UCHAR_TYPE);
+    CREATE_PRIMITIVE_TYPE("float", FLOAT_TYPE);
+//#undef CREATE_PRIMITIVE_TYPE 
+}
 
 token_type eat_tokens(token_type skip_to);
 
@@ -177,6 +262,7 @@ int start(char **buffer) {
   int retval = 0;
 
   exp_parser_init();
+  interpreter_init();
 
   if ((lexerInit(*buffer)) != 0) {
     while (get_token(/*NEXT_TOKEN*/)->type != lcEND) {
@@ -331,7 +417,7 @@ way_out compound_statement(compound_origin origin) {
   token_t prev_token;
   int retval = 0;
 
-  memcpy(&prev_token, curr_token, sizeof(token_t));
+  prev_token = *curr_token;
   if (curr_token->type == lcLBRACKET &&
       get_token(/*NEXT_TOKEN*/)->type == lcRBRACKET) {
     retval = 0;
@@ -348,7 +434,22 @@ way_out compound_statement(compound_origin origin) {
   return out;
 }
 
-int is_type(token_type type) {
+static bool find_type(interpreter_context* ctx, string_ref lexem)
+{
+    bool result = false;
+    for (int i = 0; i < ctx->num_types; i++)
+    {
+        if (!strncmp(ctx->types[i].name.pos, lexem.pos, ctx->types[i].name.len))
+        {
+            result = true;
+            break;
+        }
+    }
+    return result;
+}
+
+int is_type(string_ref lexem) {
+#if 0
   int res = FALSE;
   switch (type) {
   case lcINT:
@@ -357,13 +458,15 @@ int is_type(token_type type) {
     res = TRUE;
     break;
   }
-  return res;
+#endif
+  
+  return find_type(global_context, lexem);
 }
 
 int function_definition() {
   way_out out;
   token_type type = curr_token->type;
-  if (is_type(type) && get_token(/*NEXT_TOKEN*/)->type == lcIDENT) {
+  if (is_type(curr_token->text) && get_token(/*NEXT_TOKEN*/)->type == lcIDENT) {
     get_token(/*NEXT_TOKEN*/);
     declaration_list();
     out = compound_statement(COMPOUND);
@@ -376,25 +479,34 @@ int declaration_list() {
   token_type type;
   int retval = -1;
   if (curr_token->type == lcLBRACE) {
-    if (is_type(get_token(/*NEXT_TOKEN*/)->type)) {
-      if (get_token(/*NEXT_TOKEN*/)->type == lcIDENT) {
-        while (get_token(/*NEXT_TOKEN*/)->type == lcCOMMA &&
-               get_token(/*NEXT_TOKEN*/)->type == lcINT &&
-               get_token(/*NEXT_TOKEN*/)->type == lcIDENT)
-          ;
-        if (curr_token->type != lcRBRACE) {
-          exptected_func("RBRACE");
-        } else {
-          retval = 0;
+    if (get_token(/*NEXT_TOKEN*/)->type != lcRBRACE)
+    {
+      if (is_type(curr_token->text)) {
+        if (get_token(/*NEXT_TOKEN*/)->type == lcIDENT) {
+          while (get_token(/*NEXT_TOKEN*/)->type == lcCOMMA &&
+                 is_type(get_token(/*NEXT_TOKEN*/)->text) &&
+                 get_token(/*NEXT_TOKEN*/)->type == lcIDENT)
+            ;
+          if (curr_token->type != lcRBRACE) {
+            exptected_func("RBRACE");
+          } 
+          else {
+            retval = 0;
+          }
         }
-      }
-    } else {
-      if (curr_token->type != lcRBRACE) {
-        exptected_func("RBRACE");
-      } else {
-        retval = 0;
-      }
+      } 
+    }
+    else {
+      retval = 0;
     }
   }
   get_token(/*NEXT_TOKEN*/);
+}
+
+static void CREATE_PRIMITIVE_TYPE(char* name, builtin_types t)
+{
+    tmp_type->name = string_ref_create(name);
+    tmp_type->object_type = PRIMITIVE;
+    tmp_type->btype = t;
+    add_type(global_context, tmp_type);
 }

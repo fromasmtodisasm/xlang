@@ -37,14 +37,14 @@ int block(char **buffer)
 	return 0;
 }
 
-int lookup(char *name, int *val)
+int lookup(string_ref name, int *val)
 {
 	variable *cur_var;
 	int res = 0;
 	for (cur_var = vars; cur_var != NULL; cur_var = cur_var->next)
 	{
-		if (cur_var->name)
-			if (!strcmp(name, cur_var->name))
+		if (cur_var->name.len > 0)
+			if (!strncmp(name.pos, cur_var->name.pos, name.len))
 			{
 				*val = cur_var->value;
 				res = 1;
@@ -54,20 +54,20 @@ int lookup(char *name, int *val)
 	return res;
 }
 
-int assign_value(char *name, int val)
+int assign_value(string_ref name, int val)
 {
 	variable *cur_var;
 	variable *tmp;
 	for (cur_var = vars; cur_var != NULL; cur_var = cur_var->next)
 	{
 		tmp = cur_var;
-		if (cur_var->name == NULL)
+		if (cur_var->name.pos == NULL)
 		{
 			cur_var->name = name;
 			cur_var->value = val;
 			break;
 		}
-		else if (!strcmp(name, cur_var->name))
+		else if (!strncmp(name.pos, cur_var->name.pos, name.len))
 		{
 			cur_var->name = name;
 			cur_var->value = val;
@@ -101,7 +101,7 @@ int primary_expression()
 	{
 		//res = (int)curr_token->text;
 		//GENCODE
-		printf("\tpush %c%d\n", sign==-1 ? '-' : ' ', atoi(curr_token->text));
+		printf("\tpush %c%d\n", sign==-1 ? '-' : ' ', atoi(curr_token->text.pos));
 		break;
 	}
 	case lcIDENT:
@@ -304,7 +304,7 @@ int conditional_expression()
 
 int assignment_expression()
 {
-	char *name;
+	string_ref name;
 	int tmp = 0;
 	int res = 0;
 	token_t prev_token;
@@ -314,9 +314,8 @@ int assignment_expression()
 		return res;
 	if (curr_token->type == lcIDENT)
 	{
-		char *name;
 		int tmp = 0;
-		name = curr_token->text;
+		string_ref name = curr_token->text;
 		char *prev_pos = get_pos();
 		memcpy(&prev_token, curr_token, sizeof(token_t));
 		

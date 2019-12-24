@@ -1,6 +1,8 @@
 #pragma once
 #include "lexer.h"
 
+typedef struct type_t type_t;
+
 typedef enum variable_type
 {
 	VAR_INT,
@@ -12,10 +14,10 @@ typedef enum variable_type
 
 typedef struct _variable
 {
-	char *name;
-	int value;
-	int type;
-	struct _variable *next;
+  string_ref name;
+  int value;
+  type_t *type;
+  struct _variable *next;
 }variable;
 
 
@@ -23,9 +25,9 @@ int block(char ** buffer);
 
 int assignment_expression();
 
-int lookup(char *name, int * val);
+int lookup(string_ref name, int * val);
 
-int assign_value(char *name, int val);
+int assign_value(string_ref name, int val);
 
 int primary_expression();
 

@@ -97,11 +97,25 @@ char *strndup(const char *str, size_t n) {
 	return out;
 }
 
-token_type is_keyword(char *name) {
+string_ref string_ref_create(char* str)
+{
+    string_ref result;
+    result.pos = str;
+    result.len = strlen(str);
+    return result;
+}
+
+void string_ref_assign(string_ref *ref, char* str)
+{
+    ref->pos = str;
+    ref->len = strlen(str);
+}
+
+token_type is_keyword(string_ref name) {
 	token_type type = lcEND;
 	int i;
 	for (i = 0; table[i].tok != lcEND; i++) {
-		if (!strcmp(name, table[i].command)) {
+		if (!strncmp(name.pos, table[i].command, name.len)) {
 			type = table[i].tok;
 			break;
 		}
@@ -128,15 +142,12 @@ token_t *get_token() {
 	char *pos = curr_context->pos;
 	token_type type = lcEND;
 	void *value = NULL;
-	char *text = NULL;
+    string_ref text = { .pos = NULL, .len = 0 };
 	char *begin = pos;
 	char curr_digit[NUMBER_LEN];
-	char curr_ident[IDENT_LEN];
+	//char curr_ident[IDENT_LEN];
 	//static char curr_oper[3] = {0};
 
-	if (*pos == '\0') {
-		printf("End of source\n");
-	}
 	while (*pos) {
 		if (*pos == ' ' || *pos == '\t' || *pos == '\r' || *pos == '\n') {
 			if (*pos == '\n') {
@@ -185,279 +196,277 @@ token_t *get_token() {
 	}
 	begin = pos;
 
-	if (*pos == '\0') {
-		CURTOK().type = type = lcEND;
-	}
+    switch (*pos)
+    {
 
-	/*
-	 * Parse identifier
-	 */
+    case '\"': {
+        text.len++;
+        while (pos[text.len]) {
+            if (pos[text.len] == '\"') {
+                text.len++;
+                break;
+            }
+            text.len++;
+        }
 
-	else if (isalpha(*pos) || *pos == '_') {
-		int len = 0;
-		token_type tmp;
-		while (isalpha(*pos) || *pos == '_' || isdigit(*pos)) {
-			if (len < IDENT_LEN)
-				curr_ident[len++] = *pos++;
-		}
-		curr_ident[len] = 0;
-
-		text = strdup(curr_ident);
-
-		if ((tmp = is_keyword(text)) != lcEND) {
-			type = tmp;
-		}
-		else {
-			type = lcIDENT;
-		}
-
-	}
-	/*
-	 * Parse identifier
-	 */
-	else if ((isdigit(*pos) || *pos == '.') && !isalpha(pos[1])) {
-		int val = 0;
-		int hex_val = 0;
-		int radix = 10;
-		if (*pos == '0') {
-			if (*(pos + 1) == 'x' || *(pos + 1) == 'X') {
-				radix = 16;
-				pos += 2;
-				while (*pos) {
-					if (*pos >= '0' && *pos <= '9') {
-						// val = val * radix + (*pos - '0');
-						pos++;
-					}
-					else if (*pos >= 'A' && *pos <= 'F' || *pos >= 'a' && *pos <= 'f') {
-						if (*pos >= 'a') {
-							// hex_val = *pos - 'A' - 32 + 10;
-						}
-						else {
-							// hex_val = *pos - 'A' + 10;
-						}
-						// val = val * radix + (hex_val);
-						pos++;
-					}
-					else {
-						break;
-					}
-				}
-			}
-			else {
-				radix = 8;
-				pos++;
-				while (*pos) {
-					if (isdigit(*pos)) {
-						val = val * radix + (*pos - '0');
-						pos++;
-					}
-					else {
-						break;
-					}
-				}
-			}
-		}
-		else {
-			char *digit = curr_digit;
-			while (*pos) {
-				if (isdigit(*pos) || *pos == '.') {
-					val = val * 10 + (*pos - '0');
-					*digit = *pos++;
-					digit++;
-				}
-				else {
-					*digit = 0;
-					break;
-				}
-			}
-		}
-
-		text = strdup(curr_digit);
-		type = lcNUMBER;
-	}
-	else if (*pos == ',') {
+        text.pos = pos;
+        pos += text.len;
+        type = lcSTRING;
+    }
+	case ',': {
 		type = lcCOMMA;
 		pos++;
+        break;
 	}
-	else if (*pos == ';') {
+	case ';': {
 		type = lcSEMI;
 		pos++;
+        break;
 	}
-	else if (*pos == '(') {
+	case '(': {
 		type = lcLBRACE;
 		pos++;
+        break;
 	}
-	else if (*pos == ')') {
+	case ')': {
 		type = lcRBRACE;
 		pos++;
+        break;
 	}
-	else if (*pos == '{') {
+	case '{': {
 		type = lcLBRACKET;
 		pos++;
+        break;
 	}
-	else if (*pos == '}') {
+	case '}': {
 		type = lcRBRACKET;
 		pos++;
+        break;
 	}
-	else if (*pos == '[') {
+	case '[': {
 		type = (token_type)*pos;
 		pos++;
+        break;
 	}
-	else if (*pos == ']') {
+	case ']': {
 		type = (token_type)*pos;
 		pos++;
+        break;
 	}
-	else if (*pos == '.') {
+	case '.': {
 		type = lcPOINT;
 		pos++;
+        break;
 	}
-	else if (*pos == '\"') {
-		int len = 0;
-		pos++;
-		while (*pos) {
-			if (*pos == '\"') {
-				pos++;
-				break;
-			}
-			len++;
-			pos++;
-		}
+    case '+': {
+        if (pos[1] == '=') {
+            pos++;
+            type = lcPLUS_ASSIGN;
+        }
+        else if (pos[1] == '+') {
+            type = lcPLUS_PLUS;
+            pos++;
+        }
+        else {
+            type = lcPLUS;
+        }
+        break;
+    }
+    case '-': {
+        if (pos[1] == '=') {
+            type = lcMINUS_ASSIGN;
+            pos++;
+        }
+        else if (pos[1] == '-') {
+            type = lcMINUS_MINUS;
+            pos++;
+        }
+        else if (pos[1] == '>') {
+            type = lcARROW;
+            pos++;
+        }
+        else {
+            type = lcMINUS;
+        }
+        break;
+    }
+    case '*': {
+        if (pos[1] == '=') {
+            pos++;
+            type = lcMUL_ASSIGN;
+        }
+        else {
+            type = lcMUL;
+        }
+        break;
+    }
+    case '/': {
+        if (pos[1] == '=') {
+            pos++;
+            type = lcDIV_ASSIGN;
+        }
+        else {
+            type = lcDIV;
+        }
+        break;
+    }
+    case '=': {
+        if (pos[1] == '=') {
+            type = lcEQ_OP;
+            pos++;
+        }
+        else {
+            type = lcASSIGN;
+        }
+        break;
+    }
+    case '<': {
+        if (pos[1] == '=') {
+            type = lcLE_OP;
+            pos++;
+        }
+        else {
+            type = lcL_OP;
+        }
+        break;
+    }
+    case '>': {
+        if (pos[1] == '=') {
+            type = lcGE_OP;
+            pos++;
+        }
+        else {
+            type = lcG_OP;
+        }
+        break;
+    }
+    case '!': {
+        if (pos[1] == '=') {
+            type = lcNE_OP;
+            pos++;
+        }
+        break;
+    }
+    case '&': {
+        if (pos[1] == '&') {
+            type = lcAND_OP;
+            pos++;
+        }
+        else {
+            type = lcUNKNOWN;
+        }
+        break;
+    }
+    case '|': {
+        if (pos[1] == '|') {
+            type = lcAND_OP;
+            pos++;
+        }
+        else {
+            type = lcUNKNOWN;
+        }
+        break;
+    }
+    case '\0': {
+		CURTOK().type = type = lcEND;
+	}
+    default:
+    {
+        /*
+         * Parse identifier
+         */
+        if (isalpha(*pos) || *pos == '_') {
+            token_type tmp;
+            while (isalpha(pos[text.len]) || pos[text.len] == '_' || isdigit(pos[text.len])) {
+                text.len++; 
+            }
 
-		text = (char*)malloc(len + 1);
-		memcpy(text, pos - len - 1, len);
-		text[len] = '\0';
-		type = lcSTRING;
-	}
-	else if (type == lcEND) {
-		switch (*pos) {
-		case '+': {
-			if (pos[1] == '=') {
-				pos++;
-				type = lcPLUS_ASSIGN;
-			}
-			else if (pos[1] == '+') {
-				type = lcPLUS_PLUS;
-				pos++;
-			}
-			else {
-				type = lcPLUS;
-			}
-			break;
-		}
-		case '-': {
-			if (pos[1] == '=') {
-				type = lcMINUS_ASSIGN;
-				pos++;
-			}
-			else if (pos[1] == '-') {
-				type = lcMINUS_MINUS;
-				pos++;
-			}
-			else if (pos[1] == '>') {
-				type = lcARROW;
-				pos++;
-			}
-			else {
-				type = lcMINUS;
-			}
-			break;
-		}
-		case '*': {
-			if (pos[1] == '=') {
-				pos++;
-				type = lcMUL_ASSIGN;
-			}
-			else {
-				type = lcMUL;
-			}
-			break;
-		}
-		case '/': {
-			if (pos[1] == '=') {
-				pos++;
-				type = lcDIV_ASSIGN;
-			}
-			else {
-				type = lcDIV;
-			}
-			break;
-		}
-		case '=': {
-			if (pos[1] == '=') {
-				type = lcEQ_OP;
-				pos++;
-			}
-			else {
-				type = lcASSIGN;
-			}
-			break;
-		}
-		case '<': {
-			if (pos[1] == '=') {
-				type = lcLE_OP;
-				pos++;
-			}
-			else {
-				type = lcL_OP;
-			}
-			break;
-		}
-		case '>': {
-			if (pos[1] == '=') {
-				type = lcGE_OP;
-				pos++;
-			}
-			else {
-				type = lcG_OP;
-			}
-			break;
-		}
-		case '!': {
-			if (pos[1] == '=') {
-				type = lcNE_OP;
-				pos++;
-			}
-			break;
-		}
-		case '&': {
-			if (pos[1] == '&') {
-				type = lcAND_OP;
-				pos++;
-			}
-			else {
-				type = lcUNKNOWN;
-			}
-			break;
-		}
-		case '|': {
-			if (pos[1] == '|') {
-				type = lcAND_OP;
-				pos++;
-			}
-			else {
-				type = lcUNKNOWN;
-			}
-			break;
-		}
-		}
-		if (type != lcEND) {
-			pos++;
-		}
-	}
-	else if (*pos == '\0') {
-		type = lcEND;
-	}
-	else {
-		ERROR("UNKNOWN token\n");
-		type = lcUNKNOWN;
-		pos++;
-	}
-	if (!text && ((type != lcEND) && (type != lcUNKNOWN))) {
+            text.pos = pos;
+            pos += text.len;
+
+            if ((tmp = is_keyword(text)) != lcEND) {
+                type = tmp;
+            }
+            else {
+                type = lcIDENT;
+            }
+
+        }
+        /*
+         * Parse number 
+         */
+        else if ((isdigit(*pos) || *pos == '.') && !isalpha(pos[1])) {
+            int val = 0;
+            int hex_val = 0;
+            int radix = 10;
+            if (*pos == '0') {
+                if (*(pos + 1) == 'x' || *(pos + 1) == 'X') {
+                    radix = 16;
+                    pos += 2;
+                    while (*pos) {
+                        if (*pos >= '0' && *pos <= '9') {
+                            // val = val * radix + (*pos - '0');
+                            pos++;
+                        }
+                        else if (*pos >= 'A' && *pos <= 'F' || *pos >= 'a' && *pos <= 'f') {
+                            if (*pos >= 'a') {
+                                // hex_val = *pos - 'A' - 32 + 10;
+                            }
+                            else {
+                                // hex_val = *pos - 'A' + 10;
+                            }
+                            // val = val * radix + (hex_val);
+                            pos++;
+                        }
+                        else {
+                            break;
+                        }
+                    }
+                }
+                else {
+                    radix = 8;
+                    pos++;
+                    while (*pos) {
+                        if (isdigit(*pos)) {
+                            val = val * radix + (*pos - '0');
+                            pos++;
+                        }
+                        else {
+                            break;
+                        }
+                    }
+                }
+            }
+            else {
+                char *digit = curr_digit;
+                while (*pos) {
+                    if (isdigit(*pos) || *pos == '.') {
+                        val = val * 10 + (*pos - '0');
+                        text.len++;
+                    }
+                    else {
+                        break;
+                    }
+                }
+            }
+
+            text.pos = curr_digit;
+            type = lcNUMBER;
+        }
+        else {
+            ERROR("UNKNOWN token\n");
+            type = lcUNKNOWN;
+            pos++;
+        }
+    }
+    break;
+    }
+
+
+	if (!text.len && ((type != lcEND) && (type != lcUNKNOWN))) {
 
 		assert(type != lcEND);
 		assert(pos > begin);
-		text = strndup(begin, pos - begin);
-		text[pos - begin] = '\0';
 	}
 	CURTOK().type = type;
 	CURTOK().text = text;

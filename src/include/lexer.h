@@ -108,9 +108,17 @@ typedef enum token_category {
 	catDELIM
 } token_category;
 
+typedef struct string_ref
+{
+    char* pos;
+    int len;
+}string_ref;
+
+void string_ref_assign(string_ref ref, char* str);
+
 typedef struct token_t {
 	token_type type;
-	char *text;
+	string_ref text;
 	token_category category;
 	char *pos;
 } token_t;
@@ -121,10 +129,12 @@ typedef struct context {
 	struct context *prev, *next;
 } context_t;
 
+string_ref string_ref_create(char* str);
+
 /***************************************************************************/
 /*************************** Prototypes ************************************/
 /***************************************************************************/
-token_type is_keyword(char *name);
+token_type is_keyword(string_ref name);
 int lexerInit(char *src);
 char *get_pos();
 void set_pos(char *pos);
