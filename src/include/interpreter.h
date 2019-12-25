@@ -52,7 +52,8 @@ typedef struct type_t
     object_type_t object_type;
     builtin_types btype;
 
-    char* names;
+    int num_types;
+    string_ref* names;
     struct type_t* types;
 }type_t;
 

@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
-#define FATAL_ERROR(str) (fprintf(stderr, "Fatal error on line %d: %s\n", str), exit(-1))
+#define FATAL_ERROR(str) (fprintf(stderr, "Fatal error on line %d: %s\n", __LINE__, str), exit(-1))
 //#define MATCH(tok) curr_token->type != tok ? FATAL_ERROR("error") : get_token(); 
 static void MATCH(token_type tok) 
 {
@@ -45,6 +45,7 @@ void skip_compound_statement();
 void skip_statement();
 int function_definition();
 int declaration_list();
+static type_t* find_type(interpreter_context* ctx, string_ref lexem);
 
 static void CREATE_PRIMITIVE_TYPE(char* name, builtin_types t);
 void call_cfunction(interpreter_context* ctx, function_t* func);
@@ -107,10 +108,11 @@ static type_t* create_type()
 
     if (result != NULL)
     {
-        string_ref_assign(result->name, "unknown");
+        string_ref_assign(&result->name, "unknown");
         result->names = NULL;
         result->object_type = UNKNOWN_OBJECT;
         result->types = NULL;
+        result->num_types = 0;
     }
 }
 
@@ -285,9 +287,115 @@ way_out do_while() {
 
 int func_decl() { return 0; }
 
-void struct_declaration()
+void print_var(type_t* type, string_ref name, int level)
 {
+  type_t* curr_type;
 
+  {
+    switch (type->object_type)
+    {
+    case PRIMITIVE:
+    {
+
+      printf(
+        "%*sstype [%.*s], name [%.*s]\n", level, "\t",
+        type->name.len, type->name.pos,
+        name.len, name.pos
+      );
+    }
+    break;
+    case STRUCT:
+    {
+      printf("Struct %.*s parsed and have %d fields:\n", type->name.len, type->name.pos, type->num_types);
+      for (int i = 0; i < type->num_types; i++)
+      {
+        print_var(&type->types[i], type->names[i], level + 1);
+      }
+    }
+    break;
+    default:
+      FATAL_ERROR("unknown type");
+      break;
+    }
+  }
+}
+
+bool declare_variable(variable* var)
+{
+  var->type = find_type(global_context, curr_token->text);
+  if (get_token()->type == lcIDENT)
+  {
+    var->name = curr_token->text;
+    get_token();
+    return true;
+  }
+  return false;
+}
+
+void struct_declaration(type_t *new_type)
+{
+  //type_t new_type;
+
+  if (get_token()->type == lcIDENT)
+  {
+    new_type->object_type = STRUCT;
+    new_type->name = curr_token->text;
+    if (get_token()->type == lcLBRACKET)
+    {
+      do
+      {
+        get_token();
+        if (curr_token->type == lcRBRACKET)
+        {
+          ;// print_var(new_type, new_type->name);
+        }
+        else if (curr_token->type == lcSTRUCT)
+        {
+          type_t* nested_struct = create_type();
+          struct_declaration(nested_struct);
+
+          new_type->num_types++;
+          new_type->types = realloc(new_type->types, sizeof(type_t) * new_type->num_types);
+          new_type->types[new_type->num_types - 1] = *nested_struct;
+          if (curr_token->type != lcSEMI)
+          {
+            if (get_token()->type == lcIDENT)
+            {
+              new_type->names = realloc(new_type->names, sizeof(string_ref) * new_type->num_types);
+              new_type->names[new_type->num_types - 1] = nested_struct->name;
+            }
+            get_token();
+          }
+          else
+          {
+
+          }
+        }
+        else if (is_type(curr_token->text))
+        {
+          variable var;
+          if (declare_variable(&var))
+          {
+            new_type->num_types++;
+            new_type->names = realloc(new_type->names, sizeof(string_ref) * new_type->num_types);
+            new_type->names[new_type->num_types - 1] = var.name;
+            new_type->types = realloc(new_type->types, sizeof(type_t) * new_type->num_types);
+            new_type->types[new_type->num_types - 1] = *var.type;
+          }
+          else
+          {
+            FATAL_ERROR("could not declare struct field");
+          }
+
+        }
+        else
+        {
+          FATAL_ERROR("this is not type");
+        }
+      } while (curr_token->type == lcSEMI);
+      get_token();
+    }
+  }
 }
 
 int start(char **buffer) {
@@ -298,9 +406,10 @@ int start(char **buffer) {
 
   string_ref name = string_ref_create("myCFunction");
   function_t* func = find_cfunction(global_context, name);
+  interpreter_context* ctx = global_context;
 
-  if (is_cfunction(global_context, name))
-    call_cfunction(global_context, func);
+  //if (is_cfunction(ctx, name))
+  //  call_cfunction(ctx, func);
 
   if ((lexer_init(*buffer)) != 0) {
     while (get_token(/*NEXT_TOKEN*/)->type != lcEND) {
@@ -308,7 +417,16 @@ int start(char **buffer) {
       {
       case lcSTRUCT:
       {
-        struct_declaration();
+        //type_t *new_type = &ctx->types[ctx->num_types - 1];
+        type_t *new_type = create_type();
+        struct_declaration(new_type);
+        add_type(ctx, new_type);
+        if (curr_token->type != lcSEMI)
+        {
+          FATAL_ERROR("semi not found");
+        }
+        ctx->num_types++;
+        print_var(new_type, new_type->name, 0);
       }
       break;
       default:
@@ -482,14 +600,14 @@ way_out compound_statement(compound_origin origin) {
   return out;
 }
 
-static bool find_type(interpreter_context* ctx, string_ref lexem)
+static type_t* find_type(interpreter_context* ctx, string_ref lexem)
 {
-    bool result = false;
+    type_t* result = NULL;
     for (int i = 0; i < ctx->num_types; i++)
     {
         if (!strncmp(ctx->types[i].name.pos, lexem.pos, ctx->types[i].name.len))
         {
-            result = true;
+            result = &ctx->types[i];
             break;
         }
     }
@@ -508,7 +626,7 @@ int is_type(string_ref lexem) {
   }
 #endif
   
-  return find_type(global_context, lexem);
+  return find_type(global_context, lexem) != NULL;
 }
 
 int function_definition() {

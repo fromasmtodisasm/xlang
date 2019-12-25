@@ -116,7 +116,7 @@ typedef struct string_ref
     int len;
 }string_ref;
 
-void string_ref_assign(string_ref ref, char* str);
+void string_ref_assign(string_ref* ref, char* str);
 
 typedef struct token_t {
 	token_type type;
