@@ -51,6 +51,10 @@ static type_t* create_type(type_t* parent);
 // Parsing
 // Initialization
 xlang_context* create_interpreter_context();
+// Utils
+void print_var(type_t* type, string_ref name, int level);
+// Utils
+
 // Initialization
 
 void skip_compound_statement();
@@ -60,7 +64,7 @@ int declaration_list();
 int start(xlang_context* ctx);
 static type_t* find_type(xlang_context* ctx, string_ref lexem);
 
-static void CREATE_PRIMITIVE_TYPE(char* name, builtin_types t);
+static void CREATE_PRIMITIVE_TYPE(char* name, builtin_types t, int size);
 void call_cfunction(xlang_context* ctx, function_t* func);
 
 void push_integer(xlang_context* ctx, int value);
@@ -78,11 +82,11 @@ xlang_context* xlang_create()
   if (ctx != NULL)
   {
     tmp_type = create_type(NULL);
-    CREATE_PRIMITIVE_TYPE("int", INT_TYPE);
-    CREATE_PRIMITIVE_TYPE("char", CHAR_TYPE);
-    CREATE_PRIMITIVE_TYPE("uint", UINT_TYPE);
-    CREATE_PRIMITIVE_TYPE("uchar", UCHAR_TYPE);
-    CREATE_PRIMITIVE_TYPE("float", FLOAT_TYPE);
+    CREATE_PRIMITIVE_TYPE("int", INT_TYPE, 4);
+    CREATE_PRIMITIVE_TYPE("char", CHAR_TYPE, 1);
+    CREATE_PRIMITIVE_TYPE("uint", UINT_TYPE, 4);
+    CREATE_PRIMITIVE_TYPE("uchar", UCHAR_TYPE, 1);
+    CREATE_PRIMITIVE_TYPE("float", FLOAT_TYPE, 4);
     register_cfunction(ctx, myCFunction, "myCFunction");
   }
   return ctx;
@@ -155,6 +159,7 @@ static type_t* create_type(type_t* parent)
     {
         string_ref_assign(&result->name, "unknown");
         result->names = NULL;
+        result->size = 0;
         result->object_type = UNKNOWN_OBJECT;
         result->parent_scope = parent;
         result->childrens = NULL;
@@ -324,7 +329,7 @@ way_out do_while() {
 
 int func_decl() { return 0; }
 
-void print_var(type_t* type, string_ref name, int level)
+void print_var_recursive(type_t* type, string_ref name, int level)
 {
   type_t* curr_type;
 
@@ -346,7 +351,7 @@ void print_var(type_t* type, string_ref name, int level)
       printf("%*.sStruct %.*s parsed and have %d fields:\n", level, " ", type->name.len, type->name.pos, type->num_types);
       for (int i = 0; i < type->num_types; i++)
       {
-        print_var(&type->childrens[i], type->names[i], level + TAB_WIDTH);
+        print_var_recursive(&type->childrens[i], type->names[i], level + TAB_WIDTH);
       }
     }
     break;
@@ -355,6 +360,13 @@ void print_var(type_t* type, string_ref name, int level)
       break;
     }
   }
+}
+
+void print_var(type_t* type, string_ref name, int level)
+{
+  print_var_recursive(type, name, level);
+  printf("Total size: %d\n", type->size);
+  printf("***********\n");
 }
 
 bool declare_variable(type_t *scope, variable* var)
@@ -414,6 +426,7 @@ void struct_declaration(type_t *new_type)
           if (declare_variable(new_type, &var))
           {
             new_type->num_types++;
+            new_type->size += var.type->size;
             new_type->names = realloc(new_type->names, sizeof(string_ref) * new_type->num_types);
             new_type->names[new_type->num_types - 1] = var.name;
             new_type->childrens = realloc(new_type->childrens, sizeof(type_t) * new_type->num_types);
@@ -711,11 +724,12 @@ int declaration_list() {
   get_token(/*NEXT_TOKEN*/);
 }
 
-static void CREATE_PRIMITIVE_TYPE(char* name, builtin_types t)
+static void CREATE_PRIMITIVE_TYPE(char* name, builtin_types t, int size)
 {
     tmp_type->name = string_ref_create(name);
     tmp_type->object_type = PRIMITIVE;
     tmp_type->btype = t;
+    tmp_type->size = size;
     add_type(global_context, tmp_type);
 }
 

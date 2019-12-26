@@ -51,6 +51,7 @@ typedef struct type_t
     string_ref name;
     object_type_t object_type;
     builtin_types btype;
+    int size;
 
     int num_types;
     string_ref* names;
