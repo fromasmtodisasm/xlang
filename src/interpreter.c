@@ -23,9 +23,9 @@ static void MATCH(token_type tok)
 
 //#define CREATE_PRIMITIVE_TYPE(n, t) string_ref_assign(tmp_type->name, n); tmp_type->object_type = PRIMITIVE; tmp_type->btype = t; add_type(global_context, tmp_type);
 
-typedef struct interpreter_context
+typedef struct xlang_context
 {
-
+  const char* source;
   type_t* global_types;
   int num_types;
   int types_capacity;
@@ -37,31 +37,68 @@ typedef struct interpreter_context
 
   int stack[STACK_SIZE];
   int sp;
-}interpreter_context;
+}xlang_context;
 
 extern char *token_to_string[];
 static type_t* tmp_type = NULL;
-interpreter_context* global_context;
+xlang_context* global_context;
+
+// Parsing
+bool translation_unit(xlang_context* ctx);
+
+
+static type_t* create_type(type_t* parent);
+// Parsing
+// Initialization
+xlang_context* create_interpreter_context();
+// Initialization
 
 void skip_compound_statement();
 void skip_statement();
 int function_definition();
 int declaration_list();
-static type_t* find_type(interpreter_context* ctx, string_ref lexem);
+int start(char** buffer);
+static type_t* find_type(xlang_context* ctx, string_ref lexem);
 
 static void CREATE_PRIMITIVE_TYPE(char* name, builtin_types t);
-void call_cfunction(interpreter_context* ctx, function_t* func);
+void call_cfunction(xlang_context* ctx, function_t* func);
 
-void push_integer(interpreter_context* ctx, int value);
+void push_integer(xlang_context* ctx, int value);
 
-int myCFunction(interpreter_context* ctx)
+int myCFunction(xlang_context* ctx)
 {
   printf("this is %s\n", __FUNCTION__);
   push_integer(ctx, 123);
   return 1;
 }
 
-bool register_cfunction(interpreter_context *ctx, CFunction* function, const char* name)
+xlang_context* xlang_create()
+{
+  xlang_context *ctx = create_interpreter_context();
+  if (ctx != NULL)
+  {
+    tmp_type = create_type(NULL);
+    CREATE_PRIMITIVE_TYPE("int", INT_TYPE);
+    CREATE_PRIMITIVE_TYPE("char", CHAR_TYPE);
+    CREATE_PRIMITIVE_TYPE("uint", UINT_TYPE);
+    CREATE_PRIMITIVE_TYPE("uchar", UCHAR_TYPE);
+    CREATE_PRIMITIVE_TYPE("float", FLOAT_TYPE);
+    register_cfunction(ctx, myCFunction, "myCFunction");
+  }
+  return ctx;
+}
+
+void xlang_set_buffer(xlang_context* ctx, char* buffer)
+{
+  ctx->source = buffer;
+}
+
+bool xlang_parse(xlang_context* ctx)
+{
+  return translation_unit(ctx);
+}
+
+bool register_cfunction(xlang_context *ctx, CFunction* function, const char* name)
 {
   function_t* func = &ctx->functions[ctx->num_funcs++];
   
@@ -70,7 +107,7 @@ bool register_cfunction(interpreter_context *ctx, CFunction* function, const cha
   func->type = C_FUNCTION;
 }
 
-bool is_cfunction(interpreter_context* ctx, string_ref name)
+bool is_cfunction(xlang_context* ctx, string_ref name)
 {
   for (int i = 0; i < ctx->num_funcs; i++)
   {
@@ -82,26 +119,27 @@ bool is_cfunction(interpreter_context* ctx, string_ref name)
   return false;
 }
 
-interpreter_context* create_interpreter_context()
+xlang_context* create_interpreter_context()
 {
-    interpreter_context *ctx = malloc(sizeof(interpreter_context));
+    xlang_context *ctx = malloc(sizeof(xlang_context));
     global_context = ctx;
     if (ctx != NULL)
     {
-        ctx->num_types = 0;
-        ctx->types_capacity = TYPES_CAPACITY;
-        ctx->global_types = malloc(sizeof(type_t));
-        ctx->global_types->num_types = 0;
-        ctx->global_types->childrens = malloc(sizeof(type_t) * TYPES_CAPACITY);
-        ctx->num_funcs = 0;
-        ctx->entry_point = NULL;
-        ctx->current_function = NULL;
-        ctx->sp = 0;
+      ctx->source = NULL;
+      ctx->num_types = 0;
+      ctx->types_capacity = TYPES_CAPACITY;
+      ctx->global_types = malloc(sizeof(type_t));
+      ctx->global_types->num_types = 0;
+      ctx->global_types->childrens = malloc(sizeof(type_t) * TYPES_CAPACITY);
+      ctx->num_funcs = 0;
+      ctx->entry_point = NULL;
+      ctx->current_function = NULL;
+      ctx->sp = 0;
     }
     return ctx;
 }
 
-static void add_type(interpreter_context* ctx, type_t* t)
+static void add_type(xlang_context* ctx, type_t* t)
 {
   //t->p
   ctx->global_types->childrens[ctx->global_types->num_types++] = *t;
@@ -121,20 +159,6 @@ static type_t* create_type(type_t* parent)
         result->childrens = NULL;
         result->num_types = 0;
     }
-}
-
-
-static void interpreter_init()
-{
-    create_interpreter_context();
-    tmp_type = create_type(NULL);
-    CREATE_PRIMITIVE_TYPE("int", INT_TYPE);
-    CREATE_PRIMITIVE_TYPE("char", CHAR_TYPE);
-    CREATE_PRIMITIVE_TYPE("uint", UINT_TYPE);
-    CREATE_PRIMITIVE_TYPE("uchar", UCHAR_TYPE);
-    CREATE_PRIMITIVE_TYPE("float", FLOAT_TYPE);
-    register_cfunction(global_context, myCFunction, "myCFunction");
-//#undef CREATE_PRIMITIVE_TYPE 
 }
 
 token_type eat_tokens(token_type skip_to);
@@ -201,6 +225,11 @@ void skip_statement() {
     }
     get_token(/*NEXT_TOKEN*/);
   }
+}
+
+bool translation_unit(xlang_context* ctx)
+{
+  return start(&ctx->source) != -1;
 }
 
 void skip_compound_statement() {
@@ -305,7 +334,7 @@ void print_var(type_t* type, string_ref name, int level)
     {
 
       printf(
-        "%*.sstype [%.*s], name [%.*s]\n", level, "\t",
+        "%*.stype [%.*s], name [%.*s]\n", level, "\t",
         type->name.len, type->name.pos,
         name.len, name.pos
       );
@@ -409,11 +438,10 @@ int start(char **buffer) {
   int retval = 0;
 
   exp_parser_init();
-  interpreter_init();
 
   string_ref name = string_ref_create("myCFunction");
   function_t* func = find_cfunction(global_context, name);
-  interpreter_context* ctx = global_context;
+  xlang_context* ctx = global_context;
 
   //if (is_cfunction(ctx, name))
   //  call_cfunction(ctx, func);
@@ -691,7 +719,7 @@ static void CREATE_PRIMITIVE_TYPE(char* name, builtin_types t)
     add_type(global_context, tmp_type);
 }
 
-void call_cfunction(interpreter_context* ctx, function_t* func)
+void call_cfunction(xlang_context* ctx, function_t* func)
 {
   if (func != NULL)
   {
@@ -701,7 +729,7 @@ void call_cfunction(interpreter_context* ctx, function_t* func)
   }
 }
 
-void push_integer(interpreter_context* ctx, int value)
+void push_integer(xlang_context* ctx, int value)
 {
   if (ctx->sp < STACK_SIZE)
   {
@@ -709,7 +737,7 @@ void push_integer(interpreter_context* ctx, int value)
   }
 }
 
-void pop_integer(interpreter_context* ctx)
+void pop_integer(xlang_context* ctx)
 {
   if (ctx->sp >= 0)
   {
@@ -717,7 +745,7 @@ void pop_integer(interpreter_context* ctx)
   }
 }
 
-function_t* find_cfunction(interpreter_context* ctx, string_ref name)
+function_t* find_cfunction(xlang_context* ctx, string_ref name)
 {
   for (int i = 0; i < ctx->num_funcs; i++)
   {

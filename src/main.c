@@ -86,15 +86,21 @@ int main(int argc, char **argv)
 		}
 	}
 	else
-	{
-		int buffer_size = 1024;
-		source = malloc(buffer_size);
-		usage(basename(argv[0]));
-		while (fgets(source, buffer_size, stdin) != NULL)
-		{
-			if (start(&source) == -1)
-				break;
-		}
-	}
+  {
+    int buffer_size = 1024;
+    source = malloc(buffer_size);
+    usage(basename(argv[0]));
+    xlang_context* ctx = xlang_create();
+    if (ctx != NULL)
+    {
+      while (fgets(source, buffer_size, stdin) != NULL)
+      {
+        xlang_set_buffer(ctx, source);
+        if (xlang_parse(ctx) == false)
+          break;
+      }
+    }
+
+  }
 	return 0;
 }

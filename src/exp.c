@@ -9,7 +9,7 @@
 
 
 variable *vars;
-extern interpreter_context* global_context;
+extern xlang_context* global_context;
 //static token_t *curr_token;// = curr_token;
 
 int make_builtin_vars()
