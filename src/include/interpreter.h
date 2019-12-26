@@ -42,6 +42,7 @@ typedef enum object_type_t
     ENUM,
     ARRAY,
 
+    GLOBAL,
     UNKNOWN_OBJECT
 
 }object_type_t;
@@ -51,6 +52,7 @@ typedef struct type_t
     string_ref name;
     object_type_t object_type;
     builtin_types btype;
+    bool is_tag;
     int size;
 
     int num_types;

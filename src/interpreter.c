@@ -35,6 +35,9 @@ typedef struct xlang_context
   function_t* current_function;
   function_t* entry_point;
 
+  variable* symbol_table;
+  int num_symbols;
+
   int stack[STACK_SIZE];
   int sp;
 }xlang_context;
@@ -53,6 +56,7 @@ static type_t* create_type(type_t* parent);
 xlang_context* create_interpreter_context();
 // Utils
 void print_var(type_t* type, string_ref name, int level);
+variable* create_varialble(const char* name);
 // Utils
 
 // Initialization
@@ -134,11 +138,14 @@ xlang_context* create_interpreter_context()
       ctx->types_capacity = TYPES_CAPACITY;
       //ctx->global_types = malloc(sizeof(type_t));
       ctx->global_types = create_type(NULL);
+      ctx->global_types->object_type = GLOBAL;
       ctx->global_types->num_types = 0;
       ctx->global_types->childrens = malloc(sizeof(type_t) * TYPES_CAPACITY);
       ctx->num_funcs = 0;
       ctx->entry_point = NULL;
       ctx->current_function = NULL;
+      
+      ctx->symbol_table = create_varialble("");
       ctx->sp = 0;
     }
     return ctx;
@@ -348,10 +355,13 @@ void print_var_recursive(type_t* type, string_ref name, int level)
     break;
     case STRUCT:
     {
-      printf("%*.sStruct %.*s parsed and have %d fields:\n", level, " ", type->name.len, type->name.pos, type->num_types);
-      for (int i = 0; i < type->num_types; i++)
+      if (true)//!type->is_tag)
       {
-        print_var_recursive(&type->childrens[i], type->names[i], level + TAB_WIDTH);
+        printf("%*.sStruct %.*s have %d fields:\n", level, " ", type->name.len, type->name.pos, type->num_types);
+        for (int i = 0; i < type->num_types; i++)
+        {
+          print_var_recursive(&type->childrens[i], type->names[i], level + TAB_WIDTH);
+        }
       }
     }
     break;
@@ -367,6 +377,17 @@ void print_var(type_t* type, string_ref name, int level)
   print_var_recursive(type, name, level);
   printf("Total size: %d\n", type->size);
   printf("***********\n");
+}
+
+variable* create_varialble(const char* name)
+{
+  variable* var = malloc(sizeof(variable));
+  if (var != NULL)
+  {
+    var->name = string_ref_create(name);
+    var->next = NULL;
+    var->type = NULL;
+  }
 }
 
 bool declare_variable(type_t *scope, variable* var)
@@ -401,6 +422,7 @@ void struct_declaration(type_t *new_type)
         else if (curr_token->type == lcSTRUCT)
         {
           type_t* nested_struct = create_type(new_type);
+          nested_struct->is_tag = true;
           struct_declaration(nested_struct);
 
           new_type->num_types++;
@@ -478,10 +500,72 @@ int start(xlang_context* ctx) {
       }
       break;
       default:
-        retval = function_definition();
-        break;
+      {
+        if (curr_token->type == lcIDENT)
+        {
+          type_t *type = find_type(ctx->global_types, curr_token->text);
+          if (type != NULL)
+          {
+            token_t prev_token = *curr_token;
+            if (get_token()->type == lcIDENT)
+            {
+              if (get_token()->type != lcLBRACE)
+              {
+                *curr_token = prev_token;
+                set_pos(prev_token.pos);
+                get_token();
+                variable var;
+                declare_variable(ctx->global_types, &var);
+                if (curr_token->type != lcSEMI)
+                {
+                  FATAL_ERROR("semi not found");
+                }
+                variable *tmp = NULL;
+                variable *cur_var = NULL;
+                tmp = ctx->symbol_table;
+                for (cur_var = ctx->symbol_table; cur_var != NULL; cur_var = cur_var->next)
+                {
+                  tmp = cur_var;
+                  if (cur_var->name.len == 0)
+                    break;
+                  if (!strncmp(name.pos, cur_var->name.pos, name.len))
+                  {
+                    FATAL_ERROR("Redifinition variable");
+                    break;
+                  }
+                }
+
+                *tmp = *create_varialble(var.name.pos);
+                tmp->name.len = var.name.len;
+                tmp->type = var.type;
+              }
+              else
+              {
+                *curr_token = prev_token;
+                set_pos(prev_token.pos);
+                get_token();
+
+                retval = function_definition();
+              }
+            }
+            else
+            {
+              FATAL_ERROR("Expected declaration or definition");
+            }
+          }
+        }
+      }
+      break;
       }
     }
+    
+    variable *cur_var = NULL;
+    for (cur_var = ctx->symbol_table; cur_var != NULL; cur_var = cur_var->next)
+    {
+      printf("Var name is %.*s\n", cur_var->name.len, cur_var->name.pos);
+      print_var(cur_var->type, cur_var->type->name, 0);
+    }
+
   }
 
   return retval;
@@ -654,10 +738,20 @@ static type_t* find_type_recursive(type_t *type, string_ref lexem)
   {
     for (int i = 0; i < type->num_types; i++)
     {
+      if (type->object_type == GLOBAL)
+      {
         if (!strncmp(type->childrens[i].name.pos, lexem.pos, type->childrens[i].name.len))
         {
             return &type->childrens[i];
         }
+      }
+      else if (type->object_type == STRUCT)
+      {
+        if (type->childrens[i].object_type == STRUCT && !strncmp(type->childrens[i].name.pos, lexem.pos, type->childrens[i].name.len))
+        {
+            return &type->childrens[i];
+        }
+      }
     }
     return find_type_recursive(type->parent_scope, lexem);
   }
@@ -730,6 +824,7 @@ static void CREATE_PRIMITIVE_TYPE(char* name, builtin_types t, int size)
     tmp_type->object_type = PRIMITIVE;
     tmp_type->btype = t;
     tmp_type->size = size;
+    tmp_type->is_tag = false;
     add_type(global_context, tmp_type);
 }
 
