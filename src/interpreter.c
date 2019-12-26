@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 
+#define TAB_WIDTH 4
 #define FATAL_ERROR(str) (fprintf(stderr, "Fatal error on line %d: %s\n", __LINE__, str), exit(-1))
 //#define MATCH(tok) curr_token->type != tok ? FATAL_ERROR("error") : get_token(); 
 static void MATCH(token_type tok) 
@@ -24,17 +25,18 @@ static void MATCH(token_type tok)
 
 typedef struct interpreter_context
 {
-    type_t* types;
-    int num_types;
-    int types_capacity;
 
-    int num_funcs;
-    function_t functions[FUNCTIONS_COUNT];
-    function_t* current_function;
-    function_t* entry_point;
+  type_t* global_types;
+  int num_types;
+  int types_capacity;
 
-    int stack[STACK_SIZE];
-    int sp;
+  int num_funcs;
+  function_t functions[FUNCTIONS_COUNT];
+  function_t* current_function;
+  function_t* entry_point;
+
+  int stack[STACK_SIZE];
+  int sp;
 }interpreter_context;
 
 extern char *token_to_string[];
@@ -88,7 +90,9 @@ interpreter_context* create_interpreter_context()
     {
         ctx->num_types = 0;
         ctx->types_capacity = TYPES_CAPACITY;
-        ctx->types = malloc(sizeof(type_t) * TYPES_CAPACITY);
+        ctx->global_types = malloc(sizeof(type_t));
+        ctx->global_types->num_types = 0;
+        ctx->global_types->childrens = malloc(sizeof(type_t) * TYPES_CAPACITY);
         ctx->num_funcs = 0;
         ctx->entry_point = NULL;
         ctx->current_function = NULL;
@@ -99,10 +103,12 @@ interpreter_context* create_interpreter_context()
 
 static void add_type(interpreter_context* ctx, type_t* t)
 {
-    ctx->types[ctx->num_types++] = *t;
+  //t->p
+  ctx->global_types->childrens[ctx->global_types->num_types++] = *t;
+  ctx->num_types++;
 }
 
-static type_t* create_type()
+static type_t* create_type(type_t* parent)
 {
     type_t* result = malloc(sizeof(type_t));
 
@@ -111,7 +117,8 @@ static type_t* create_type()
         string_ref_assign(&result->name, "unknown");
         result->names = NULL;
         result->object_type = UNKNOWN_OBJECT;
-        result->types = NULL;
+        result->parent_scope = parent;
+        result->childrens = NULL;
         result->num_types = 0;
     }
 }
@@ -120,7 +127,7 @@ static type_t* create_type()
 static void interpreter_init()
 {
     create_interpreter_context();
-    tmp_type = create_type();
+    tmp_type = create_type(NULL);
     CREATE_PRIMITIVE_TYPE("int", INT_TYPE);
     CREATE_PRIMITIVE_TYPE("char", CHAR_TYPE);
     CREATE_PRIMITIVE_TYPE("uint", UINT_TYPE);
@@ -298,7 +305,7 @@ void print_var(type_t* type, string_ref name, int level)
     {
 
       printf(
-        "%*sstype [%.*s], name [%.*s]\n", level, "\t",
+        "%*.sstype [%.*s], name [%.*s]\n", level, "\t",
         type->name.len, type->name.pos,
         name.len, name.pos
       );
@@ -306,10 +313,10 @@ void print_var(type_t* type, string_ref name, int level)
     break;
     case STRUCT:
     {
-      printf("Struct %.*s parsed and have %d fields:\n", type->name.len, type->name.pos, type->num_types);
+      printf("%*.sStruct %.*s parsed and have %d fields:\n", level, " ", type->name.len, type->name.pos, type->num_types);
       for (int i = 0; i < type->num_types; i++)
       {
-        print_var(&type->types[i], type->names[i], level + 1);
+        print_var(&type->childrens[i], type->names[i], level + TAB_WIDTH);
       }
     }
     break;
@@ -320,9 +327,9 @@ void print_var(type_t* type, string_ref name, int level)
   }
 }
 
-bool declare_variable(variable* var)
+bool declare_variable(type_t *scope, variable* var)
 {
-  var->type = find_type(global_context, curr_token->text);
+  var->type = find_type(scope, curr_token->text);
   if (get_token()->type == lcIDENT)
   {
     var->name = curr_token->text;
@@ -351,12 +358,12 @@ void struct_declaration(type_t *new_type)
         }
         else if (curr_token->type == lcSTRUCT)
         {
-          type_t* nested_struct = create_type();
+          type_t* nested_struct = create_type(new_type);
           struct_declaration(nested_struct);
 
           new_type->num_types++;
-          new_type->types = realloc(new_type->types, sizeof(type_t) * new_type->num_types);
-          new_type->types[new_type->num_types - 1] = *nested_struct;
+          new_type->childrens = realloc(new_type->childrens, sizeof(type_t) * new_type->num_types);
+          new_type->childrens[new_type->num_types - 1] = *nested_struct;
           if (curr_token->type != lcSEMI)
           {
             if (get_token()->type == lcIDENT)
@@ -371,16 +378,16 @@ void struct_declaration(type_t *new_type)
 
           }
         }
-        else if (is_type(curr_token->text))
+        else if (is_type(new_type, curr_token->text))
         {
           variable var;
-          if (declare_variable(&var))
+          if (declare_variable(new_type, &var))
           {
             new_type->num_types++;
             new_type->names = realloc(new_type->names, sizeof(string_ref) * new_type->num_types);
             new_type->names[new_type->num_types - 1] = var.name;
-            new_type->types = realloc(new_type->types, sizeof(type_t) * new_type->num_types);
-            new_type->types[new_type->num_types - 1] = *var.type;
+            new_type->childrens = realloc(new_type->childrens, sizeof(type_t) * new_type->num_types);
+            new_type->childrens[new_type->num_types - 1] = *var.type;
           }
           else
           {
@@ -418,7 +425,7 @@ int start(char **buffer) {
       case lcSTRUCT:
       {
         //type_t *new_type = &ctx->types[ctx->num_types - 1];
-        type_t *new_type = create_type();
+        type_t *new_type = create_type(global_context->global_types);
         struct_declaration(new_type);
         add_type(ctx, new_type);
         if (curr_token->type != lcSEMI)
@@ -600,21 +607,28 @@ way_out compound_statement(compound_origin origin) {
   return out;
 }
 
-static type_t* find_type(interpreter_context* ctx, string_ref lexem)
+static type_t* find_type_recursive(type_t *type, string_ref lexem)
 {
-    type_t* result = NULL;
-    for (int i = 0; i < ctx->num_types; i++)
+  if (type != NULL)
+  {
+    for (int i = 0; i < type->num_types; i++)
     {
-        if (!strncmp(ctx->types[i].name.pos, lexem.pos, ctx->types[i].name.len))
+        if (!strncmp(type->childrens[i].name.pos, lexem.pos, type->childrens[i].name.len))
         {
-            result = &ctx->types[i];
-            break;
+            return &type->childrens[i];
         }
     }
-    return result;
+    return find_type_recursive(type->parent_scope, lexem);
+  }
+  return NULL;
 }
 
-int is_type(string_ref lexem) {
+static type_t* find_type(type_t* scope, string_ref lexem)
+{
+  return find_type_recursive(scope, lexem);
+}
+
+int is_type(type_t* scope, string_ref lexem) {
 #if 0
   int res = FALSE;
   switch (type) {
@@ -626,13 +640,13 @@ int is_type(string_ref lexem) {
   }
 #endif
   
-  return find_type(global_context, lexem) != NULL;
+  return find_type(scope, lexem) != NULL;
 }
 
 int function_definition() {
   way_out out;
   token_type type = curr_token->type;
-  if (is_type(curr_token->text) && get_token(/*NEXT_TOKEN*/)->type == lcIDENT) {
+  if (is_type(global_context->global_types, curr_token->text) && get_token(/*NEXT_TOKEN*/)->type == lcIDENT) {
     get_token(/*NEXT_TOKEN*/);
     declaration_list();
     out = compound_statement(COMPOUND);
@@ -647,10 +661,10 @@ int declaration_list() {
   if (curr_token->type == lcLBRACE) {
     if (get_token(/*NEXT_TOKEN*/)->type != lcRBRACE)
     {
-      if (is_type(curr_token->text)) {
+      if (is_type(global_context->global_types, curr_token->text)) {
         if (get_token(/*NEXT_TOKEN*/)->type == lcIDENT) {
           while (get_token(/*NEXT_TOKEN*/)->type == lcCOMMA &&
-                 is_type(get_token(/*NEXT_TOKEN*/)->text) &&
+                 is_type(global_context->global_types, get_token(/*NEXT_TOKEN*/)->text) &&
                  get_token(/*NEXT_TOKEN*/)->type == lcIDENT)
             ;
           if (curr_token->type != lcRBRACE) {

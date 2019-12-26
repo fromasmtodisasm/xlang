@@ -54,7 +54,8 @@ typedef struct type_t
 
     int num_types;
     string_ref* names;
-    struct type_t* types;
+    struct type_t* parent_scope;
+    struct type_t* childrens;
 }type_t;
 
 typedef struct block_t function_body_t;
