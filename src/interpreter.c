@@ -57,7 +57,7 @@ void skip_compound_statement();
 void skip_statement();
 int function_definition();
 int declaration_list();
-int start(char** buffer);
+int start(xlang_context* ctx);
 static type_t* find_type(xlang_context* ctx, string_ref lexem);
 
 static void CREATE_PRIMITIVE_TYPE(char* name, builtin_types t);
@@ -128,7 +128,8 @@ xlang_context* create_interpreter_context()
       ctx->source = NULL;
       ctx->num_types = 0;
       ctx->types_capacity = TYPES_CAPACITY;
-      ctx->global_types = malloc(sizeof(type_t));
+      //ctx->global_types = malloc(sizeof(type_t));
+      ctx->global_types = create_type(NULL);
       ctx->global_types->num_types = 0;
       ctx->global_types->childrens = malloc(sizeof(type_t) * TYPES_CAPACITY);
       ctx->num_funcs = 0;
@@ -229,7 +230,7 @@ void skip_statement() {
 
 bool translation_unit(xlang_context* ctx)
 {
-  return start(&ctx->source) != -1;
+  return start(ctx) != -1;
 }
 
 void skip_compound_statement() {
@@ -434,19 +435,18 @@ void struct_declaration(type_t *new_type)
   }
 }
 
-int start(char **buffer) {
+int start(xlang_context* ctx) {
   int retval = 0;
 
   exp_parser_init();
 
   string_ref name = string_ref_create("myCFunction");
-  function_t* func = find_cfunction(global_context, name);
-  xlang_context* ctx = global_context;
+  function_t* func = find_cfunction(ctx, name);
 
   //if (is_cfunction(ctx, name))
   //  call_cfunction(ctx, func);
 
-  if ((lexer_init(*buffer)) != 0) {
+  if ((lexer_init(ctx->source)) != 0) {
     while (get_token(/*NEXT_TOKEN*/)->type != lcEND) {
       switch (curr_token->type)
       {
