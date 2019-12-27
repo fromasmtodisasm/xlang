@@ -14,6 +14,7 @@ set(HEADERS
 	include/exp.h
 	include/fileutils.h
 	include/interpreter.h
+	include/interpreter_private.h
 	include/lexer.h
 	include/preprocessor.h
     )

@@ -127,8 +127,7 @@ typedef struct token_t {
 typedef struct context {
 	token_t curr_token;
 	char *pos;
-	int cur_line;
-	struct context *prev, *next;
+	int line;
 } context_t;
 
 string_ref string_ref_create(char* str);
@@ -136,12 +135,15 @@ string_ref string_ref_create(char* str);
 /***************************************************************************/
 /*************************** Prototypes ************************************/
 /***************************************************************************/
+context_t* lexer_create_context();
 token_type is_keyword(string_ref name);
 int lexer_init(char *src);
 char *get_pos();
 void set_pos(char *pos);
 int get_line();
 token_t *get_token();
+context_t* get_context();
+void set_context(context_t* );
 /*
 union
 {

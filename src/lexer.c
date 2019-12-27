@@ -92,7 +92,7 @@ char *strndup(const char *str, size_t n) {
 	char *out;
 	size_t len = strlen(str);
 	if (len > n) len = n;
-	out = (char*)malloc(len);
+	out = MALLOC(char, len);
 	strncpy(out, str, len);
 	return out;
 }
@@ -111,11 +111,28 @@ void string_ref_assign(string_ref *ref, char* str)
     ref->len = strlen(str);
 }
 
+void token_init(token_t* t)
+{
+  memset(t, 0, sizeof(token_t));
+}
+
+context_t* lexer_create_context()
+{
+  context_t* ctx = MALLOC(context_t, sizeof(context));
+  if (ctx != NULL)
+  {
+    token_init(&ctx->curr_token);
+    ctx->line = 1;
+    ctx->pos = NULL;
+  }
+  return NULL;
+}
+
 token_type is_keyword(string_ref name) {
 	token_type type = lcEND;
 	int i;
 	for (i = 0; table[i].tok != lcEND; i++) {
-		if (!strncmp(name.pos, table[i].command, name.len)) {
+		if (!strncmp(name.pos, table[i].command, strlen(table[i].command))) {
 			type = table[i].tok;
 			break;
 		}
@@ -126,7 +143,7 @@ token_type is_keyword(string_ref name) {
 int lexer_init(char *src) {
 	curr_context = &context;
 	curr_context->pos = src;
-	curr_context->cur_line = 1;
+	curr_context->line = 1;
 	curr_token = &(curr_context->curr_token);
 
 	return 1;
@@ -136,7 +153,7 @@ char *get_pos() { return curr_context->pos; }
 
 void set_pos(char *pos) { curr_context->pos = pos; }
 
-int get_line() { return curr_context->cur_line; }
+int get_line() { return curr_context->line; }
 
 token_t *get_token() {
 	char *pos = curr_context->pos;
@@ -151,7 +168,7 @@ token_t *get_token() {
   while (*pos) {
     if (*pos == ' ' || *pos == '\t' || *pos == '\r' || *pos == '\n') {
       if (*pos == '\n') {
-        curr_context->cur_line++;
+        curr_context->line++;
       }
       pos++;
     }
@@ -160,7 +177,7 @@ token_t *get_token() {
       while (*pos) {
         if (*pos == '\n') {
           type = lcCOMMENT;
-          curr_context->cur_line++;
+          curr_context->line++;
           pos++;
           break;
         }
@@ -190,7 +207,7 @@ token_t *get_token() {
           pos++;
         }
       }
-      curr_context->cur_line++;
+      curr_context->line++;
     }
     else break;
   }
@@ -478,4 +495,14 @@ token_t *get_token() {
 	assert(&CURTOK() != NULL);
 	if (type == lcEND) DEBUG_TRACE("End of source\n");
 	return &CURTOK();
+}
+
+context_t* get_context()
+{
+  return curr_context;
+}
+
+void set_context(context_t* ctx)
+{
+  curr_context = ctx;
 }

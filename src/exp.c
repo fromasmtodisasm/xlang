@@ -1,6 +1,7 @@
 #include "exp.h"
 #include "lexer.h"
 #include "interpreter.h"
+#include "interpreter_private.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,22 +13,48 @@ variable *vars;
 extern xlang_context* global_context;
 //static token_t *curr_token;// = curr_token;
 
+typedef struct primary_value_t
+{
+  enum primary_type
+  {
+    LITERAL,
+    VARIABLE
+  }type;
+  union
+  {
+    variable* var;
+    union 
+    {
+      char* sval;
+      char cval;
+      unsigned char ucval;
+      int ival;
+      unsigned int uival;
+      float fval;
+    }/*literal_value*/;
+  };
+
+}primary_value_t;
+
 int make_builtin_vars()
 {
-	vars = malloc(sizeof(variable));
-	variable False =
-	{
-		.name = string_ref_create("false"),
-    .value = 0
+	//vars = malloc(sizeof(variable));
+  vars = global_context->symbol_table;
+#if 0
+  variable False =
+  {
+    .name = string_ref_create("false"),
+    .ival = 0
 	};
 	variable True = {
 		.name = string_ref_create("true"),
-		.value = 1,
+		.ival = 1,
 	};
 
 	memcpy(vars, &True, sizeof(variable));
   vars->next = malloc(sizeof(variable));
 	memcpy(vars->next, &False, sizeof(variable));
+#endif
 }
 
 int exp_parser_init()
@@ -40,21 +67,20 @@ int block(char **buffer)
 	return 0;
 }
 
-int lookup(string_ref name, int *val)
+variable* lookup(string_ref name)
 {
 	variable *cur_var;
+  //variable* vars = global_context->symbol_table;
 	int res = 0;
 	for (cur_var = vars; cur_var != NULL; cur_var = cur_var->next)
 	{
 		if (cur_var->name.len > 0)
 			if (!strncmp(name.pos, cur_var->name.pos, name.len))
 			{
-				*val = cur_var->value;
-				res = 1;
-				break;
+        return cur_var;
 			}
 	}
-	return res;
+	return NULL;
 }
 
 int assign_value(string_ref name, int val)
@@ -67,13 +93,13 @@ int assign_value(string_ref name, int val)
 		if (cur_var->name.pos == NULL)
 		{
 			cur_var->name = name;
-			cur_var->value = val;
+			cur_var->ival = val;
 			break;
 		}
 		else if (!strncmp(name.pos, cur_var->name.pos, name.len))
 		{
 			cur_var->name = name;
-			cur_var->value = val;
+			cur_var->ival = val;
 			break;
 		}
 	}
@@ -82,13 +108,13 @@ int assign_value(string_ref name, int val)
 		tmp->next = malloc(sizeof(variable));
 		tmp = tmp->next;
 		tmp->name = name;
-		tmp->value = val;
+		tmp->ival = val;
 		tmp->next = NULL;
 
 	}
 }
 
-int primary_expression()
+int primary_expression(primary_value_t *pv)
 {
 	int res = 0;
 	int sign = 0; // -1 - negative, 0 without sign
@@ -124,14 +150,47 @@ int primary_expression()
         call_cfunction(global_context, func);
       }
     }
+    else if (curr_token->type == lcPOINT)
+    {
+      //type_t* this_type = find_type(global_context->global_types, prev_token.text);
+      variable* var = lookup(prev_token.text);
+      type_t* this_type = var->type;
+      if (this_type != NULL)
+      {
+        pv->type = VARIABLE;
+        pv->var = var;
+        if (this_type->object_type == STRUCT)
+        {
+          get_token();
+          primary_expression(pv);
+        }
+        else
+        {
+          FATAL_ERROR("type on left is not structure");
+        }
+      }
+    }
 		else 
 		{
+#if 0
       *curr_token = prev_token;
-      if ((lookup(curr_token->text, &res)) == 0)
+      variable* var = lookup(curr_token->text);
+      if (type != NULL)
       {
-        printf("Error, undefined variable <%.*s>\n", curr_token->text.len, curr_token->text.pos);
-      }
+        if (var == NULL)
+        {
+          printf("Error, undefined variable <%.*s>\n", curr_token->text.len, curr_token->text.pos);
+        }
+        else
+        {
 
+        }
+      }
+      else
+      {
+        FATAL_ERROR("This is not type");
+      }
+#endif
 			//exit(-1);
 		}
 			//GENCODE
@@ -164,7 +223,9 @@ int multiplicative_expression()
 	int res = 0;
 	int stop = 0;
 
-	res = primary_expression();
+  //type_t *type = create_type(global_context->global_types);
+  primary_value_t pv;
+	res = primary_expression(&pv);
 	while ( curr_token->type == lcMUL || curr_token->type == lcDIV)
 	{
 		switch (curr_token->type)
@@ -172,7 +233,7 @@ int multiplicative_expression()
 		case lcMUL:
 		{
 			get_token(/*NEXT_TOKEN*/);
-			res *= primary_expression();
+			res *= primary_expression(&pv);
 			//gencode
 			printf("\tmul\n");
 			break;
@@ -180,7 +241,7 @@ int multiplicative_expression()
 		case lcDIV:
 		{
 			get_token(/*NEXT_TOKEN*/);
-			primary_expression();
+			primary_expression(&pv);
 			//gencode
 			printf("\tdiv\n");
 			break;

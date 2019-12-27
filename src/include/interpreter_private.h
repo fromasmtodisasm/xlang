@@ -1,0 +1,30 @@
+#pragma once
+#include "interpreter.h"
+
+#define FATAL_ERROR(str) (fprintf(stderr, "Fatal error on line %d: %s\n", __LINE__, str), exit(-1))
+
+#define TYPES_CAPACITY 256
+#define STACK_SIZE 64 
+#define FUNCTIONS_COUNT 128 
+
+
+typedef struct xlang_context
+{
+  const char* source;
+  type_t* global_types;
+  int num_types;
+  int types_capacity;
+
+  int num_funcs;
+  function_t functions[FUNCTIONS_COUNT];
+  function_t* current_function;
+  function_t* entry_point;
+
+  variable* symbol_table;
+  int num_symbols;
+
+  int stack[STACK_SIZE];
+  int sp;
+}xlang_context;
+
+type_t* create_type(type_t* parent);

@@ -1,4 +1,5 @@
 #include "interpreter.h"
+#include "interpreter_private.h"
 #include "common.h"
 #include "exp.h"
 #include "lexer.h"
@@ -10,38 +11,10 @@
 #include <stdbool.h>
 
 #define TAB_WIDTH 4
-#define FATAL_ERROR(str) (fprintf(stderr, "Fatal error on line %d: %s\n", __LINE__, str), exit(-1))
-//#define MATCH(tok) curr_token->type != tok ? FATAL_ERROR("error") : get_token(); 
 static void MATCH(token_type tok) 
 {
     curr_token->type != tok ? FATAL_ERROR("error") : (void)get_token();
 }
-#define TYPES_CAPACITY 256
-#define STACK_SIZE 64 
-#define FUNCTIONS_COUNT 128 
-
-
-//#define CREATE_PRIMITIVE_TYPE(n, t) string_ref_assign(tmp_type->name, n); tmp_type->object_type = PRIMITIVE; tmp_type->btype = t; add_type(global_context, tmp_type);
-
-typedef struct xlang_context
-{
-  const char* source;
-  type_t* global_types;
-  int num_types;
-  int types_capacity;
-
-  int num_funcs;
-  function_t functions[FUNCTIONS_COUNT];
-  function_t* current_function;
-  function_t* entry_point;
-
-  variable* symbol_table;
-  int num_symbols;
-
-  int stack[STACK_SIZE];
-  int sp;
-}xlang_context;
-
 extern char *token_to_string[];
 static type_t* tmp_type = NULL;
 xlang_context* global_context;
@@ -49,8 +22,6 @@ xlang_context* global_context;
 // Parsing
 bool translation_unit(xlang_context* ctx);
 
-
-static type_t* create_type(type_t* parent);
 // Parsing
 // Initialization
 xlang_context* create_interpreter_context();
@@ -66,7 +37,6 @@ void skip_statement();
 int function_definition();
 int declaration_list();
 int start(xlang_context* ctx);
-static type_t* find_type(xlang_context* ctx, string_ref lexem);
 
 static void CREATE_PRIMITIVE_TYPE(char* name, builtin_types t, int size);
 void call_cfunction(xlang_context* ctx, function_t* func);
@@ -158,7 +128,7 @@ static void add_type(xlang_context* ctx, type_t* t)
   ctx->num_types++;
 }
 
-static type_t* create_type(type_t* parent)
+type_t* create_type(type_t* parent)
 {
     type_t* result = malloc(sizeof(type_t));
 
@@ -538,6 +508,20 @@ int start(xlang_context* ctx) {
                 *tmp = *create_varialble(var.name.pos);
                 tmp->name.len = var.name.len;
                 tmp->type = var.type;
+                switch (tmp->type->object_type)
+                {
+                case PRIMITIVE:
+                {
+                  tmp->ival = 0;
+                }
+                case STRUCT:
+                {
+                  tmp->object = malloc(tmp->type->size);
+                }
+                break;
+                default:
+                  break;
+                }
               }
               else
               {
@@ -758,7 +742,7 @@ static type_t* find_type_recursive(type_t *type, string_ref lexem)
   return NULL;
 }
 
-static type_t* find_type(type_t* scope, string_ref lexem)
+type_t* find_type(type_t* scope, string_ref lexem)
 {
   return find_type_recursive(scope, lexem);
 }
@@ -824,6 +808,7 @@ static void CREATE_PRIMITIVE_TYPE(char* name, builtin_types t, int size)
     tmp_type->object_type = PRIMITIVE;
     tmp_type->btype = t;
     tmp_type->size = size;
+    tmp_type->size = 0;
     tmp_type->is_tag = false;
     add_type(global_context, tmp_type);
 }

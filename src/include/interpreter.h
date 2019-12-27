@@ -54,6 +54,7 @@ typedef struct type_t
     builtin_types btype;
     bool is_tag;
     int size;
+    int offset;
 
     int num_types;
     string_ref* names;
@@ -102,3 +103,8 @@ bool register_cfunction(xlang_context *ctx, CFunction* func, const char* name);
 bool is_cfunction(xlang_context* ctx, string_ref name);
 void call_cfunction(xlang_context* ctx, function_t* func);
 function_t* find_cfunction(xlang_context* ctx, string_ref name);
+
+/*
+*
+*/
+type_t* find_type(type_t* scope, string_ref lexem);
