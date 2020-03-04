@@ -25,14 +25,34 @@ typedef enum way_out
 
 typedef enum builtin_types
 {
-    CHAR_TYPE,
-    INT_TYPE,
-    UCHAR_TYPE,
-    UINT_TYPE,
-    FLOAT_TYPE,
+	CHAR_TYPE,
+  UCHAR_TYPE,
+  BOOL_TYPE,
+  INT_TYPE,
+  UINT_TYPE,
+  FLOAT_TYPE,
+  DOUBLE_TYPE,
 
-    VOID_TYPE,
-    UNKNOWN_TYPE
+  VEC2_TYPE,
+  VEC3_TYPE,
+  VEC4_TYPE,
+
+  DVEC2_TYPE,
+  DVEC3_TYPE,
+  DVEC4_TYPE,
+
+  MAT2_TYPE,
+  MAT3_TYPE,
+  MAT4_TYPE,
+
+  DMAT2_TYPE,
+  DMAT3_TYPE,
+  DMAT4_TYPE,
+
+
+  VOID_TYPE,
+  UNKNOWN_TYPE
+
 }builtin_types;
 
 typedef enum object_type_t
