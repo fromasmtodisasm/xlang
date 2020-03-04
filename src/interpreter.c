@@ -1,8 +1,14 @@
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 #include "interpreter.h"
 #include "common.h"
 #include "exp.h"
 #include "lexer.h"
 #include "preprocessor.h"
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #include <memory.h> //memcpy
 #include <stdio.h>
@@ -37,6 +43,8 @@ typedef struct xlang_context
 
   variable* symbol_table;
   int num_symbols;
+
+  int align; // variable alignment
 
   int stack[STACK_SIZE];
   int sp;
@@ -86,11 +94,30 @@ xlang_context* xlang_create()
   if (ctx != NULL)
   {
     tmp_type = create_type(NULL);
+
     CREATE_PRIMITIVE_TYPE("int", INT_TYPE, 4);
     CREATE_PRIMITIVE_TYPE("char", CHAR_TYPE, 1);
     CREATE_PRIMITIVE_TYPE("uint", UINT_TYPE, 4);
     CREATE_PRIMITIVE_TYPE("uchar", UCHAR_TYPE, 1);
     CREATE_PRIMITIVE_TYPE("float", FLOAT_TYPE, 4);
+    CREATE_PRIMITIVE_TYPE("double", DOUBLE_TYPE, 4);
+
+    CREATE_PRIMITIVE_TYPE("vec2", VEC2_TYPE, 2 * 4);
+    CREATE_PRIMITIVE_TYPE("vec3", VEC3_TYPE, 3 * 4);
+    CREATE_PRIMITIVE_TYPE("vec4", VEC4_TYPE, 4 * 4);
+
+    CREATE_PRIMITIVE_TYPE("dvec2", VEC2_TYPE, 2 * 8);
+    CREATE_PRIMITIVE_TYPE("dvec3", VEC3_TYPE, 3 * 8);
+    CREATE_PRIMITIVE_TYPE("dvec4", VEC4_TYPE, 4 * 8);
+
+    CREATE_PRIMITIVE_TYPE("mat2", MAT2_TYPE, 2 * 2 * 4);
+    CREATE_PRIMITIVE_TYPE("mat3", MAT3_TYPE, 3 * 3 * 4);
+    CREATE_PRIMITIVE_TYPE("mat4", MAT4_TYPE, 4 * 4 * 4);
+
+    CREATE_PRIMITIVE_TYPE("dmat2", MAT2_TYPE, 2 * 2 * 8);
+    CREATE_PRIMITIVE_TYPE("dmat3", MAT3_TYPE, 3 * 3 * 8);
+    CREATE_PRIMITIVE_TYPE("dmat4", MAT4_TYPE, 4 * 4 * 8);
+
     register_cfunction(ctx, myCFunction, "myCFunction");
   }
   return ctx;

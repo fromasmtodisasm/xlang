@@ -3,10 +3,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 #include "exp.h"
 #include "interpreter.h"
 #include "preprocessor.h"
 #include "fileutils.h"
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #if !defined _MSC_VER
 	#define getline mygetline
@@ -70,6 +76,7 @@ int main(int argc, char **argv)
 	char *expression = source;
 	FILE *test;
 
+#if 0
 	if (argc > 1)
 	{
 		expression = buf;
@@ -86,9 +93,10 @@ int main(int argc, char **argv)
 		}
 	}
 	else
+#endif
   {
     int buffer_size = 1024;
-    source = malloc(buffer_size);
+    source = (char*)malloc(buffer_size);
     usage(basename(argv[0]));
     xlang_context* ctx = xlang_create();
     if (ctx != NULL)

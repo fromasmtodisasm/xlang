@@ -30,6 +30,24 @@ typedef enum builtin_types
     UCHAR_TYPE,
     UINT_TYPE,
     FLOAT_TYPE,
+    DOUBLE_TYPE,
+
+    VEC2_TYPE,
+    VEC3_TYPE,
+    VEC4_TYPE,
+
+    DVEC2_TYPE,
+    DVEC3_TYPE,
+    DVEC4_TYPE,
+
+    MAT2_TYPE,
+    MAT3_TYPE,
+    MAT4_TYPE,
+
+    DMAT2_TYPE,
+    DMAT3_TYPE,
+    DMAT4_TYPE,
+
 
     VOID_TYPE,
     UNKNOWN_TYPE
