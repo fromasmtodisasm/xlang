@@ -62,6 +62,33 @@ typedef struct type_t
     struct type_t* childrens;
 }type_t;
 
+typedef enum symbol_type
+{
+  esymbol_variable,
+  esymbol_fuction
+}symbol_type;
+
+typedef struct symbol_function
+{
+  type_t* return_type;
+}symbol_function;
+
+typedef union symbol
+{
+  symbol_type type;
+
+
+}symbol;
+
+#if 0
+typedef struct symbol_table
+{
+  int num_
+  variable* variables;
+};
+#endif
+
+
 typedef struct block_t function_body_t;
 typedef struct xlang_context xlang_context;
 typedef int (*CFunction)(xlang_context*);
@@ -86,10 +113,10 @@ typedef struct function_t
 }function_t;
 
 
-way_out do_if();
-way_out do_while();
-way_out statement(compound_origin origin);
-way_out compound_statement(compound_origin origin);
+way_out do_if(xlang_context* ctx);
+way_out do_while(xlang_context* ctx);
+way_out statement(xlang_context* ctx, compound_origin origin);
+way_out compound_statement(xlang_context* ctx, compound_origin origin);
 
 #ifdef __cplusplus
 }

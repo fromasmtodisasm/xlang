@@ -9,9 +9,9 @@
 #include <string.h>
 
 
+DEFINE_LEXER_CONTEXT();
 variable *vars;
 extern xlang_context* global_context;
-//static token_t *curr_token;// = curr_token;
 
 typedef struct primary_value_t
 {
@@ -114,32 +114,32 @@ int assign_value(string_ref name, int val)
 	}
 }
 
-int primary_expression(primary_value_t *pv)
+int primary_expression(xlang_context* ctx, primary_value_t *pv)
 {
 	int res = 0;
 	int sign = 0; // -1 - negative, 0 without sign
-	if (curr_token->type == lcPLUS || curr_token->type == lcMINUS) {
-		if (curr_token->type == lcMINUS)
+	if (CURRENT_TOKEN(ctx->lexer).type == lcPLUS || CURRENT_TOKEN(ctx->lexer).type == lcMINUS) {
+		if (CURRENT_TOKEN(ctx->lexer).type == lcMINUS)
 			sign = -1;
-		get_token();
+		get_token(ctx->lexer);
 	}
-	switch (curr_token->type)
+	switch (CURRENT_TOKEN(ctx->lexer).type)
 	{
 
 	case lcNUMBER:
 	{
-		//res = (int)curr_token->text;
+		//res = (int)CURRENT_TOKEN(ctx->lexer).text;
 		//GENCODE
-		printf("\tpush %c%d\n", sign==-1 ? '-' : ' ', atoi(curr_token->text.pos));
+		printf("\tpush %c%d\n", sign==-1 ? '-' : ' ', atoi(CURRENT_TOKEN(ctx->lexer).text.pos));
 		break;
 	}
 	case lcIDENT:
 	{
-    token_t prev_token = *curr_token;
+    token_t prev_token = CURRENT_TOKEN(ctx->lexer);
 
-    if (get_token()->type == lcLBRACE)
+    if (get_token(ctx->lexer)->type == lcLBRACE)
     {
-      if (get_token()->type != lcRBRACE)
+      if (get_token(ctx->lexer)->type != lcRBRACE)
       {
         printf("error, rbrace expected\n");
         exit(-1);
@@ -150,7 +150,7 @@ int primary_expression(primary_value_t *pv)
         call_cfunction(global_context, func);
       }
     }
-    else if (curr_token->type == lcPOINT)
+    else if (CURRENT_TOKEN(ctx->lexer).type == lcPOINT)
     {
       //type_t* this_type = find_type(global_context->global_types, prev_token.text);
       variable* var = lookup(prev_token.text);
@@ -161,8 +161,8 @@ int primary_expression(primary_value_t *pv)
         pv->var = var;
         if (this_type->object_type == STRUCT)
         {
-          get_token();
-          primary_expression(pv);
+          get_token(ctx->lexer);
+          primary_expression(ctx, pv);
         }
         else
         {
@@ -173,13 +173,13 @@ int primary_expression(primary_value_t *pv)
 		else 
 		{
 #if 0
-      *curr_token = prev_token;
-      variable* var = lookup(curr_token->text);
+      *CURRENT_TOKEN = prev_token;
+      variable* var = lookup(CURRENT_TOKEN(ctx->lexer).text);
       if (type != NULL)
       {
         if (var == NULL)
         {
-          printf("Error, undefined variable <%.*s>\n", curr_token->text.len, curr_token->text.pos);
+          printf("Error, undefined variable <%.*s>\n", CURRENT_TOKEN(ctx->lexer).text.len, CURRENT_TOKEN(ctx->lexer).text.pos);
         }
         else
         {
@@ -194,14 +194,14 @@ int primary_expression(primary_value_t *pv)
 			//exit(-1);
 		}
 			//GENCODE
-			printf("\tpush %c%.*s\n", sign==-1 ? '-' : ' ', curr_token->text.len, curr_token->text.pos);
+			printf("\tpush %c%.*s\n", sign==-1 ? '-' : ' ', CURRENT_TOKEN(ctx->lexer).text.len, CURRENT_TOKEN(ctx->lexer).text.pos);
 		break;
 	}
 	case lcLBRACE:
 	{
-		get_token(/*NEXT_TOKEN*/);
-		res = assignment_expression();
-		if (curr_token->type != lcRBRACE)
+		get_token(ctx->lexer);
+		res = assignment_expression(ctx);
+		if (CURRENT_TOKEN(ctx->lexer).type != lcRBRACE)
 		{
 			printf("Error, expected ')'\n");
 			getchar();
@@ -210,38 +210,38 @@ int primary_expression(primary_value_t *pv)
 		break;
 	}
 	default:
-		printf("Error, expected primary on line %d!!!\n", get_line());
+		printf("Error, expected primary on line %d!!!\n", get_line(ctx->lexer));
 		getchar();
 		exit(-1);
 	}
-	get_token();
+	get_token(ctx->lexer);
 	return res;
 }
 
-int multiplicative_expression()
+int multiplicative_expression(xlang_context* ctx)
 {
 	int res = 0;
 	int stop = 0;
 
   //type_t *type = create_type(global_context->global_types);
   primary_value_t pv;
-	res = primary_expression(&pv);
-	while ( curr_token->type == lcMUL || curr_token->type == lcDIV)
+	res = primary_expression(ctx, &pv);
+	while ( CURRENT_TOKEN(ctx->lexer).type == lcMUL || CURRENT_TOKEN(ctx->lexer).type == lcDIV)
 	{
-		switch (curr_token->type)
+		switch (CURRENT_TOKEN(ctx->lexer).type)
 		{
 		case lcMUL:
 		{
-			get_token(/*NEXT_TOKEN*/);
-			res *= primary_expression(&pv);
+			get_token(ctx->lexer);
+			res *= primary_expression(ctx, &pv);
 			//gencode
 			printf("\tmul\n");
 			break;
 		}
 		case lcDIV:
 		{
-			get_token(/*NEXT_TOKEN*/);
-			primary_expression(&pv);
+			get_token(ctx->lexer);
+			primary_expression(ctx, &pv);
 			//gencode
 			printf("\tdiv\n");
 			break;
@@ -254,28 +254,28 @@ int multiplicative_expression()
 	return res;
 }
 
-int additive_expression()
+int additive_expression(xlang_context* ctx)
 {
 	int res = 0;
 	int stop = 0;
 	
-	res = multiplicative_expression();
-	while (curr_token->type == lcPLUS || curr_token->type == lcMINUS)
+	res = multiplicative_expression(ctx);
+	while (CURRENT_TOKEN(ctx->lexer).type == lcPLUS || CURRENT_TOKEN(ctx->lexer).type == lcMINUS)
 	{
-		switch (curr_token->type)
+		switch (CURRENT_TOKEN(ctx->lexer).type)
 		{
 		case lcPLUS:
 		{
-			get_token(/*NEXT_TOKEN*/);
-			res += multiplicative_expression();
+			get_token(ctx->lexer);
+			res += multiplicative_expression(ctx);
 			//gencode
 			printf("\tadd\n");
 			break;
 		}
 		case lcMINUS:
 		{
-			get_token(/*NEXT_TOKEN*/);
-			res -= multiplicative_expression();
+			get_token(ctx->lexer);
+			res -= multiplicative_expression(ctx);
 			//gencode
 			printf("\tsub\n");
 			break;
@@ -303,76 +303,76 @@ int is_relop(token_type type)
 		);
 }
 
-int conditional_expression()
+int conditional_expression(xlang_context* ctx)
 {
 	int res = 0;
-	token_type type = curr_token->type;
-	res = additive_expression();
+	token_type type = CURRENT_TOKEN(ctx->lexer).type;
+	res = additive_expression(ctx);
 	
-	while (is_relop(type=curr_token->type))
+	while (is_relop(type=CURRENT_TOKEN(ctx->lexer).type))
 	{
-		get_token(/*NEXT_TOKEN*/);
+		get_token(ctx->lexer);
 		switch (type)
 		{	
 
 		case lcAND_OP:
-			res &= additive_expression();
+			res &= additive_expression(ctx);
 			//gencode
 			printf("\tcmp\n");
 			//gencode
 			printf("\tand\n");
 			break;
 		case lcOR_OP:
-			res |= additive_expression();
+			res |= additive_expression(ctx);
 			//gencode
 			printf("\tcmp\n");
 			//gencode
 			printf("\tor\n");
 			break;
 		case lcEQ_OP:
-			res = res == additive_expression();
+			res = res == additive_expression(ctx);
 			//gencode
 			printf("\tcmp\n");
 			//gencode
 			printf("\tcmp\n");
 			break;
 		case lcL_OP:
-			res  = res < additive_expression();
+			res  = res < additive_expression(ctx);
 			//gencode
 			printf("\tcmp\n");
 			//gencode
 			printf("\tjl\n");
 			break;
 		case lcG_OP:
-			res = res > additive_expression();
+			res = res > additive_expression(ctx);
 			//gencode
 			printf("\tcmp\n");
 			//gencode
 			printf("\tja\n");
 			break;
 		case lcLE_OP:
-			res = res <= additive_expression();
+			res = res <= additive_expression(ctx);
 			//gencode
 			printf("\tcmp\n");
 			//gencode
 			printf("\tjbe\n");
 			break;
 		case lcGE_OP:
-			res = res >= additive_expression();
+			res = res >= additive_expression(ctx);
 			//gencode
 			printf("\tcmp\n");
 			//gencode
 			printf("\tjae\n");
 			break;
 		case lcN_OP:
-			res != additive_expression();
+			res != additive_expression(ctx);
 			//gencode
 			printf("\tcmp\n");
 			//gencode
 			printf("\tjnz\n");
 			break;
 		case lcNE_OP:
-			res = res != additive_expression();
+			res = res != additive_expression(ctx);
 			//gencode
 			printf("\tcmp\n");
 			//gencode
@@ -380,45 +380,44 @@ int conditional_expression()
 		default:
 			break;
 		}
-		type = curr_token->type;
+		type = CURRENT_TOKEN(ctx->lexer).type;
 	}
 	return res;
 }
 
-int assignment_expression()
+int assignment_expression(xlang_context* ctx)
 {
 	string_ref name;
 	int tmp = 0;
 	int res = 0;
-	token_t prev_token;
+  lexer_context_t* lexer = NULL;
 
-	name = curr_token->text;
-	if (curr_token->type == lcSEMI)
+	name = CURRENT_TOKEN(ctx->lexer).text;
+	if (CURRENT_TOKEN(ctx->lexer).type == lcSEMI)
 		return res;
-	if (curr_token->type == lcIDENT)
+	if (CURRENT_TOKEN(ctx->lexer).type == lcIDENT)
 	{
 		int tmp = 0;
-		string_ref name = curr_token->text;
-		char *prev_pos = get_pos();
-		memcpy(&prev_token, curr_token, sizeof(token_t));
+		string_ref name = CURRENT_TOKEN(ctx->lexer).text;
+    lexer_save_context(&lexer, ctx->lexer);
 		
-		token_type type = get_token()->type;
+		token_type type = get_token(ctx->lexer)->type;
 		if (type == lcASSIGN || type == lcPLUS_ASSIGN ||
 			type == lcMINUS_ASSIGN || type == lcMUL_ASSIGN ||
 			type == lcDIV_ASSIGN)
 		{
-			get_token(/*NEXT_TOKEN*/);
+			get_token(ctx->lexer);
 			lookup(name, &tmp);
 			switch (type)
 			{
 			case lcASSIGN:
-				res = assignment_expression();
+				res = assignment_expression(ctx);
 				//gencode
 				printf("\tpush %*.s\n", name.len, name);
 				printf("\tsave\n");
 				break;
 			case lcPLUS_ASSIGN:
-				res = tmp += res = assignment_expression();
+				res = tmp += res = assignment_expression(ctx);
 				//gencode
 				printf("\tpush %*.s\n", name.len, name);
 				printf("\tload\n");
@@ -428,7 +427,7 @@ int assignment_expression()
 				
 				break;
 			case lcMINUS_ASSIGN:
-				res = tmp -= assignment_expression();
+				res = tmp -= assignment_expression(ctx);
 				//gencode
 				printf("\tpush %*.s\n", name.len, name);
 				printf("\tload\n");
@@ -437,7 +436,7 @@ int assignment_expression()
 				printf("\tsave\n");
 				break;
 			case lcMUL_ASSIGN:
-				res = tmp *= assignment_expression();
+				res = tmp *= assignment_expression(ctx);
 				//gencode
 				printf("\tpush %*.s\n", name.len, name);
 				printf("\tload\n");
@@ -446,7 +445,7 @@ int assignment_expression()
 				printf("\tsave\n");
 				break;
 			case lcDIV_ASSIGN:
-				res = tmp /= assignment_expression();
+				res = tmp /= assignment_expression(ctx);
 				//gencode
 				printf("\tpush %*.s\n", name.len, name);
 				printf("\tload\n");
@@ -462,11 +461,10 @@ int assignment_expression()
 		}
 		else
 		{
-			memcpy(curr_token, &prev_token, sizeof(token_t));
-			set_pos(prev_pos);
+      lexer_update_context(&ctx->lexer, lexer);
 		}
 	}
-	res = conditional_expression();
+	res = conditional_expression(ctx);
 	return res;
 
 }

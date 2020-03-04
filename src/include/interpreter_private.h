@@ -1,5 +1,6 @@
 #pragma once
 #include "interpreter.h"
+#include "lexer.h"
 
 #define FATAL_ERROR(str) (fprintf(stderr, "Fatal error on line %d: %s\n", __LINE__, str), exit(-1))
 
@@ -19,6 +20,8 @@ typedef struct xlang_context
   function_t functions[FUNCTIONS_COUNT];
   function_t* current_function;
   function_t* entry_point;
+
+	lexer_context_t *lexer;
 
   variable* symbol_table;
   int num_symbols;
