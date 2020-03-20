@@ -5,7 +5,7 @@ set(SOURCES
     fileutils.c
     interpreter.c
     lexer.c
-    main.cpp
+    main.c
     preprocessor.c
      "executable_alloc.cpp")
 set(HEADERS
