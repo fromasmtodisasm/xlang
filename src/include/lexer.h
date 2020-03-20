@@ -11,6 +11,8 @@
 #define BASE_INDEX 257
 #define IDENT_LEN 64
 #define NUMBER_LEN 20
+//#define CURRENT_TOKEN() (curr_context->CURRENT_TOKEN)
+#define DEFINE_LEXER_CONTEXT() //static lexer_context_t* curr_context
 
 /***************************************************************************/
 /*********************** Typedefs/Structures *******************************/
@@ -124,24 +126,24 @@ typedef struct token_t {
 	token_category category;
 	char *pos;
 } token_t;
-typedef struct context {
-	token_t curr_token;
-	char *pos;
-	int cur_line;
-	struct context *prev, *next;
-} context_t;
-
+typedef struct lexer_context_t lexer_context_t;
 string_ref string_ref_create(char* str);
 
 /***************************************************************************/
 /*************************** Prototypes ************************************/
 /***************************************************************************/
+lexer_context_t* lexer_create_context();
 token_type is_keyword(string_ref name);
-int lexer_init(char *src);
-char *get_pos();
-void set_pos(char *pos);
-int get_line();
-token_t *get_token();
+char *lexer_get_pos(lexer_context_t*);
+void lexer_set_pos(lexer_context_t*, char *pos);
+void lexer_set_token(lexer_context_t* ctx, token_t* token);
+int get_line(lexer_context_t*);
+token_t *get_token(lexer_context_t*);
+token_t CURRENT_TOKEN(lexer_context_t*);
+void lexer_update_context(lexer_context_t** dst, lexer_context_t* src);
+void lexer_save_context(lexer_context_t** dst, lexer_context_t* src);
+lexer_context_t* get_context();
+void set_context(lexer_context_t* );
 /*
 union
 {
@@ -154,6 +156,7 @@ float float_number
 /***************************************************************************/
 /********************* Externally Defined Globals **************************/
 /***************************************************************************/
-extern token_t *curr_token;
+//extern token_t *CURRENT_TOKEN;
+//extern lexer_context_t* current_context;
 
 #endif /* _LEXER_H_ */

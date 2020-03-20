@@ -35,5 +35,5 @@ build/*
 /src/INSTALL.vcxproj.filters
 /src/INSTALL.vcxproj
 /src/goto_test
-/out/build/x64-Debug
-/CMakeSettings.json
+out/build
+CMakeSettings.json

@@ -15,7 +15,17 @@ typedef enum variable_type
 typedef struct _variable
 {
   string_ref name;
-  int value;
+  union value
+  {
+    char* sval;
+    char cval;
+    unsigned char ucval;
+    int ival;
+    unsigned int uival;
+    float fval;
+
+    void* object;
+  };
   type_t *type;
   struct _variable *next;
 }variable;
@@ -25,7 +35,7 @@ int block(char ** buffer);
 
 int assignment_expression();
 
-int lookup(string_ref name, int * val);
+variable* lookup(string_ref name);
 
 int assign_value(string_ref name, int val);
 

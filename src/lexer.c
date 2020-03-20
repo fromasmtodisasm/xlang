@@ -14,18 +14,26 @@
 /***************************************************************************/
 /***************** Defines used by this module only ************************/
 /***************************************************************************/
-#define CURTOK() (curr_context->curr_token)
 #define NUMTOKS 2
 #define ERROR(A, ...)
 #define DEBUG_TRACE(A, ...)
 
 /***************************************************************************/
+/*********************** Typedefs/Structures *******************************/
+/***************************************************************************/
+typedef struct lexer_context_t{
+	token_t current_token;
+	char *pos;
+	int line;
+} lexer_context_t;
+
+/***************************************************************************/
 /********** Global Variables defined for this module only ******************/
 /************************ (should be static) *******************************/
 /***************************************************************************/
-context_t context;
-context_t *curr_context;
-token_t *curr_token;
+lexer_context_t context;
+DEFINE_LEXER_CONTEXT();
+//token_t *CURRENT_TOKEN;
 static char *source;
 struct commands {
 	char command[20];
@@ -92,7 +100,7 @@ char *strndup(const char *str, size_t n) {
 	char *out;
 	size_t len = strlen(str);
 	if (len > n) len = n;
-	out = (char*)malloc(len);
+	out = MALLOC(char, len);
 	strncpy(out, str, len);
 	return out;
 }
@@ -111,11 +119,28 @@ void string_ref_assign(string_ref *ref, char* str)
     ref->len = strlen(str);
 }
 
+void token_init(token_t* t)
+{
+  memset(t, 0, sizeof(token_t));
+}
+
+lexer_context_t* lexer_create_context()
+{
+  lexer_context_t* ctx = MALLOC(lexer_context_t, sizeof(context));
+  if (ctx != NULL)
+  {
+    token_init(&ctx->current_token);
+    ctx->line = 1;
+    ctx->pos = NULL;
+  }
+  return ctx;
+}
+
 token_type is_keyword(string_ref name) {
 	token_type type = lcEND;
 	int i;
 	for (i = 0; table[i].tok != lcEND; i++) {
-		if (!strncmp(name.pos, table[i].command, name.len)) {
+		if (!strncmp(name.pos, table[i].command, strlen(table[i].command))) {
 			type = table[i].tok;
 			break;
 		}
@@ -123,23 +148,19 @@ token_type is_keyword(string_ref name) {
 	return type;
 }
 
-int lexer_init(char *src) {
-	curr_context = &context;
-	curr_context->pos = src;
-	curr_context->cur_line = 1;
-	curr_token = &(curr_context->curr_token);
+char *lexer_get_pos(lexer_context_t* ctx) { return ctx->pos; }
 
-	return 1;
+void lexer_set_pos(lexer_context_t* ctx, char *pos) { ctx->pos = pos; }
+
+void lexer_set_token(lexer_context_t* ctx, token_t* token)
+{
+  ctx->current_token = *token;
 }
 
-char *get_pos() { return curr_context->pos; }
+int get_line(lexer_context_t* ctx) { return ctx->line; }
 
-void set_pos(char *pos) { curr_context->pos = pos; }
-
-int get_line() { return curr_context->cur_line; }
-
-token_t *get_token() {
-	char *pos = curr_context->pos;
+token_t *get_token(lexer_context_t* ctx) {
+	char *pos = ctx->pos;
 	token_type type = lcEND;
 	void *value = NULL;
     string_ref text = { .pos = NULL, .len = 0 };
@@ -151,7 +172,7 @@ token_t *get_token() {
   while (*pos) {
     if (*pos == ' ' || *pos == '\t' || *pos == '\r' || *pos == '\n') {
       if (*pos == '\n') {
-        curr_context->cur_line++;
+        ctx->line++;
       }
       pos++;
     }
@@ -160,7 +181,7 @@ token_t *get_token() {
       while (*pos) {
         if (*pos == '\n') {
           type = lcCOMMENT;
-          curr_context->cur_line++;
+          ctx->line++;
           pos++;
           break;
         }
@@ -190,7 +211,7 @@ token_t *get_token() {
           pos++;
         }
       }
-      curr_context->cur_line++;
+      ctx->line++;
     }
     else break;
   }
@@ -369,7 +390,7 @@ token_t *get_token() {
       break;
   }
   case '\0': {
-    CURTOK().type = type = lcEND;
+    ctx->current_token.type = type = lcEND;
     break;
   }
   default:
@@ -470,12 +491,37 @@ token_t *get_token() {
 		assert(type != lcEND);
 		assert(pos > begin);
 	}
-	CURTOK().type = type;
-	CURTOK().text = text;
-	CURTOK().pos = begin;
-	curr_context->pos = pos;
-	//DEBUG_DEVELOP("< %s, %s >\n", "text" /*token_to_string[CURTOK().type - BASE_INDEX]*/, text);
-	assert(&CURTOK() != NULL);
+	ctx->current_token.type = type;
+	ctx->current_token.text = text;
+	ctx->current_token.pos = begin;
+	ctx->pos = pos;
+	//DEBUG_DEVELOP("< %s, %s >\n", "text" /*token_to_string[CURRENT_TOKEN().type - BASE_INDEX]*/, text);
 	if (type == lcEND) DEBUG_TRACE("End of source\n");
-	return &CURTOK();
+	return &ctx->current_token;
 }
+
+token_t CURRENT_TOKEN(lexer_context_t* ctx)
+{
+  return ctx->current_token;
+}
+
+void lexer_update_context(lexer_context_t** dst, lexer_context_t* src)
+{
+  **dst = *src;
+}
+void lexer_save_context(lexer_context_t** dst, lexer_context_t* src)
+{
+  *dst = MALLOC(lexer_context_t, sizeof(lexer_context_t));
+  **dst = *src;
+}
+#if 0
+lexer_context_t* get_context()
+{
+  return curr_context;
+}
+
+void set_context(lexer_context_t* ctx)
+{
+  curr_context = ctx;
+}
+#endif

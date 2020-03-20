@@ -2,6 +2,7 @@
 extern "C" {
 #endif // __cplusplus
 #include "interpreter.h"
+#include "interpreter_private.h"
 #include "common.h"
 #include "exp.h"
 #include "lexer.h"
@@ -16,11 +17,10 @@ extern "C" {
 #include <stdbool.h>
 
 #define TAB_WIDTH 4
-#define FATAL_ERROR(str) (fprintf(stderr, "Fatal error on line %d: %s\n", __LINE__, str), exit(-1))
-//#define MATCH(tok) curr_token->type != tok ? FATAL_ERROR("error") : get_token(); 
-static void MATCH(token_type tok) 
+//DEFINE_LEXER_CONTEXT();
+static void MATCH(xlang_context* ctx, token_type tok)
 {
-    curr_token->type != tok ? FATAL_ERROR("error") : (void)get_token();
+    CURRENT_TOKEN(ctx->lexer).type != tok ? FATAL_ERROR("error") : (void)get_token(ctx->lexer);
 }
 #define TYPES_CAPACITY 256
 #define STACK_SIZE 64 
@@ -29,27 +29,6 @@ static void MATCH(token_type tok)
 
 //#define CREATE_PRIMITIVE_TYPE(n, t) string_ref_assign(tmp_type->name, n); tmp_type->object_type = PRIMITIVE; tmp_type->btype = t; add_type(global_context, tmp_type);
 
-typedef struct xlang_context
-{
-  const char* source;
-  type_t* global_types;
-  int num_types;
-  int types_capacity;
-
-  int num_funcs;
-  function_t functions[FUNCTIONS_COUNT];
-  function_t* current_function;
-  function_t* entry_point;
-
-  variable* symbol_table;
-  int num_symbols;
-
-  int align; // variable alignment
-
-  int stack[STACK_SIZE];
-  int sp;
-}xlang_context;
-
 extern char *token_to_string[];
 static type_t* tmp_type = NULL;
 xlang_context* global_context;
@@ -57,8 +36,6 @@ xlang_context* global_context;
 // Parsing
 bool translation_unit(xlang_context* ctx);
 
-
-static type_t* create_type(type_t* parent);
 // Parsing
 // Initialization
 xlang_context* create_interpreter_context();
@@ -69,12 +46,11 @@ variable* create_varialble(const char* name);
 
 // Initialization
 
-void skip_compound_statement();
-void skip_statement();
-int function_definition();
+void skip_compound_statement(xlang_context* ctx);
+void skip_statement(xlang_context* ctx);
+int function_definition(xlang_context* ctx);
 int declaration_list();
 int start(xlang_context* ctx);
-static type_t* find_type(xlang_context* ctx, string_ref lexem);
 
 static void CREATE_PRIMITIVE_TYPE(char* name, builtin_types t, int size);
 void call_cfunction(xlang_context* ctx, function_t* func);
@@ -100,23 +76,30 @@ xlang_context* xlang_create()
     CREATE_PRIMITIVE_TYPE("uint", UINT_TYPE, 4);
     CREATE_PRIMITIVE_TYPE("uchar", UCHAR_TYPE, 1);
     CREATE_PRIMITIVE_TYPE("float", FLOAT_TYPE, 4);
-    CREATE_PRIMITIVE_TYPE("double", DOUBLE_TYPE, 4);
 
-    CREATE_PRIMITIVE_TYPE("vec2", VEC2_TYPE, 2 * 4);
-    CREATE_PRIMITIVE_TYPE("vec3", VEC3_TYPE, 3 * 4);
-    CREATE_PRIMITIVE_TYPE("vec4", VEC4_TYPE, 4 * 4);
+		CREATE_PRIMITIVE_TYPE("char", CHAR_TYPE, 4);
+		CREATE_PRIMITIVE_TYPE("uchar", UCHAR_TYPE, 4);
+		CREATE_PRIMITIVE_TYPE("bool", BOOL_TYPE, 4);
+		CREATE_PRIMITIVE_TYPE("int", INT_TYPE, 4);
+		CREATE_PRIMITIVE_TYPE("uint", UINT_TYPE, 4);
+		CREATE_PRIMITIVE_TYPE("float", FLOAT_TYPE, 4);
+		CREATE_PRIMITIVE_TYPE("double", DOUBLE_TYPE, 4);
 
-    CREATE_PRIMITIVE_TYPE("dvec2", VEC2_TYPE, 2 * 8);
-    CREATE_PRIMITIVE_TYPE("dvec3", VEC3_TYPE, 3 * 8);
-    CREATE_PRIMITIVE_TYPE("dvec4", VEC4_TYPE, 4 * 8);
+		CREATE_PRIMITIVE_TYPE("vec2", VEC2_TYPE, 2 * 4);
+		CREATE_PRIMITIVE_TYPE("vec3", VEC3_TYPE, 3 * 4);
+		CREATE_PRIMITIVE_TYPE("vec4", VEC4_TYPE, 4 * 4);
 
-    CREATE_PRIMITIVE_TYPE("mat2", MAT2_TYPE, 2 * 2 * 4);
-    CREATE_PRIMITIVE_TYPE("mat3", MAT3_TYPE, 3 * 3 * 4);
-    CREATE_PRIMITIVE_TYPE("mat4", MAT4_TYPE, 4 * 4 * 4);
+		CREATE_PRIMITIVE_TYPE("dvec2", DVEC2_TYPE, 2 * 8);
+		CREATE_PRIMITIVE_TYPE("dvec3", DVEC3_TYPE, 3 * 8);
+		CREATE_PRIMITIVE_TYPE("dvec4", DVEC4_TYPE, 4 * 8);
 
-    CREATE_PRIMITIVE_TYPE("dmat2", MAT2_TYPE, 2 * 2 * 8);
-    CREATE_PRIMITIVE_TYPE("dmat3", MAT3_TYPE, 3 * 3 * 8);
-    CREATE_PRIMITIVE_TYPE("dmat4", MAT4_TYPE, 4 * 4 * 8);
+		CREATE_PRIMITIVE_TYPE("mat2", MAT2_TYPE, 2 * 2 * 4);
+		CREATE_PRIMITIVE_TYPE("mat3", MAT3_TYPE, 3 * 3 * 4);
+		CREATE_PRIMITIVE_TYPE("mat4", MAT4_TYPE, 4 * 4 * 4);
+
+		CREATE_PRIMITIVE_TYPE("dmat2", DMAT2_TYPE, 2 * 2 * 8);
+		CREATE_PRIMITIVE_TYPE("dmat3", DMAT3_TYPE, 3 * 3 * 8);
+		CREATE_PRIMITIVE_TYPE("dmat4", DMAT4_TYPE, 4 * 4 * 8);
 
     register_cfunction(ctx, myCFunction, "myCFunction");
   }
@@ -126,6 +109,7 @@ xlang_context* xlang_create()
 void xlang_set_buffer(xlang_context* ctx, char* buffer)
 {
   ctx->source = buffer;
+  lexer_set_pos(ctx->lexer, buffer);
 }
 
 bool xlang_parse(xlang_context* ctx)
@@ -171,6 +155,8 @@ xlang_context* create_interpreter_context()
       ctx->num_funcs = 0;
       ctx->entry_point = NULL;
       ctx->current_function = NULL;
+
+      ctx->lexer = lexer_create_context();
       
       ctx->symbol_table = create_varialble("");
       ctx->sp = 0;
@@ -185,7 +171,7 @@ static void add_type(xlang_context* ctx, type_t* t)
   ctx->num_types++;
 }
 
-static type_t* create_type(type_t* parent)
+type_t* create_type(type_t* parent)
 {
     type_t* result = malloc(sizeof(type_t));
 
@@ -201,7 +187,7 @@ static type_t* create_type(type_t* parent)
     }
 }
 
-token_type eat_tokens(token_type skip_to);
+token_type eat_tokens(xlang_context* ctx, token_type skip_to);
 
 int gen_label() {
 	static int label;
@@ -212,35 +198,35 @@ void exptected_func(char *exptected) {
   printf("Error. Expected %s\n", exptected);
 }
 
-void skip_if() {
-  if (eat_tokens(lcRBRACE) == lcRBRACE) {
-    get_token(/*NEXT_TOKEN*/);
-    skip_statement();
+void skip_if(xlang_context* ctx) {
+  if (eat_tokens(ctx, lcRBRACE) == lcRBRACE) {
+    get_token(ctx->lexer);
+    skip_statement(ctx);
   }
 }
 
-void skip_while() {
-  if (eat_tokens(lcRBRACE) == lcRBRACE) {
-    get_token(/*NEXT_TOKEN*/);
-    skip_statement();
+void skip_while(xlang_context* ctx) {
+  if (eat_tokens(ctx, lcRBRACE) == lcRBRACE) {
+    get_token(ctx->lexer);
+    skip_statement(ctx);
   }
 }
 
-token_type eat_tokens(token_type skip_to) {
+token_type eat_tokens(xlang_context* ctx, token_type skip_to) {
   token_type type = lcEND;
-  if ((type = curr_token->type) == skip_to)
+  if ((type = CURRENT_TOKEN(ctx->lexer).type) == skip_to)
     return type;
-  while (((type = get_token(/*NEXT_TOKEN*/)->type) != skip_to) && type != lcEND)
+  while (((type = get_token(ctx->lexer)->type) != skip_to) && type != lcEND)
     ;
   return type;
 }
-void skip_statement() {
+void skip_statement(xlang_context* ctx) {
   int stop = 0;
   while (!stop) {
-    switch (curr_token->type) {
+    switch (CURRENT_TOKEN(ctx->lexer).type) {
     case lcLBRACKET: {
-      skip_compound_statement();
-      if (curr_token->type != lcRBRACKET) {
+      skip_compound_statement(ctx);
+      if (CURRENT_TOKEN(ctx->lexer).type != lcRBRACKET) {
         printf("error: expected }\n");
       }
       /*else
@@ -250,20 +236,20 @@ void skip_statement() {
       return;
     } break;
     case lcIF: {
-      skip_if();
+      skip_if(ctx);
     } break;
     case lcWHILE: {
-      skip_while();
+      skip_while(ctx);
     } break;
     case lcRBRACKET:
       return;
     default:
-      if (eat_tokens(lcSEMI) == lcSEMI)
+      if (eat_tokens(ctx, lcSEMI) == lcSEMI)
         break;
       else
         return;
     }
-    get_token(/*NEXT_TOKEN*/);
+    get_token(ctx->lexer);
   }
 }
 
@@ -272,18 +258,18 @@ bool translation_unit(xlang_context* ctx)
   return start(ctx) != -1;
 }
 
-void skip_compound_statement() {
+void skip_compound_statement(xlang_context* ctx) {
   int bracket_lvl = 0;
   int res = 0;
   token_t prev_token;
 
-  memcpy(&prev_token, curr_token, sizeof(token_t));
-  if (!(curr_token->type == lcLBRACKET &&
-        get_token(/*NEXT_TOKEN*/)->type == lcRBRACKET) &&
-      (curr_token->type != lcEND)) {
+  prev_token = CURRENT_TOKEN(ctx->lexer);
+  if (!(CURRENT_TOKEN(ctx->lexer).type == lcLBRACKET &&
+        get_token(ctx->lexer)->type == lcRBRACKET) &&
+      (CURRENT_TOKEN(ctx->lexer).type != lcEND)) {
     if (prev_token.type == lcLBRACKET) {
-      skip_statement();
-      if (curr_token->type == lcRBRACKET) {
+      skip_statement(ctx);
+      if (CURRENT_TOKEN(ctx->lexer).type == lcRBRACKET) {
 
       } else {
         printf("error: expected }\n");
@@ -292,36 +278,36 @@ void skip_compound_statement() {
   }
 }
 
-way_out do_if() {
+way_out do_if(xlang_context* ctx) {
   int condition = 0;
   way_out out = NORMAL;
 
-  MATCH(lcLBRACE); 
+  MATCH(ctx, lcLBRACE); 
   
   int endif = gen_label();
   int else_label = gen_label();
   // gencode
   assignment_expression();
-  MATCH(lcRBRACE);
-  statement(SELECTION); 
-  if (curr_token->type == lcELSE) {
-	MATCH(lcELSE);
-	statement(SELECTION);
+  MATCH(ctx, lcRBRACE);
+  statement(ctx, SELECTION); 
+  if (CURRENT_TOKEN(ctx->lexer).type == lcELSE) {
+	MATCH(ctx, lcELSE);
+	statement(ctx, SELECTION);
 	printf("_label_%04x:\n", else_label);
   }
   printf("_label_%04x:\n", endif);
 
 
  
-  ///*get_token(/*NEXT_TOKEN*/);*/
+  ///*get_token(ctx->lexer);*/
   return out;
 }
 
-way_out do_while() {
+way_out do_while(xlang_context* ctx) {
   int condition = 0;
   way_out out = NORMAL;
 
-  MATCH(lcLBRACE); 
+  MATCH(ctx, lcLBRACE); 
   //assignment_expression();
   int header = gen_label();
   int end_while = gen_label();
@@ -331,23 +317,23 @@ way_out do_while() {
   assignment_expression();
   //printf("\tcmp\n");
   //printf("\tjnz _label_%04x\n", end_while);
-  MATCH(lcRBRACE);
+  MATCH(ctx, lcRBRACE);
   //get_token();
 
-  statement(ITERATION);
+  statement(ctx, ITERATION);
   printf("\tjmp _label_%04x\n", header);
   printf("_label_%04x:\n",end_while);
 
-  get_token();
+  get_token(ctx->lexer);
   /*
 	while (get_token(), condition = assignment_expression()) {
-	  if ((curr_token = curr_token)->type == lcRBRACE) {
+	  if ((CURRENT_TOKEN = CURRENT_TOKEN)->type == lcRBRACE) {
 		get_token();
 		if ((out = statement(ITERATION)) == BREAK) {
 		  break;
 		} else if (out == CONTINUE || out == NORMAL) {
-		  pos_end = curr_token->pos;
-		  set_pos(pos_begin);
+		  pos_end = CURRENT_TOKEN(ctx->lexer).pos;
+		  lexer_set_pos(pos_begin);
 		  get_token();
 		  continue;
 		} else if (out == RETURN) {
@@ -417,62 +403,61 @@ variable* create_varialble(const char* name)
   }
 }
 
-bool declare_variable(type_t *scope, variable* var)
+bool declare_variable(xlang_context* ctx, type_t *scope, variable* var)
 {
-  var->type = find_type(scope, curr_token->text);
-  if (get_token()->type == lcIDENT)
+  var->type = find_type(scope, CURRENT_TOKEN(ctx->lexer).text);
+  if (get_token(ctx->lexer)->type == lcIDENT)
   {
-    var->name = curr_token->text;
-    get_token();
+    var->name = CURRENT_TOKEN(ctx->lexer).text;
+    get_token(ctx->lexer);
     return true;
   }
   return false;
 }
 
-void struct_declaration(type_t *new_type)
+void struct_declaration(xlang_context* ctx, type_t *new_type)
 {
-  //type_t new_type;
 
-  if (get_token()->type == lcIDENT)
+  if (get_token(ctx->lexer)->type == lcIDENT)
   {
     new_type->object_type = STRUCT;
-    new_type->name = curr_token->text;
-    if (get_token()->type == lcLBRACKET)
+    new_type->name = CURRENT_TOKEN(ctx->lexer).text;
+    if (get_token(ctx->lexer)->type == lcLBRACKET)
     {
       do
       {
-        get_token();
-        if (curr_token->type == lcRBRACKET)
+        get_token(ctx->lexer);
+        if (CURRENT_TOKEN(ctx->lexer).type == lcRBRACKET)
         {
           ;// print_var(new_type, new_type->name);
         }
-        else if (curr_token->type == lcSTRUCT)
+        else if (CURRENT_TOKEN(ctx->lexer).type == lcSTRUCT)
         {
           type_t* nested_struct = create_type(new_type);
           nested_struct->is_tag = true;
-          struct_declaration(nested_struct);
+          struct_declaration(ctx, nested_struct);
 
           new_type->num_types++;
           new_type->childrens = realloc(new_type->childrens, sizeof(type_t) * new_type->num_types);
           new_type->childrens[new_type->num_types - 1] = *nested_struct;
-          if (curr_token->type != lcSEMI)
+          if (CURRENT_TOKEN(ctx->lexer).type != lcSEMI)
           {
-            if (get_token()->type == lcIDENT)
+            if (get_token(ctx->lexer)->type == lcIDENT)
             {
               new_type->names = realloc(new_type->names, sizeof(string_ref) * new_type->num_types);
               new_type->names[new_type->num_types - 1] = nested_struct->name;
             }
-            get_token();
+            get_token(ctx->lexer);
           }
           else
           {
 
           }
         }
-        else if (is_type(new_type, curr_token->text))
+        else if (is_type(new_type, CURRENT_TOKEN(ctx->lexer).text))
         {
           variable var;
-          if (declare_variable(new_type, &var))
+          if (declare_variable(ctx, new_type, &var))
           {
             new_type->num_types++;
             new_type->size += var.type->size;
@@ -491,8 +476,8 @@ void struct_declaration(type_t *new_type)
         {
           FATAL_ERROR("this is not type");
         }
-      } while (curr_token->type == lcSEMI);
-      get_token();
+      } while (CURRENT_TOKEN(ctx->lexer).type == lcSEMI);
+      get_token(ctx->lexer);
     }
   }
 }
@@ -508,224 +493,244 @@ int start(xlang_context* ctx) {
   //if (is_cfunction(ctx, name))
   //  call_cfunction(ctx, func);
 
-  if ((lexer_init(ctx->source)) != 0) {
-    while (get_token(/*NEXT_TOKEN*/)->type != lcEND) {
-      switch (curr_token->type)
+  
+  while (get_token(ctx->lexer)->type != lcEND) {
+    switch (CURRENT_TOKEN(ctx->lexer).type)
+    {
+    case lcSTRUCT:
+    {
+      //type_t *new_type = &ctx->types[ctx->num_types - 1];
+      type_t *new_type = create_type(global_context->global_types);
+      struct_declaration(ctx, new_type);
+      add_type(ctx, new_type);
+      if (CURRENT_TOKEN(ctx->lexer).type != lcSEMI)
       {
-      case lcSTRUCT:
-      {
-        //type_t *new_type = &ctx->types[ctx->num_types - 1];
-        type_t *new_type = create_type(global_context->global_types);
-        struct_declaration(new_type);
-        add_type(ctx, new_type);
-        if (curr_token->type != lcSEMI)
-        {
-          FATAL_ERROR("semi not found");
-        }
-        ctx->num_types++;
-        print_var(new_type, new_type->name, 0);
+        FATAL_ERROR("semi not found");
       }
-      break;
-      default:
+      ctx->num_types++;
+      print_var(new_type, new_type->name, 0);
+    }
+    break;
+    default:
+    {
+      if (CURRENT_TOKEN(ctx->lexer).type == lcIDENT)
       {
-        if (curr_token->type == lcIDENT)
+        type_t *type = find_type(ctx->global_types, CURRENT_TOKEN(ctx->lexer).text);
+        if (type != NULL)
         {
-          type_t *type = find_type(ctx->global_types, curr_token->text);
-          if (type != NULL)
+          //token_t prev_token = CURRENT_TOKEN(ctx->lexer);
+          lexer_context_t* prev_lexer = NULL;
+          lexer_save_context(&prev_lexer, ctx->lexer);
+          if (get_token(ctx->lexer)->type == lcIDENT)
           {
-            token_t prev_token = *curr_token;
-            if (get_token()->type == lcIDENT)
+            if (get_token(ctx->lexer)->type != lcLBRACE)
             {
-              if (get_token()->type != lcLBRACE)
+              //CURRENT_TOKEN(ctx->lexer) = prev_token;
+              //lexer_set_pos(ctx->lexer, prev_token.pos);
+              lexer_update_context(&ctx->lexer, prev_lexer);
+              //get_token(ctx->lexer);
+              variable var;
+              declare_variable(ctx, ctx->global_types, &var);
+              if (CURRENT_TOKEN(ctx->lexer).type != lcSEMI)
               {
-                *curr_token = prev_token;
-                set_pos(prev_token.pos);
-                get_token();
-                variable var;
-                declare_variable(ctx->global_types, &var);
-                if (curr_token->type != lcSEMI)
-                {
-                  FATAL_ERROR("semi not found");
-                }
-                variable *tmp = NULL;
-                variable *cur_var = NULL;
-                tmp = ctx->symbol_table;
-                for (cur_var = ctx->symbol_table; cur_var != NULL; cur_var = cur_var->next)
-                {
-                  tmp = cur_var;
-                  if (cur_var->name.len == 0)
-                    break;
-                  if (!strncmp(name.pos, cur_var->name.pos, name.len))
-                  {
-                    FATAL_ERROR("Redifinition variable");
-                    break;
-                  }
-                }
-
-                *tmp = *create_varialble(var.name.pos);
-                tmp->name.len = var.name.len;
-                tmp->type = var.type;
+                FATAL_ERROR("semi not found");
               }
-              else
+              variable *tmp = NULL;
+              variable *cur_var = NULL;
+              tmp = ctx->symbol_table;
+              for (cur_var = ctx->symbol_table; cur_var != NULL; cur_var = cur_var->next)
               {
-                *curr_token = prev_token;
-                set_pos(prev_token.pos);
-                get_token();
+                tmp = cur_var;
+                if (cur_var->name.len == 0)
+                  break;
+                if (!strncmp(name.pos, cur_var->name.pos, name.len))
+                {
+                  FATAL_ERROR("Redifinition variable");
+                  break;
+                }
+              }
 
-                retval = function_definition();
+              *tmp = *create_varialble(var.name.pos);
+              tmp->name.len = var.name.len;
+              tmp->type = var.type;
+              switch (tmp->type->object_type)
+              {
+              case PRIMITIVE:
+              {
+                tmp->ival = 0;
+              }
+              case STRUCT:
+              {
+                tmp->object = malloc(tmp->type->size);
+              }
+              break;
+              default:
+                break;
               }
             }
             else
             {
-              FATAL_ERROR("Expected declaration or definition");
+              //CURRENT_TOKEN(ctx->lexer) = prev_token;
+              //lexer_set_pos(ctx->lexer, prev_token.pos);
+              lexer_update_context(&ctx->lexer, prev_lexer);
+              get_token(ctx->lexer);
+
+              retval = function_definition(ctx);
             }
+          }
+          else
+          {
+            FATAL_ERROR("Expected declaration or definition");
           }
         }
       }
-      break;
-      }
     }
-    
-    variable *cur_var = NULL;
-    for (cur_var = ctx->symbol_table; cur_var != NULL; cur_var = cur_var->next)
-    {
-      printf("Var name is %.*s\n", cur_var->name.len, cur_var->name.pos);
-      print_var(cur_var->type, cur_var->type->name, 0);
+    break;
     }
-
   }
+  
+  variable *cur_var = NULL;
+  for (cur_var = ctx->symbol_table; cur_var != NULL; cur_var = cur_var->next)
+  {
+    printf("Var name is %.*s\n", cur_var->name.len, cur_var->name.pos);
+    print_var(cur_var->type, cur_var->type->name, 0);
+  }
+
+
 
   return retval;
 }
 
 int is_print() { return 0; }
 
-int print() {
+int print(xlang_context* ctx) {
   int stop = 0;
 
-  get_token(/*NEXT_TOKEN*/);
+  get_token(ctx->lexer);
   do {
     char *number = "%d";
     char *string = "%s";
     char *curtype;
     int expr_val = 0;
-    if (curr_token->type == lcSTRING) {
-      printf("%.*s", curr_token->text.len, curr_token->text.pos);
-      get_token(/*NEXT_TOKEN*/);
+    if (CURRENT_TOKEN(ctx->lexer).type == lcSTRING) {
+      printf("%.*s", CURRENT_TOKEN(ctx->lexer).text.len, CURRENT_TOKEN(ctx->lexer).text.pos);
+      get_token(ctx->lexer);
     } else {
       curtype = number;
       expr_val = assignment_expression();
       printf("%d", expr_val);
     }
-  } while ((curr_token = curr_token)->type == lcSTRING ||
-           curr_token->type == lcIDENT);
+  } while (CURRENT_TOKEN(ctx->lexer).type == lcSTRING ||
+           CURRENT_TOKEN(ctx->lexer).type == lcIDENT);
   puts("");
 }
 
-int read() {
+int read(xlang_context* ctx) {
   int stop = 0;
   int tmp;
 
-  while (get_token(/*NEXT_TOKEN*/)->type != lcSEMI &&
-         curr_token->type != lcEND) {
-    if (curr_token->type == lcIDENT) {
+  while (get_token(ctx->lexer)->type != lcSEMI &&
+         CURRENT_TOKEN(ctx->lexer).type != lcEND) {
+    if (CURRENT_TOKEN(ctx->lexer).type == lcIDENT) {
       scanf("%d", &tmp);
-      assign_value(curr_token->text, tmp);
+      assign_value(CURRENT_TOKEN(ctx->lexer).text, tmp);
     }
   }
 }
 
-int interprete() {
-  if (get_token(/*NEXT_TOKEN*/)->type == lcSTRING) {
-    start((char **)&(curr_token->text));
+int interprete(xlang_context* ctx) {
+#if 0
+  if (get_token(ctx->lexer)->type == lcSTRING) {
+    start((char **)&(CURRENT_TOKEN(ctx->lexer).text));
   }
-  get_token(/*NEXT_TOKEN*/);
+  get_token(ctx->lexer);
+#endif
   return 0;
 }
 
-way_out statement(compound_origin origin) {
+way_out statement(xlang_context* ctx, compound_origin origin) {
   int res = 0;
   int expr_len;
   way_out out = NORMAL;
   int stop = 0;
 
   while (!stop) {
-    switch (curr_token->type) {
+    switch (CURRENT_TOKEN(ctx->lexer).type) {
     case lcIF: {
-	  get_token(/*NEXT_TOKEN*/);
-      if ((out = do_if()) == CONTINUE || out == BREAK)
+	  get_token(ctx->lexer);
+      if ((out = do_if(ctx)) == CONTINUE || out == BREAK)
         return out;
     } break;
     case lcWHILE: {
-	  get_token();
-      do_while();
+	  get_token(ctx->lexer);
+      do_while(ctx);
     } break;
     case lcBREAK: {
-      if (get_token(/*NEXT_TOKEN*/)->type == lcSEMI) {
-        get_token(/*NEXT_TOKEN*/);
-        skip_statement();
+      if (get_token(ctx->lexer)->type == lcSEMI) {
+        get_token(ctx->lexer);
+        skip_statement(ctx);
         return BREAK;
       } else {
         exptected_func("SEMI");
       }
     } break;
     case lcGOTO: {
-		MATCH(lcIDENT);
+		MATCH(ctx, lcIDENT);
 		//gencode
-		printf("\tjmp %s\n", curr_token->text);
-		MATCH(lcSEMI);
+		printf("\tjmp %s\n", CURRENT_TOKEN(ctx->lexer).text);
+		MATCH(ctx, lcSEMI);
     } break;
     case lcCONTINUE: {
-      if (get_token(/*NEXT_TOKEN*/)->type == lcSEMI) {
-        get_token(/*NEXT_TOKEN*/);
-        skip_statement();
+      if (get_token(ctx->lexer)->type == lcSEMI) {
+        get_token(ctx->lexer);
+        skip_statement(ctx);
         return CONTINUE;
       } else {
         exptected_func("SEMI");
       }
     } break;
     case lcLBRACKET: {
-      out = compound_statement(origin);
-      if (curr_token->type != lcRBRACKET) {
+      out = compound_statement(ctx, origin);
+      if (CURRENT_TOKEN(ctx->lexer).type != lcRBRACKET) {
         printf("error: expected }\n");
       }
       return out;
     } break;
     case lcFUNCTION: {
-      if (get_token(/*NEXT_TOKEN*/)->type == lcIDENT) {
+      if (get_token(ctx->lexer)->type == lcIDENT) {
         func_decl();
       } else {
         exptected_func("IDENT");
       }
     } break;
     case lcPRINT: {
-      print();
-      if ((curr_token = curr_token)->type == lcSEMI) {
-        get_token(/*NEXT_TOKEN*/);
+      print(ctx);
+      if (CURRENT_TOKEN(ctx->lexer).type == lcSEMI) {
+        get_token(ctx->lexer);
       }
     } break;
     case lcREAD: {
-      read();
+      read(ctx);
 
     } break;
     case lcABORT: {
-      get_token(/*NEXT_TOKEN*/);
+      get_token(ctx->lexer);
       puts("This is abort!");
       out = -1;
       goto abort;
     } break;
     case lcINTERPRETE: {
-      interprete();
+      interprete(ctx);
     } break;
     case lcNUMBER: {
     case lcIDENT: 
 
       res = assignment_expression();
-      if (curr_token->type != lcSEMI) {
+      if (CURRENT_TOKEN(ctx->lexer).type != lcSEMI) {
         exptected_func("SEMI");
         goto abort;
       }
-      get_token(/*NEXT_TOKEN*/);
+      get_token(ctx->lexer);
     } break;
     default:
       stop = 1;
@@ -736,20 +741,20 @@ way_out statement(compound_origin origin) {
 abort:
   return out;
 }
-way_out compound_statement(compound_origin origin) {
+way_out compound_statement(xlang_context* ctx, compound_origin origin) {
   way_out out = NORMAL;
   int expr_len;
   token_t prev_token;
   int retval = 0;
 
-  prev_token = *curr_token;
-  if (curr_token->type == lcLBRACKET &&
-      get_token(/*NEXT_TOKEN*/)->type == lcRBRACKET) {
+  prev_token = CURRENT_TOKEN(ctx->lexer);
+  if (CURRENT_TOKEN(ctx->lexer).type == lcLBRACKET &&
+      get_token(ctx->lexer)->type == lcRBRACKET) {
     retval = 0;
   } else {
     if (prev_token.type == lcLBRACKET) {
-      out = statement(origin);
-      if (curr_token->type == lcRBRACKET) {
+      out = statement(ctx, origin);
+      if (CURRENT_TOKEN(ctx->lexer).type == lcRBRACKET) {
 
       } else {
         printf("error: expected }\n");
@@ -785,7 +790,7 @@ static type_t* find_type_recursive(type_t *type, string_ref lexem)
   return NULL;
 }
 
-static type_t* find_type(type_t* scope, string_ref lexem)
+type_t* find_type(type_t* scope, string_ref lexem)
 {
   return find_type_recursive(scope, lexem);
 }
@@ -805,31 +810,31 @@ int is_type(type_t* scope, string_ref lexem) {
   return find_type(scope, lexem) != NULL;
 }
 
-int function_definition() {
+int function_definition(xlang_context* ctx) {
   way_out out;
-  token_type type = curr_token->type;
-  if (is_type(global_context->global_types, curr_token->text) && get_token(/*NEXT_TOKEN*/)->type == lcIDENT) {
-    get_token(/*NEXT_TOKEN*/);
-    declaration_list();
-    out = compound_statement(COMPOUND);
+  token_type type = CURRENT_TOKEN(ctx->lexer).type;
+  if (is_type(global_context->global_types, CURRENT_TOKEN(ctx->lexer).text) && get_token(ctx->lexer)->type == lcIDENT) {
+    get_token(ctx->lexer);
+    declaration_list(ctx);
+    out = compound_statement(ctx, COMPOUND);
   }
 
   return 0;
 }
 
-int declaration_list() {
+int declaration_list(xlang_context* ctx) {
   token_type type;
   int retval = -1;
-  if (curr_token->type == lcLBRACE) {
-    if (get_token(/*NEXT_TOKEN*/)->type != lcRBRACE)
+  if (CURRENT_TOKEN(ctx->lexer).type == lcLBRACE) {
+    if (get_token(ctx->lexer)->type != lcRBRACE)
     {
-      if (is_type(global_context->global_types, curr_token->text)) {
-        if (get_token(/*NEXT_TOKEN*/)->type == lcIDENT) {
-          while (get_token(/*NEXT_TOKEN*/)->type == lcCOMMA &&
-                 is_type(global_context->global_types, get_token(/*NEXT_TOKEN*/)->text) &&
-                 get_token(/*NEXT_TOKEN*/)->type == lcIDENT)
+      if (is_type(global_context->global_types, CURRENT_TOKEN(ctx->lexer).text)) {
+        if (get_token(ctx->lexer)->type == lcIDENT) {
+          while (get_token(ctx->lexer)->type == lcCOMMA &&
+                 is_type(global_context->global_types, get_token(ctx->lexer)->text) &&
+                 get_token(ctx->lexer)->type == lcIDENT)
             ;
-          if (curr_token->type != lcRBRACE) {
+          if (CURRENT_TOKEN(ctx->lexer).type != lcRBRACE) {
             exptected_func("RBRACE");
           } 
           else {
@@ -842,7 +847,7 @@ int declaration_list() {
       retval = 0;
     }
   }
-  get_token(/*NEXT_TOKEN*/);
+  get_token(ctx->lexer);
 }
 
 static void CREATE_PRIMITIVE_TYPE(char* name, builtin_types t, int size)

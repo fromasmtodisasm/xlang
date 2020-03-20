@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 
 #ifdef __cplusplus
@@ -74,6 +75,19 @@ char *basename(char *path)
 	return path + pos;
 }
 
+bool parse(xlang_context* ctx, char* source)
+{
+  xlang_set_buffer(ctx, source);
+  return xlang_parse(ctx);
+}
+
+#if 0
+bool preprocess(xlang_context* ctx, char* source)
+{
+  while
+}
+#endif
+
 void test_alloc()
 {
 	std::vector<unsigned char> const code =
@@ -118,41 +132,35 @@ int main(int argc, char **argv)
 	char *expression = source;
 	FILE *test;
 
-#if 0
-	if (argc > 1)
-	{
-		expression = buf;
-		int cur_file = 1;
-		for (; cur_file < argc; cur_file++)
-		{
-			printf("Load %s \n\n\n", argv[cur_file]);
-			if (source = loadProgram(argv[cur_file]))
-			{
-				printf("source: \n%s\n\n", source);
-				start(&source);
-			}
-
-		}
-	}
-	else
-#endif
-	test_alloc();
-	return 0;
+  xlang_context* ctx = xlang_create();
+  if (ctx != NULL)
   {
-    int buffer_size = 1024;
-    source = (char*)malloc(buffer_size);
-    usage(basename(argv[0]));
-    xlang_context* ctx = xlang_create();
-    if (ctx != NULL)
+    if (argc > 1)
     {
+      expression = buf;
+      int cur_file = 1;
+      for (; cur_file < argc; cur_file++)
+      {
+        printf("Load %s \n\n\n", argv[cur_file]);
+        if (source = loadProgram(argv[cur_file]))
+        {
+          printf("source: \n%s\n\n", source);
+          parse(ctx, source);
+        }
+        
+      }
+    }
+    else
+    {
+      int buffer_size = 1024;
+      source = (char*)malloc(buffer_size);
+      usage(basename(argv[0]));
       while (fgets(source, buffer_size, stdin) != NULL)
       {
-        xlang_set_buffer(ctx, source);
-        if (xlang_parse(ctx) == false)
+        if (parse(ctx, source) == false)
           break;
       }
     }
-
   }
 	return 0;
 }
