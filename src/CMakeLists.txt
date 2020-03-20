@@ -5,9 +5,9 @@ set(SOURCES
     fileutils.c
     interpreter.c
     lexer.c
-    main.c
+    main.cpp
     preprocessor.c
-    )
+     "executable_alloc.cpp")
 set(HEADERS
 	include/
 	include/common.h
@@ -17,7 +17,7 @@ set(HEADERS
 	include/interpreter_private.h
 	include/lexer.h
 	include/preprocessor.h
-    )
+     "executable_alloc.h")
 add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 install (TARGETS xlang DESTINATION bin)

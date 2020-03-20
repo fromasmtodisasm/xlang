@@ -1,9 +1,15 @@
+#ifdef __cplusplus
+extern "C" {
+#endif // __cplusplus
 #include "interpreter.h"
 #include "interpreter_private.h"
 #include "common.h"
 #include "exp.h"
 #include "lexer.h"
 #include "preprocessor.h"
+#ifdef __cplusplus
+}
+#endif // __cplusplus
 
 #include <memory.h> //memcpy
 #include <stdio.h>
@@ -16,6 +22,13 @@ static void MATCH(xlang_context* ctx, token_type tok)
 {
     CURRENT_TOKEN(ctx->lexer).type != tok ? FATAL_ERROR("error") : (void)get_token(ctx->lexer);
 }
+#define TYPES_CAPACITY 256
+#define STACK_SIZE 64 
+#define FUNCTIONS_COUNT 128 
+
+
+//#define CREATE_PRIMITIVE_TYPE(n, t) string_ref_assign(tmp_type->name, n); tmp_type->object_type = PRIMITIVE; tmp_type->btype = t; add_type(global_context, tmp_type);
+
 extern char *token_to_string[];
 static type_t* tmp_type = NULL;
 xlang_context* global_context;
@@ -57,6 +70,7 @@ xlang_context* xlang_create()
   if (ctx != NULL)
   {
     tmp_type = create_type(NULL);
+
     CREATE_PRIMITIVE_TYPE("int", INT_TYPE, 4);
     CREATE_PRIMITIVE_TYPE("char", CHAR_TYPE, 1);
     CREATE_PRIMITIVE_TYPE("uint", UINT_TYPE, 4);
