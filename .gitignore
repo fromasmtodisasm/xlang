@@ -31,3 +31,4 @@ CMakeCache.txt
 /src/Debug
 /src/xlang.dir/Debug
 /Win32/Debug
+/out/build/x64-Debug

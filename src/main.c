@@ -172,6 +172,54 @@ char *basename(char *path) {
   return path + pos;
 }
 
+void cli_mod(char **argv)
+{
+  char *source = NULL;
+  if (globalArgs.numInputFiles > 0) {
+    int cur_file = 0;
+    node_t *syntax_tree = NULL;
+    OPEN_DEBUG_FILE(globalArgs.debugFileName);
+    for (; cur_file < globalArgs.numInputFiles; cur_file++) {
+      DEBUG_PROD("Load %s \n", argv[cur_file]);
+      if (source = loadProgram(globalArgs.inputFiles[cur_file])) {
+        syntax_tree = parse(&source);
+        DEBUG_PROD("\nParsed!!!\n");
+        interprete(syntax_tree);
+      } else {
+        DEBUG_PROD("Failed load");
+      }
+    }
+  } else {
+    DEBUG_PROD("NO INPUT FILES");
+  }
+}
+
+void repl_mod()
+{
+  char *source = NULL;
+  int buffer_size = 1024;
+  node_t *syntax_tree = NULL;
+  source = (char *)malloc(buffer_size);
+  while (printf(">"), fgets(source, buffer_size, stdin) != NULL) {
+    if ((syntax_tree = parse(&source)) != NULL) {
+      DEBUG_PROD("\nPARSED\n");
+      interprete(syntax_tree);
+    } else {
+      DEBUG_PROD("PARSE ERROR\n");
+    }
+  }
+}
+
+void global_args_init()
+{
+  globalArgs.debugFileName = "out.log";
+  globalArgs.outFile = stdout;
+  globalArgs.verbosity = 0;
+  globalArgs.inputFiles = NULL;
+  globalArgs.numInputFiles = 0;
+  globalArgs.usage = 0;
+}
+
 int main(int argc, char **argv) {
   char *source = NULL;
   char buf[255];
@@ -180,12 +228,7 @@ int main(int argc, char **argv) {
   int exit_code = EXIT_SUCCESS;
 
   debug_file = stderr;
-  globalArgs.debugFileName = "out.log";
-  globalArgs.outFile = stdout;
-  globalArgs.verbosity = 0;
-  globalArgs.inputFiles = NULL;
-  globalArgs.numInputFiles = 0;
-  globalArgs.usage = 0;
+  global_args_init();
 
   SET_DEBUG_LVL(DEBUG_ALL);
   
@@ -193,38 +236,12 @@ int main(int argc, char **argv) {
   process_args(argc, argv);
   printf("debug file is %s\n",globalArgs.debugFileName);
   printf("%d FILE TO INTERPRETE\n", globalArgs.numInputFiles);
-  //OPEN_DEBUG_FILE(globalArgs.debugFileName);
+  OPEN_DEBUG_FILE(globalArgs.debugFileName);
   if (!globalArgs.usage) {
     if (!globalArgs.isCLI) {
-      if (globalArgs.numInputFiles > 0) {
-        int cur_file = 0;
-        node_t *syntax_tree = NULL;
-        OPEN_DEBUG_FILE(globalArgs.debugFileName);
-        for (; cur_file < globalArgs.numInputFiles; cur_file++) {
-          DEBUG_PROD("Load %s \n", argv[cur_file]);
-          if (source = loadProgram(globalArgs.inputFiles[cur_file])) {
-            syntax_tree = parse(&source);
-            DEBUG_PROD("\nParsed!!!\n");
-            interprete(syntax_tree);
-          }
-          else { DEBUG_PROD("Failed load"); }
-        }
-      } else { 
-        DEBUG_PROD("NO INPUT FILES"); 
-      }
+      cli_mod(argv);
     } else {
-      int buffer_size = 1024;
-      node_t *syntax_tree = NULL;
-	  source = (char*)malloc(buffer_size);
-      while (printf(">"), fgets(source, buffer_size, stdin) != NULL) {
-        if ((syntax_tree = parse(&source)) != NULL){
-          DEBUG_PROD("\nPARSED\n"); 
-          interprete(syntax_tree);
-        }
-        else {
-          DEBUG_PROD("PARSE ERROR\n");
-        }
-      }
+	  repl_mod();
       /* Go to new line */
       puts("");
     }
