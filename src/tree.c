@@ -6,15 +6,16 @@
 
 #include "tree.h"
 
-node_t *create_node(int type, char *text) {
-  node_t *node;
-
-  node = (node_t*)malloc(sizeof(node_t));
-  node->left = NULL;
-  node->right = NULL;
-  node->type = type;
-  node->text = text;
-  node->value.i = 0;
+node_t *create_node(int type, string_ref text) {
+  node_t *node = (node_t*)malloc(sizeof(node_t));
+	if (node != NULL)
+	{
+		node->left = NULL;
+		node->right = NULL;
+		node->type = type;
+		node->text = text;
+		node->value.i = 0;
+	}
   return node;
 }
 

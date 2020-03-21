@@ -10,42 +10,42 @@
 /***************************************************************************/
 /***************************** Defines *************************************/
 /***************************************************************************/
-#define GET_TOKEN() (DEBUG_TRACE("Get from %s\n", __FUNCTION__), get_token())
+#define GET_TOKEN() (DEBUG_TRACE("Get from %s\n", __FUNCTION__), lexer_get_token())
 
 /***************************************************************************/
 /*********************** Typedefs/Structures *******************************/
 /***************************************************************************/
-typedef enum variable_type {
-  VAR_INT,
-  VAR_STRING,
-  VAR_BOOL,
-  //VAR_CONST,
-  VAR_SONST_LITERAL
-} variable_type;
+typedef struct type_t type_t;
+typedef enum variable_type
+{
+	VAR_INT,
+	VAR_STRING,
+	VAR_BOOL,
+	//VAR_CONST,
+	VAR_SONST_LITERAL
+}variable_type;
 
-typedef struct variable {
-  char *name;
-  float value;
-  int type;
-  struct variable *next;
-} variable;
+typedef struct _variable
+{
+  string_ref name;
+  union value
+  {
+    char* sval;
+    char cval;
+    unsigned char ucval;
+    int ival;
+    unsigned int uival;
+    float fval;
+
+    void* object;
+  };
+  type_t *type;
+  struct _variable *next;
+}variable;
 
 /***************************************************************************/
 /*************************** Prototypes ************************************/
 /***************************************************************************/
-int block(char **buffer);
-int assignment_expression(node_t **node);
-int lookup(node_t *node);
-float assign_value(node_t *node);
-int primary_expression(node_t **node);
-int multiplicative_expression(node_t **node);
-int additive_expression(node_t **node);
-int conditional_expression(node_t **node);
-
-int exp_parser_init();
-void prefix_tree(node_t *tree, int level);
-void calculate(node_t *root);
-node_t *eval();
 
 /***************************************************************************/
 /********************* Externally Defined Globals **************************/

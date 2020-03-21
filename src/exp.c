@@ -1,17 +1,16 @@
 /***************************************************************************/
 /****************************** Includes ***********************************/
 /***************************************************************************/
+#include "exp.h"
+#include "lexer.h"
+#include "interpreter.h"
+#include "interpreter_private.h"
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "common.h"
-#include "config.h"
-#include "exp.h"
-#include "debug.h"
-
 /***************************************************************************/
 /***************** Defines used by this module only ************************/
 /***************************************************************************/
@@ -20,11 +19,12 @@
 #define end_func()                                                             \
   DEBUG_TRACE("On line [%d]\n", __LINE__) // fprintf(stderr, "Function %s is end on
                                      // line %d\n", __FUNCTION__, __LINE__)
+#define ERROR(...) DEBUG_PROD(__VA_ARGS__)
 #ifdef BTREE_USE
 
 #include "tree.h"
 
-int cmp_var_name(const void *left, const void *right);
+int cmp_var_name(xlang_context* ctx, const void *left, const void *right);
 typedef struct btree_node_t listof;
 
 listof *vars;
@@ -41,7 +41,7 @@ typedef struct list_t listof;
 
 static listof *vars;
 #define push_var(var) push(&vars, &var, sizeof(var))
-#define find_var(var) (variable*)foreach_element(vars, var.name, cmp_var_name)
+#define find_var(var) (variable*)foreach_element(vars, &var.name, cmp_var_name)
 #define VAR_STORAGE "LIST_USE"
 
 #endif
@@ -56,99 +56,131 @@ const char *var_storage = VAR_STORAGE;
 /*********************** Function Prototypes *******************************/
 /******  (should be static, if not they should be in '.h' file) ************/
 /***************************************************************************/
-int exp_parser_init();
+DEFINE_LEXER_CONTEXT();
+//variable *vars;
+extern xlang_context* global_context;
 
-static int make_builtin_vars();
+typedef struct primary_value_t
+{
+  enum primary_type
+  {
+    LITERAL,
+    VARIABLE
+  }type;
+  union
+  {
+    variable* var;
+    union 
+    {
+      char* sval;
+      char cval;
+      unsigned char ucval;
+      int ival;
+      unsigned int uival;
+      float fval;
+    }/*literal_value*/;
+  };
 
-int make_builtin_vars() {
-  variable _false = { "false", 0 };
-  variable _true = { "true", 1, };
-  push_var(_false);
-  push_var(_true);
-  return TRUE;
+}primary_value_t;
+
+int make_builtin_vars()
+{
+	//vars = malloc(sizeof(variable));
+  vars = global_context->symbol_table;
+#if 0
+  variable False =
+  {
+    .name = string_ref_create("false"),
+    .ival = 0
+	};
+	variable True = {
+		.name = string_ref_create("true"),
+		.ival = 1,
+	};
+
+	memcpy(vars, &True, sizeof(variable));
+  vars->next = malloc(sizeof(variable));
+	memcpy(vars->next, &False, sizeof(variable));
+#endif
 }
 
-int exp_parser_init() { 
-  DEBUG_ALL("Used var storage: %s\n", var_storage);
-  make_builtin_vars(); 
-  return TRUE;
+int exp_parser_init()
+{
+	make_builtin_vars();
 }
 
-#ifdef BTREE_USE
-
-int cmp_var_name(const void *left, const void *right) {
-  return strcmp(((variable*)left)->name, ((variable*)right)->name) == 0;
+int block(char **buffer)
+{
+	return 0;
 }
-
-#endif //BTREE_USE
 
 #ifdef LIST_USE
 
-void *cmp_var_name(const void *vars, const void *data) {
-  char *name = (char*)data;
-  variable *cur_var = (variable*)vars;
-  if (!strcmp(name, cur_var->name)) {
-    DEBUG_ALL("founded var with name  = %s\n", name);
-    return cur_var;
-  }
-  return 0;
+void* cmp_var_name(const void* vars, const void* data) {
+	string_ref* name = (string_ref*)data;
+	variable* cur_var = (variable*)vars;
+	if (!strncmp(name->pos, cur_var->name.pos, cur_var->name.len)) {
+		DEBUG_ALL("founded var with name  = %s\n", name);
+		return cur_var;
+	}
+	return 0;
 }
 
 #endif //LIST_USE
 
-void print_var(void *var) {
-  printf("var name = %s\n", ((variable*)(var))->name);
+void print_var(void* var) {
+	printf("var name = %s\n", ((variable*)(var))->name);
 }
 
-int lookup(node_t *node) {
-  variable *cur_var;
-  int res = 0;
-  variable *var = NULL;
-  variable tmp;
-  tmp.name = node->text;
-  if (var = find_var(tmp))
-  {
-    node->value.f = var->value;
-    res = 1;
-  }
-  return res;
+int lookup(node_t* node) {
+	variable* cur_var;
+	int res = 0;
+	variable* var = NULL;
+	variable tmp;
+	tmp.name = node->text;
+	if (var = find_var(tmp))
+	{
+		node->value.f = var->fval;
+		res = 1;
+	}
+	return res;
 }
 
-float assign_value(node_t *node) {
-  variable *cur_var;
-  variable tmp;
-  assert(node != NULL);
-  tmp.name = node->text;
-  if (cur_var = find_var(tmp)) {
-    //cur_var->name = name;
-    cur_var->value = node->value.f;
-  }
-  else  {
-    
-    //tmp.name = name;
-    tmp.value = node->value.f;
-    push_var(tmp);
-  }
-  return node->value.f;
+float assign_value(node_t* node) {
+	variable* cur_var;
+	variable tmp;
+	assert(node != NULL);
+	tmp.name = node->text;
+	if (cur_var = find_var(tmp)) {
+		//cur_var->name = name;
+		cur_var->fval = node->value.f;
+	}
+	else {
+
+		//tmp.name = name;
+		tmp.fval = node->value.f;
+		push_var(tmp);
+	}
+	return node->value.f;
 }
 
-int primary_expression(node_t **root) {
+int primary_expression(xlang_context* ctx, node_t **root) {
   int res = 0;
   //DEBUG_TRACE("\n");
-  switch (curr_token->type) {
+  switch (CURRENT_TOKEN(ctx->lexer).type) {
 
   case lcNUMBER:
   case lcSTRING:
   case lcIDENT: {
-    assert(curr_token->text != NULL);
-    *root = create_node(curr_token->type, strdup(curr_token->text));
+    assert(CURRENT_TOKEN(ctx->lexer).text.len != 0);
+    *root = create_node(CURRENT_TOKEN(ctx->lexer).type, CURRENT_TOKEN(ctx->lexer).text);
     assert(*root != NULL);
     break;
   }
   case lcLBRACE: {
-    GET_TOKEN(/*NEXT_TOKEN*/);
-    res = assignment_expression(root);
-    if (curr_token->type != lcRBRACE) {
+    lexer_get_token(ctx);
+    res = assignment_expression(ctx, root);
+    if (CURRENT_TOKEN(ctx->lexer).type != lcRBRACE) {
       printf("Error, expected ')'\n");
       getchar();
       // exit(-1);
@@ -156,74 +188,74 @@ int primary_expression(node_t **root) {
     break;
   }
   default:
-    ERROR("Error, expected primary on line %d!!! ", get_line());
-    ERROR("Meeted %s\n", curr_token->text);
+    ERROR("Error, expected primary on line %d!!! ", lexer_get_line(ctx));
+    ERROR("Meeted %s\n", CURRENT_TOKEN(ctx->lexer).text);
     getchar();
     exit(-1);
   }
-  GET_TOKEN();
+  lexer_get_token(ctx);
   return res;
 }
 
-int postfix_expression(node_t **root) {
+int postfix_expression(xlang_context* ctx, node_t **root) {
   int res = 0;
   node_t *node;
-  int need_get = TRUE;
+  int need_get = true;
   //DEBUG_TRACE("\n");
   
-  res = primary_expression(root);
+  res = primary_expression(ctx, root);
 
-  switch (curr_token->type)
+  switch (CURRENT_TOKEN(ctx->lexer).type)
   {
   case lcPLUS_PLUS: {
   case lcMINUS_MINUS:
-    DEBUG_ALL("This id postfix expression: %s\n", curr_token->text);
-    node = create_node(curr_token->type, strdup(curr_token->text));
+    DEBUG_ALL("This id postfix expression: %s\n", CURRENT_TOKEN(ctx->lexer).text);
+    node = create_node(CURRENT_TOKEN(ctx->lexer).type, CURRENT_TOKEN(ctx->lexer).text);
     node->left = (*root);
     *root = node;
   } break;
   case '[': {
-    GET_TOKEN();
-    res = primary_expression(root);
-    if (curr_token->type != ']')
+    lexer_get_token(ctx);
+    res = primary_expression(ctx, root);
+    if (CURRENT_TOKEN(ctx->lexer).type != ']')
       ERROR("Expected ']'\n");
   } break;
   case lcLBRACE: {
-    if (GET_TOKEN()->type != lcRBRACE)
+    if (CURRENT_TOKEN(ctx).type != lcRBRACE)
     {
       //list_t *args;  
-      node = create_node(lcCALL, strdup(curr_token->text));
+      node = create_node(lcCALL, CURRENT_TOKEN(ctx->lexer).text);
       node->left = (*root);
       *root = node;
       
-      res = assignment_expression(root);
-      while(curr_token->type == lcCOMMA) {
-        GET_TOKEN();
-        res = assignment_expression(root);
+      res = assignment_expression(ctx, root);
+      while(CURRENT_TOKEN(ctx->lexer).type == lcCOMMA) {
+        lexer_get_token(ctx);
+        res = assignment_expression(ctx, root);
       }
-      if (curr_token->type != lcRBRACE)
+      if (CURRENT_TOKEN(ctx->lexer).type != lcRBRACE)
         ERROR("Expected RBRACE\n");
     }
     else
     {
       printf("Empty arg list\n");
-      node = create_node(lcCALL, strdup(curr_token->text));
+      node = create_node(lcCALL, CURRENT_TOKEN(ctx->lexer).text);
       node->left = (*root);
       *root = node;
     }
   } break;
   case lcPOINT: {
   case lcARROW:
-    if (GET_TOKEN()->type != lcIDENT) {
-      ERROR("Expected identifier on line %d\n", get_line());
+    if (CURRENT_TOKEN(ctx).type != lcIDENT) {
+      ERROR("Expected identifier on line %d\n", lexer_get_line(ctx));
     } 
     else {
-      GET_TOKEN();
-      need_get = FALSE;
-      while (curr_token->type == lcPOINT, curr_token->type == lcARROW) {
-        if (GET_TOKEN()->type == lcIDENT)
+      lexer_get_token(ctx);
+      need_get = false;
+      while (CURRENT_TOKEN(ctx->lexer).type == lcPOINT, CURRENT_TOKEN(ctx->lexer).type == lcARROW) {
+        if (CURRENT_TOKEN(ctx).type == lcIDENT)
         {
-          GET_TOKEN();
+          lexer_get_token(ctx);
         }
         else break;
       }
@@ -231,59 +263,59 @@ int postfix_expression(node_t **root) {
   } break;
 
   default: {
-    need_get = FALSE; 
+    need_get = false; 
   } break;
   }
 
-  if (need_get) GET_TOKEN();
+  if (need_get) lexer_get_token(ctx);
   return res;
 }
 
-int unary_expression(node_t **root) {
+int unary_expression(xlang_context* ctx, node_t **root) {
   int res = 0;
   node_t *node;
   //DEBUG_TRACE("\n");
 
-  res = postfix_expression(root);
+  res = postfix_expression(ctx, root);
 
   return res;
 }
 
-int multiplicative_expression(node_t **root) {
+int multiplicative_expression(xlang_context* ctx, node_t **root) {
   int res = 0;
   int stop = 0;
   node_t *node;
 
   //DEBUG_TRACE("\n");
   // Build left subtree
-  res = unary_expression(root);
-  while (curr_token->type == lcMUL || curr_token->type == lcDIV) {
-    assert(curr_token->text != NULL);
-    node = create_node(curr_token->type, strdup(curr_token->text));
+  res = unary_expression(ctx, root);
+  while (CURRENT_TOKEN(ctx->lexer).type == lcMUL || CURRENT_TOKEN(ctx->lexer).type == lcDIV) {
+    assert(CURRENT_TOKEN(ctx->lexer).text.len != 0);
+    node = create_node(CURRENT_TOKEN(ctx->lexer).type, CURRENT_TOKEN(ctx->lexer).text);
     assert(node != NULL);
     node->left = (*root);
-    GET_TOKEN();
-    unary_expression(&(node->right));
+    lexer_get_token(ctx);
+    unary_expression(ctx, &(node->right));
     *root = node;
   }
   assert(*root != NULL);
   return res;
 }
 
-int additive_expression(node_t **root) {
+int additive_expression(xlang_context* ctx, node_t **root) {
   int res = 0;
   node_t *node;
 
   //DEBUG_TRACE("\n");
-  res = multiplicative_expression(root);
+  res = multiplicative_expression(ctx, root);
   assert(*root != NULL);
-  while (curr_token->type == lcPLUS || curr_token->type == lcMINUS) {
-    assert(curr_token->text != NULL);
-    node = create_node(curr_token->type, strdup(curr_token->text));
+  while (CURRENT_TOKEN(ctx->lexer).type == lcPLUS || CURRENT_TOKEN(ctx->lexer).type == lcMINUS) {
+    assert(CURRENT_TOKEN(ctx->lexer).text.len != 0);
+    node = create_node(CURRENT_TOKEN(ctx->lexer).type, CURRENT_TOKEN(ctx->lexer).text);
     assert(node != NULL);
     node->left = *root;
-    GET_TOKEN();
-    multiplicative_expression(&(node->right));
+    lexer_get_token(ctx);
+    multiplicative_expression(ctx, &(node->right));
     *root = node;
   }
   assert(*root != NULL);
@@ -297,66 +329,60 @@ int is_relop(token_type type) {
           lcL_OP == type || lcNE_OP == type);
 }
 
-int conditional_expression(node_t **root) {
+int conditional_expression(xlang_context* ctx, node_t **root) {
   int res = 0;
   node_t *node;
-  token_type type = curr_token->type;
+  token_type type = CURRENT_TOKEN(ctx->lexer).type;
 
   //DEBUG_TRACE("\n");
-  res = additive_expression(root);
+  res = additive_expression(ctx, root);
 
-  while (is_relop(type = curr_token->type)) {
-    assert(curr_token->text != NULL);
-    node = create_node(curr_token->type, strdup(curr_token->text));
+  while (is_relop(type = CURRENT_TOKEN(ctx->lexer).type)) {
+    assert(CURRENT_TOKEN(ctx->lexer).text.len != 0);
+    node = create_node(CURRENT_TOKEN(ctx->lexer).type, CURRENT_TOKEN(ctx->lexer).text);
     assert(node != NULL);
     node->left = *root;
-    GET_TOKEN(/*NEXT_TOKEN*/);
-    additive_expression(&(node->right));
+    lexer_get_token(ctx);
+    additive_expression(ctx, &(node->right));
     *root = node;
 
-    type = curr_token->type;
+    type = CURRENT_TOKEN(ctx->lexer).type;
   }
   assert(*root != NULL);
   return res;
 }
 
-int assignment_expression(node_t **root) {
-  char *name;
+int assignment_expression(xlang_context* ctx, node_t **root) {
+  string_ref name;
   int tmp = 0;
   int res = 0;
   token_t prev_token;
-
   node_t *node;
-  //DEBUG_TRACE("\n");
 
-  name = curr_token->text;
-  if (curr_token->type == lcSEMI) {
-    //get_token();
+  name = CURRENT_TOKEN(ctx->lexer).text;
+  if (CURRENT_TOKEN(ctx->lexer).type == lcSEMI) {
+    //lexer_get_token();
     return res;
   }
-  if (curr_token->type == lcIDENT) {
-    char *name;
+  if (CURRENT_TOKEN(ctx->lexer).type == lcIDENT) {
+    string_ref name;
     int tmp = 0;
-	token_type type = curr_token->type;
-    char *prev_pos = get_pos();
-	name = curr_token->text;
-    //memcpy(&prev_token, curr_token, sizeof(token_t));
-    res = conditional_expression(root);
+		token_type type = CURRENT_TOKEN(ctx->lexer).type;
+    char *prev_pos = lexer_get_pos(ctx);
+		name = CURRENT_TOKEN(ctx->lexer).text;
+    res = conditional_expression(ctx, root);
     DEBUG_PROD("root = %s\n", (*root)->text);
-    DEBUG_PROD("CURRENT TOKEN = %s\n", curr_token->text);
-    //system("sleep 1");
-    //*root = create_node(curr_token->type, strdup(curr_token->text));
-    //token_type type = curr_token->type;
+    DEBUG_PROD("CURRENT TOKEN = %s\n", CURRENT_TOKEN(ctx->lexer).text);
     if (type == lcASSIGN || type == lcPLUS_ASSIGN || type == lcMINUS_ASSIGN ||
         type == lcMUL_ASSIGN || type == lcDIV_ASSIGN) {
-	  node_t *exp;
-      assert(curr_token->text != NULL);
-      node = create_node(curr_token->type, strdup(curr_token->text));
+			node_t *exp;
+      assert(CURRENT_TOKEN(ctx->lexer).text.len != 0);
+      node = create_node(CURRENT_TOKEN(ctx->lexer).type, CURRENT_TOKEN(ctx->lexer).text);
       assert(node != NULL);
       node->left = *root;
-      GET_TOKEN(/*NEXT_TOKEN*/);
-      assignment_expression(&(node->right));
-      exp = create_node(lcEXP, "expression");
+      lexer_get_token(ctx);
+      assignment_expression(ctx, &(node->right));
+      exp = create_node(lcEXP, string_ref_create("expression"));
       node->left->type = node->right->type;
       exp->right = node;
       *root = exp;
@@ -366,17 +392,17 @@ int assignment_expression(node_t **root) {
       //set_pos(prev_pos);
     }
   }
-  else { res = conditional_expression(root); }
+  else { res = conditional_expression(ctx, root); }
   return res;
 }
 
-void make_space(int n) {
+void make_space(xlang_context* ctx, int n) {
   for (; n > 0; n--) {
     printf(" ");
   }
 }
 
-void print_node(node_t *node, int level) {
+void print_node(xlang_context* ctx, node_t *node, int level) {
   assert(node != NULL);
   // make_space(level);
   switch (node->type) {
@@ -392,7 +418,8 @@ void print_node(node_t *node, int level) {
   }
 }
 
-void functional(node_t *tree, int level) {
+#if 0
+void functional(xlang_context* ctx, node_t *tree, int level) {
   if (tree) {
     switch (tree->type) {
     case lcPLUS:
@@ -411,13 +438,13 @@ void functional(node_t *tree, int level) {
     }
   }
 }
-
-void calculate(node_t *tree) {
+#endif
+void calculate(xlang_context* ctx, node_t *tree) {
   
   float *val = &tree->value.f, val1 = 0, val2 = 0;
   if (tree) {
-    calculate(tree->left);
-    calculate(tree->right);
+    calculate(ctx, tree->left);
+    calculate(ctx, tree->right);
     switch (tree->type) {
     case lcPLUS: {
       *val = tree->value.f = tree->left->value.f + tree->right->value.f;
@@ -473,53 +500,53 @@ void calculate(node_t *tree) {
 
     case lcNUMBER: {
       tree->type = lcNUMBER;
-      *val = atof(tree->text);
+      *val = atof(tree->text.pos);
     } break;
     case lcIDENT: {
-      if (!lookup(tree)) {
+      if (!lookup(ctx, tree->text)) {
         printf("Undefined var: %s\n", tree->text);
       }
     } break;
 
     case lcASSIGN: {
-      calculate(tree->right);
+      calculate(ctx, tree->right);
       tree->left->value.f = tree->right->value.f;
       *val = assign_value(tree->left);
       //printf("assign res = %f\n", *val);
     } break;
     case lcPLUS_ASSIGN: {
-      calculate(tree->right);
+      calculate(ctx, tree->right);
       tree->left->value.f += tree->right->value.f; 
       *val = assign_value(tree->left);
       // printf("plus_asign = %f\n", *val);
     } break;
     case lcMINUS_ASSIGN: {
-      calculate(tree->right);
+      calculate(ctx, tree->right);
       tree->left->value.f -= tree->right->value.f; 
       *val = assign_value(tree->left);
     } break;
     case lcMUL_ASSIGN: {
-      calculate(tree->right);
+      calculate(ctx, tree->right);
       tree->left->value.f *= tree->right->value.f; 
       *val = assign_value(tree->left);
     } break;
     case lcDIV_ASSIGN: {
-      calculate(tree->right);
+      calculate(ctx, tree->right);
       tree->left->value.f /= tree->right->value.f; 
       *val = assign_value(tree->left);
     } break;
     case lcPLUS_PLUS: {
-      calculate(tree->left);
+      calculate(ctx, tree->left);
       *val = tree->left->value.f++;
       assign_value(tree->left);
     } break;
     case lcMINUS_MINUS: {
-      calculate(tree->left);
+      calculate(ctx, tree->left);
       *val = tree->left->value.f--;
       assign_value(tree->left);
     } break;
     case lcCALL: {
-      calculate(tree->left);
+      calculate(ctx, tree->left);
       //printf("func call\n");
       assign_value(tree->left);
       *val = tree->left->value.f;
@@ -529,12 +556,12 @@ void calculate(node_t *tree) {
 }
 
 
-node_t *eval() {
+node_t *eval(xlang_context* ctx) {
   node_t *root;
-  float retval = assignment_expression(&root);
+  float retval = assignment_expression(ctx, &root);
 
   // functional(root,0);
-  calculate(root);
+  calculate(ctx, root);
   //printf("result = %f\n", root->value.f);
   return root;
 }

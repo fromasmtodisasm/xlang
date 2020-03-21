@@ -89,8 +89,18 @@ int process_args(int argc, char **argv) {
     "PROD",     DEBUG_PROD,
     NULL 
   };
+#ifndef DEBUG
   if (argc > 1) {
     opt = getopt( argc, argv, optString );
+#else
+		char* args[] =
+		{
+			"-c",
+			"-o test.log"
+		};
+		argc = _countof(args);
+    opt = getopt( argc, args, optString );
+#endif
     while( opt != -1 ) {
       empty_cmd = FALSE;
       switch( opt ) {
@@ -124,9 +134,11 @@ int process_args(int argc, char **argv) {
       }
       opt = getopt( argc, argv, optString );
     }
+#ifndef DEBUG
   }
   else 
     globalArgs.usage = TRUE; 
+#endif
 
   globalArgs.inputFiles = argv + optind;
   globalArgs.numInputFiles = argc - optind;
@@ -172,7 +184,7 @@ char *basename(char *path) {
   return path + pos;
 }
 
-void cli_mod(char **argv)
+void cli_mod(xlang_context* ctx, char **argv)
 {
   char *source = NULL;
   if (globalArgs.numInputFiles > 0) {
@@ -182,7 +194,7 @@ void cli_mod(char **argv)
     for (; cur_file < globalArgs.numInputFiles; cur_file++) {
       DEBUG_PROD("Load %s \n", argv[cur_file]);
       if (source = loadProgram(globalArgs.inputFiles[cur_file])) {
-        syntax_tree = parse(&source);
+        syntax_tree = parse(ctx, &source);
         DEBUG_PROD("\nParsed!!!\n");
         interprete(syntax_tree);
       } else {
@@ -194,14 +206,14 @@ void cli_mod(char **argv)
   }
 }
 
-void repl_mod()
+void repl_mod(xlang_context *ctx)
 {
   char *source = NULL;
   int buffer_size = 1024;
   node_t *syntax_tree = NULL;
   source = (char *)malloc(buffer_size);
   while (printf(">"), fgets(source, buffer_size, stdin) != NULL) {
-    if ((syntax_tree = parse(&source)) != NULL) {
+    if ((syntax_tree = parse(ctx, &source)) != NULL) {
       DEBUG_PROD("\nPARSED\n");
       interprete(syntax_tree);
     } else {
@@ -238,13 +250,14 @@ int main(int argc, char **argv) {
   printf("%d FILE TO INTERPRETE\n", globalArgs.numInputFiles);
   OPEN_DEBUG_FILE(globalArgs.debugFileName);
   if (!globalArgs.usage) {
-    if (!globalArgs.isCLI) {
-      cli_mod(argv);
-    } else {
-	  repl_mod();
-      /* Go to new line */
-      puts("");
-    }
+		xlang_context* ctx = xlang_create();
+		if (ctx != NULL) {
+			if (!globalArgs.isCLI) {
+				repl_mod(ctx);
+			} else {
+				cli_mod(ctx, argv);
+			}
+		}
   }
   else  usage(basename(argv[0]));
   fclose(debug_file);

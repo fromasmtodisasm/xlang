@@ -35,7 +35,7 @@ node_t *exec_expression(node_t *root,int level) {
     //PRINT_PAD(level,DEBUG_TRACE,"node is < %s >\n", root->text);
   }
   
-  calculate(root);
+  calculate(NULL, root);
   return root;
 }
 
@@ -119,7 +119,7 @@ void do_statements(node_t *node, int level) {
         } break;
         case lcEXP:
         {
-          calculate(node->right->right);
+          calculate(NULL, node->right->right);
           //do_statements(node->left, level + 1);
           exec_expression(node->right, level);
           DEBUG_ALL("in exp");
@@ -186,7 +186,7 @@ void extern_defs(node_t *root)
 int interprete(node_t *syntax_tree) {
   assert(syntax_tree != NULL);
   DEBUG_LOG("Start interpreting...\n"); 
-  assert(syntax_tree->text != NULL);
+  assert(syntax_tree->text.len != 0);
   DEBUG_TRACE("root text: %s\n", syntax_tree->text);
   //assert(syntax_tree->right != NULL);
   //sleep(2);

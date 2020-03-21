@@ -4,6 +4,7 @@
 /***************************************************************************/
 /************************** Other Includes *********************************/
 /***************************************************************************/
+#include "lexer.h"
 
 /***************************************************************************/
 /***************************** Defines *************************************/
@@ -16,7 +17,7 @@ typedef struct node_t node_t;
 
 struct node_t {
   int type;
-  char *text;
+  string_ref text;
   struct {
     union {
       int i;
@@ -30,7 +31,7 @@ struct node_t {
   node_t *left, *right;
 };
 
-node_t *create_node(int type, char *text);
+node_t *create_node(int type, string_ref text);
 void print_tree(node_t *node, int level);
 struct btree_node_t {
     struct btree_node_t *left;
