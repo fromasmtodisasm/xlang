@@ -163,6 +163,7 @@ node_t *eval(xlang_context* ctx);
 xlang_context* xlang_create();
 void xlang_set_buffer(xlang_context* ctx, char* buffer);
 bool xlang_parse(xlang_context* ctx);
+bool xlang_dostring(xlang_context* ctx, char* str);
 
 bool register_cfunction(xlang_context* ctx, CFunction* func, const char* name);
 bool is_cfunction(xlang_context* ctx, string_ref name);

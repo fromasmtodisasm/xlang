@@ -410,7 +410,7 @@ function_t* find_cfunction(xlang_context* ctx, string_ref name)
 	}
 }
 
-node_t *parse(xlang_context *ctx, char **buffer) {
+node_t *parse(xlang_context *ctx) {
   node_t *external_defs = NULL;
   node_t *curr_node = NULL;
   node_t *program = NULL;
